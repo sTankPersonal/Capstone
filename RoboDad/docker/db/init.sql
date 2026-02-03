@@ -1,35 +1,217 @@
 -- RoboDad schema
--- employment_status maps to EmploymentStatus enum: 0=Employed 1=Unemployed 2=Student 3=Retired
--- finance type maps to FinanceEnum: 0=Salary 1=Bonus 2=Investment 3=Expense 4=Tax
+
+-- ── Reference: Employment Statuses ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS employment_statuses (
+    employment_status_id TEXT PRIMARY KEY,
+    value                TEXT NOT NULL,
+    created_at           DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+INSERT INTO employment_statuses (employment_status_id, value) VALUES
+    ('employed',    'Employed'),
+    ('unemployed',  'Unemployed'),
+    ('student',     'Student'),
+    ('retired',     'Retired')
+ON CONFLICT (employment_status_id) DO NOTHING;
+
+-- ── Reference: Currencies ─────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS currencies (
+    currency_id TEXT PRIMARY KEY,
+    value       TEXT NOT NULL,
+    created_at  DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+INSERT INTO currencies (currency_id, value) VALUES
+    ('USD', 'US Dollar'),
+    ('EUR', 'Euro'),
+    ('GBP', 'British Pound'),
+    ('CAD', 'Canadian Dollar'),
+    ('AUD', 'Australian Dollar'),
+    ('JPY', 'Japanese Yen'),
+    ('CHF', 'Swiss Franc'),
+    ('CNY', 'Chinese Yuan'),
+    ('INR', 'Indian Rupee'),
+    ('MXN', 'Mexican Peso'),
+    ('BRL', 'Brazilian Real'),
+    ('KRW', 'South Korean Won'),
+    ('SGD', 'Singapore Dollar'),
+    ('HKD', 'Hong Kong Dollar'),
+    ('SEK', 'Swedish Krona')
+ON CONFLICT (currency_id) DO NOTHING;
+
+-- ── Reference: Languages ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS languages (
+    language_id TEXT PRIMARY KEY,
+    value       TEXT NOT NULL,
+    created_at  DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+INSERT INTO languages (language_id, value) VALUES
+    ('en', 'English'),
+    ('es', 'Spanish'),
+    ('fr', 'French'),
+    ('de', 'German'),
+    ('zh', 'Chinese'),
+    ('ar', 'Arabic'),
+    ('pt', 'Portuguese'),
+    ('ru', 'Russian'),
+    ('ja', 'Japanese'),
+    ('hi', 'Hindi'),
+    ('ko', 'Korean'),
+    ('it', 'Italian'),
+    ('nl', 'Dutch'),
+    ('pl', 'Polish'),
+    ('sv', 'Swedish')
+ON CONFLICT (language_id) DO NOTHING;
+
+-- ── Reference: Countries ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS countries (
+    country_id TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    created_at DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+INSERT INTO countries (country_id, value) VALUES
+    ('US', 'United States'),
+    ('GB', 'United Kingdom'),
+    ('CA', 'Canada'),
+    ('AU', 'Australia'),
+    ('DE', 'Germany'),
+    ('FR', 'France'),
+    ('JP', 'Japan'),
+    ('CN', 'China'),
+    ('IN', 'India'),
+    ('MX', 'Mexico'),
+    ('BR', 'Brazil'),
+    ('IT', 'Italy'),
+    ('ES', 'Spain'),
+    ('KR', 'South Korea'),
+    ('RU', 'Russia'),
+    ('NL', 'Netherlands'),
+    ('SE', 'Sweden'),
+    ('CH', 'Switzerland'),
+    ('SG', 'Singapore'),
+    ('HK', 'Hong Kong')
+ON CONFLICT (country_id) DO NOTHING;
+
+-- ── Reference: Transaction Categories ────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS transaction_categories (
+    transaction_category_id TEXT PRIMARY KEY,
+    value                   TEXT NOT NULL,
+    created_at              DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+INSERT INTO transaction_categories (transaction_category_id, value) VALUES
+    ('housing',         'Housing'),
+    ('food',            'Food & Dining'),
+    ('transportation',  'Transportation'),
+    ('utilities',       'Utilities'),
+    ('healthcare',      'Healthcare'),
+    ('entertainment',   'Entertainment'),
+    ('education',       'Education'),
+    ('clothing',        'Clothing & Apparel'),
+    ('savings',         'Savings'),
+    ('income',          'Income'),
+    ('investments',     'Investments'),
+    ('insurance',       'Insurance'),
+    ('personal',        'Personal Care'),
+    ('travel',          'Travel'),
+    ('subscriptions',   'Subscriptions'),
+    ('gifts',           'Gifts & Donations'),
+    ('other',           'Other')
+ON CONFLICT (transaction_category_id) DO NOTHING;
+
+-- ── Reference: Message Senders ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS message_senders (
+    message_sender_id TEXT PRIMARY KEY,
+    name              TEXT NOT NULL,
+    created_at        DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+INSERT INTO message_senders (message_sender_id, name) VALUES
+    ('user',      'User'),
+    ('assistant', 'Assistant')
+ON CONFLICT (message_sender_id) DO NOTHING;
+
+-- ── Reference: LLM Personas ───────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS llm_personas (
+    llm_persona_id TEXT PRIMARY KEY,
+    name           TEXT NOT NULL,
+    description    TEXT NOT NULL,
+    system_prompt  TEXT NOT NULL,
+    created_at     DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+INSERT INTO llm_personas (llm_persona_id, name, description, system_prompt) VALUES
+    (
+        'robodad',
+        'RoboDad',
+        'A warm, encouraging father figure who guides you toward financial independence.',
+        'You are RoboDad, a caring and knowledgeable AI financial advisor who speaks like a supportive father. Your goal is to help users build healthy financial habits, understand their spending, and work toward their financial goals. You give practical, actionable advice in plain language. You celebrate wins, gently correct mistakes, and always encourage long-term thinking. You never judge the user for past financial decisions — you focus on what they can do today to improve their future.'
+    ),
+    (
+        'budget_coach',
+        'Budget Coach',
+        'A no-nonsense accountability partner laser-focused on sticking to the budget.',
+        'You are Budget Coach, a direct and disciplined financial accountability partner. Your role is to help users track their spending, identify budget overruns, and stay on target with their financial goals. You are honest and to-the-point — if the user is overspending, you say so clearly and suggest specific corrections. You do not sugarcoat bad financial behavior, but you always provide a concrete next step to get back on track.'
+    ),
+    (
+        'investment_mentor',
+        'Investment Mentor',
+        'A patient teacher who explains investing concepts and helps build long-term wealth.',
+        'You are Investment Mentor, a patient and knowledgeable guide focused on long-term wealth building. Your role is to help users understand investment concepts, evaluate their risk tolerance, and develop strategies for growing their savings over time. You explain financial concepts clearly without jargon, use relatable examples, and always tie advice back to the user''s specific financial situation and goals. You emphasize diversification, patience, and compound growth.'
+    )
+ON CONFLICT (llm_persona_id) DO NOTHING;
 
 -- ── Users ─────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
-    id                SERIAL      PRIMARY KEY,
-    name              VARCHAR(255) NOT NULL,
-    age               SMALLINT     NOT NULL CHECK (age BETWEEN 0 AND 150),
-    employment_status SMALLINT     NOT NULL CHECK (employment_status BETWEEN 0 AND 3),
-    email             VARCHAR(255) NOT NULL UNIQUE,
-    password_hash     VARCHAR(255) NOT NULL
+    user_id              TEXT PRIMARY KEY,
+    email                TEXT NOT NULL UNIQUE,
+    password_hash        TEXT,
+    first_name           TEXT,
+    last_name            TEXT,
+    date_of_birth        DATE,
+    country_id           TEXT REFERENCES countries(country_id),
+    currency_id          TEXT REFERENCES currencies(currency_id),
+    language_id          TEXT REFERENCES languages(language_id),
+    employment_status_id TEXT REFERENCES employment_statuses(employment_status_id),
+    created_at           DATE NOT NULL DEFAULT CURRENT_DATE,
+    updated_at           DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
--- ── Finances ──────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS finances (
-    id          SERIAL           PRIMARY KEY,
-    user_id     INTEGER          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    amount      DOUBLE PRECISION NOT NULL,
-    description TEXT             NOT NULL,
-    type        SMALLINT         NOT NULL CHECK (type BETWEEN 0 AND 4)
+-- ── Chat Sessions ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    chat_session_id TEXT PRIMARY KEY,
+    user_id         TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    llm_persona_id  TEXT NOT NULL REFERENCES llm_personas(llm_persona_id),
+    description     TEXT NOT NULL,
+    additional_info TEXT,
+    created_at      DATE NOT NULL DEFAULT CURRENT_DATE,
+    updated_at      DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
--- ── Budget goals ──────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS budget_goals (
-    id          SERIAL           PRIMARY KEY,
-    user_id     INTEGER          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    end_goal    DOUBLE PRECISION NOT NULL CHECK (end_goal > 0),
-    amount      DOUBLE PRECISION NOT NULL CHECK (amount >= 0),
-    description TEXT             NOT NULL
+-- ── Chat Messages ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS chat_messages (
+    chat_message_id   TEXT PRIMARY KEY,
+    chat_session_id   TEXT NOT NULL REFERENCES chat_sessions(chat_session_id) ON DELETE CASCADE,
+    message_sender_id TEXT NOT NULL REFERENCES message_senders(message_sender_id),
+    content           TEXT,
+    created_at        DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+-- ── Transactions ──────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS transactions (
+    transaction_id          TEXT PRIMARY KEY,
+    user_id                 TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    transaction_category_id TEXT NOT NULL REFERENCES transaction_categories(transaction_category_id),
+    amount                  DOUBLE PRECISION,
+    currency_id             TEXT REFERENCES currencies(currency_id),
+    description             TEXT,
+    transaction_date        DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at              DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 -- ── Indexes ───────────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_finances_user_id     ON finances(user_id);
-CREATE INDEX IF NOT EXISTS idx_budget_goals_user_id ON budget_goals(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id    ON chat_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON chat_messages(chat_session_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id     ON transactions(user_id);

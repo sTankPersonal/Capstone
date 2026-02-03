@@ -1,24 +1,33 @@
 #pragma once
-#include "infrastructureServices/persistance/IDatabaseConnection.h"
+#include "IDatabaseConnection.h"
+#include <pqxx/pqxx>
+#include <memory>
 #include <string>
-#include <stdexcept>
-#include <libpq-fe.h>
 
 class DatabaseConnection : public IDatabaseConnection {
-    PGconn* conn_ = nullptr;
+    std::unique_ptr<pqxx::connection> conn_;
 
 public:
     explicit DatabaseConnection(const std::string& connStr);
-    ~DatabaseConnection();
 
+    explicit DatabaseConnection(
+        const std::string& user,
+        const std::string& password,
+        const std::string& dbname,
+        const std::string& host = "localhost",
+        unsigned int port = 5432
+    );
+
+    ~DatabaseConnection() = default;
     DatabaseConnection(const DatabaseConnection&) = delete;
     DatabaseConnection& operator=(const DatabaseConnection&) = delete;
-    DatabaseConnection(DatabaseConnection&& other) noexcept;
-    DatabaseConnection& operator=(DatabaseConnection&& other) noexcept;
+    DatabaseConnection(DatabaseConnection&&) = default;
+    DatabaseConnection& operator=(DatabaseConnection&&) = default;
 
-    PGconn* get() const noexcept { return conn_; }
+    pqxx::connection& getConnection() noexcept { return *conn_; }
+    const pqxx::connection& getConnection() const noexcept { return *conn_; }
+
     bool isConnected() const noexcept override;
 
-    // Reads DATABASE_URL from the environment. Throws if unset or connection fails.
     static DatabaseConnection fromEnv();
 };

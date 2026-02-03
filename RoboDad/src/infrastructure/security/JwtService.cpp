@@ -2,7 +2,6 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include <cstdint>
 #include <stdexcept>
 
 namespace {
@@ -68,14 +67,14 @@ std::string hmacSha256(const std::string& key, const std::string& data) {
 
 } // namespace
 
-std::string JwtService::generate(uint32_t userId) {
+std::string JwtService::generate(const std::string& userId) {
     const std::string header  = base64urlEncodeStr(R"({"alg":"HS256","typ":"JWT"})");
-    const std::string payload = base64urlEncodeStr(R"({"sub":")" + std::to_string(userId) + R"("})");
+    const std::string payload = base64urlEncodeStr(R"({"sub":")" + userId + R"("})");
     const std::string toSign  = header + "." + payload;
     return toSign + "." + hmacSha256(secret_, toSign);
 }
 
-std::optional<uint32_t> JwtService::verify(const std::string& token) {
+std::optional<std::string> JwtService::verify(const std::string& token) {
     const auto dot1 = token.find('.');
     if (dot1 == std::string::npos) return std::nullopt;
     const auto dot2 = token.find('.', dot1 + 1);
@@ -88,13 +87,9 @@ std::optional<uint32_t> JwtService::verify(const std::string& token) {
     const std::string payloadJson = base64urlDecode(token.substr(dot1 + 1, dot2 - dot1 - 1));
     auto subStart = payloadJson.find(R"("sub":")");
     if (subStart == std::string::npos) return std::nullopt;
-    subStart += 7;
+    subStart += 7; // length of "sub":"
     const auto subEnd = payloadJson.find('"', subStart);
     if (subEnd == std::string::npos) return std::nullopt;
 
-    try {
-        return static_cast<uint32_t>(std::stoul(payloadJson.substr(subStart, subEnd - subStart)));
-    } catch (...) {
-        return std::nullopt;
-    }
+    return payloadJson.substr(subStart, subEnd - subStart);
 }

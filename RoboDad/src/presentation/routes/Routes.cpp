@@ -1,65 +1,40 @@
-#include "Routes.h"
-#include <sstream>
-#include "../controllers/ChatController.h"
-#include "../controllers/DashboardController.h"
-#include "../controllers/SettingsController.h"
-#include "../controllers/EarningsController.h"
-#include "../controllers/ExpensesController.h"
-#include "../controllers/AuthenticationController.h"
-#include "../controllers/GoogleAuthController.h"
+#include "presentation/routes/Routes.h"
+#include "presentation/controllers/ChatController.h"
+#include "presentation/controllers/DashboardController.h"
+#include "presentation/controllers/SettingsController.h"
+#include "presentation/controllers/ActivityController.h"
+#include "presentation/controllers/AuthenticationController.h"
+#include "presentation/controllers/GoogleAuthController.h"
 
-std::optional<uint32_t> requireAuth(const crow::request& req, IJwtService& jwt) {
-    std::string cookieHeader = req.get_header_value("Cookie");
-    if (cookieHeader.empty()) return std::nullopt;
+void registerAllRoutes(crow::SimpleApp&         app,
+                       ILlmClient&              llmClient,
+                       IPromptBuilder&          promptBuilder,
+                       IPlaidClient&            plaidClient,
+                       IUserRepository&         userRepo,
+                       IChatSessionRepository&  chatSessionRepo,
+                       IChatMessageRepository&  chatMessageRepo,
+                       ILlmPersonaRepository&   personaRepo,
+                       ITransactionRepository&         transactionRepo,
+                       ITransactionCategoryRepository& categoryRepo,
+                       ICurrencyRepository&            currencyRepo,
+                       IJwtService&             jwt,
+                       IPasswordHasher&         hasher,
+                       const AppConfig&        config) {
 
-    std::string token;
-    std::istringstream stream(cookieHeader);
-    std::string pair;
-    while (std::getline(stream, pair, ';')) {
-        size_t start = pair.find_first_not_of(' ');
-        if (start == std::string::npos) continue;
-        pair = pair.substr(start);
-        if (pair.rfind("token=", 0) == 0) {
-            token = pair.substr(6);
-            break;
-        }
-    }
-
-    if (token.empty()) return std::nullopt;
-    return jwt.verify(token);
-}
-
-void registerAllRoutes(crow::SimpleApp& app, OpenAIClient& openai,
-    UserRepository& userRepo, IJwtService& jwt,
-    IPasswordHasher& hasher, const AppConfig& config) {
     CROW_ROUTE(app, "/assets/<path>")
-        ([](const crow::request&, crow::response& res, std::string path) {
+    ([](const crow::request&, crow::response& res, std::string path) {
         res.set_static_file_info("public/" + path);
         res.end();
-            });
+    });
 
-    (new ChatController(openai, jwt))->registerRoutes(app);
-    (new DashboardController(jwt))->registerRoutes(app);
-    (new SettingsController(jwt))->registerRoutes(app);
-    (new EarningsController(jwt))->registerRoutes(app);
-    (new ExpensesController(jwt))->registerRoutes(app);
     (new AuthenticationController(userRepo, hasher, jwt))->registerRoutes(app);
-    (new GoogleAuthController(userRepo, jwt, hasher,
-        config.googleClientId(),
-        config.googleClientSecret()))->registerRoutes(app);
-
-    CROW_ROUTE(app, "/api/user/me")
-        ([&jwt, &userRepo](const crow::request& req) {
-        auto userId = requireAuth(req, jwt);
-        if (!userId) return crow::response(401, R"({"error":"Unauthorized"})");
-        auto user = userRepo.findById(*userId);
-        if (!user) return crow::response(404, R"({"error":"User not found"})");
-        crow::json::wvalue out;
-        out["name"] = user->getPersonalInfo().getName();
-        return crow::response(200, out.dump());
-            });
+    (new GoogleAuthController(userRepo, jwt, hasher, config.googleClientId(), config.googleClientSecret()))->registerRoutes(app);
+    (new ChatController(chatSessionRepo, chatMessageRepo, personaRepo, transactionRepo, llmClient, promptBuilder, jwt))->registerRoutes(app);
+    (new SettingsController(userRepo, personaRepo, hasher, jwt))->registerRoutes(app);
+    (new ActivityController(transactionRepo, categoryRepo, currencyRepo, plaidClient, jwt))->registerRoutes(app);
+    DashboardController().registerRoutes(app);
 
     CROW_ROUTE(app, "/")([] {
         return "<h1>RoboDad Server Running</h1>";
-        });
+    });
 }

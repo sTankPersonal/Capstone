@@ -1,12 +1,9 @@
-# Ignore Visual Studio files
+# Ignore Visual Studio and VS Code settings
 .vs
+.vscode
 
 # Ignore build directories
 out
-
-# Third-party headers — fetched automatically by CMake FetchContent at build time
-RoboDad/includes/asio/
-RoboDad/includes/crow/
 
 # Environment Secrets
 secrets.env

@@ -13,18 +13,19 @@ include(GoogleTest)
 
 # ── Domain unit tests ─────────────────────────────────────────────────────────
 add_executable(domain_tests
-    domain/BudgetGoalTests.cpp
-    domain/FinanceTests.cpp
     domain/UserTests.cpp
+    domain/FinanceTests.cpp
+    domain/ChatTests.cpp
+    domain/ReferenceEntityTests.cpp
 )
 target_link_libraries(domain_tests PRIVATE GTest::gtest_main roboDadDomain)
 gtest_discover_tests(domain_tests PROPERTIES LABELS "unit")
 
 # ── Application unit tests (repositories mocked with GMock) ──────────────────
 add_executable(application_tests
-    application/BudgetUseCaseTests.cpp
-    application/ExpenseUseCaseTests.cpp
     application/AuthUseCaseTests.cpp
+    application/TransactionUseCaseTests.cpp
+    application/ImportPlaidTransactionTests.cpp
 )
 target_link_libraries(application_tests PRIVATE
     GTest::gmock_main
@@ -37,8 +38,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_executable(infrastructure_unit_tests
         infrastructure/PasswordHasherTests.cpp
         infrastructure/JwtServiceTests.cpp
-        infrastructure/HttpRequestTests.cpp
-        infrastructure/HttpResponseTests.cpp
         infrastructure/PromptBuilderTests.cpp
     )
     target_link_libraries(infrastructure_unit_tests PRIVATE
@@ -51,8 +50,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     option(RUN_INTEGRATION_TESTS "Build and register DB integration tests" OFF)
     if(RUN_INTEGRATION_TESTS)
         add_executable(infrastructure_integration_tests
-            infrastructure/integration/PostgresBudgetRepositoryTests.cpp
             infrastructure/integration/PostgresUserRepositoryTests.cpp
+            infrastructure/integration/PostgresTransactionRepositoryTests.cpp
+            infrastructure/integration/OpenAIClientTests.cpp
+            infrastructure/integration/PlaidClientTests.cpp
         )
         target_link_libraries(infrastructure_integration_tests PRIVATE
             GTest::gtest_main

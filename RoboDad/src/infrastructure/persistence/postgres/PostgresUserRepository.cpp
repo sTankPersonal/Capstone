@@ -1,122 +1,152 @@
 #include "infrastructure/persistence/postgres/PostgresUserRepository.h"
-#include "infrastructure/persistence/postgres/PgUtils.hpp"
-#include "domain/user/EmploymentStatus.h"
-#include "domain/finance/Finance.h"
-#include <libpq-fe.h>
-#include <string>
-#include <vector>
-
-namespace {
-
-std::vector<Finance> fetchFinancesForUser(PGconn* conn, uint32_t userId) {
-    std::string uid = std::to_string(userId);
-    const char* p[] = { uid.c_str() };
-    pg::Result res(PQexecParams(conn,
-        "SELECT id, amount, description, type FROM finances WHERE user_id = $1 ORDER BY id",
-        1, nullptr, p, nullptr, nullptr, 0));
-    pg::check(res.get(), PGRES_TUPLES_OK, conn, "fetchFinancesForUser");
-
-    std::vector<Finance> out;
-    int n = PQntuples(res.get());
-    out.reserve(n);
-    for (int i = 0; i < n; ++i) {
-        uint32_t id    = static_cast<uint32_t>(std::stoul(PQgetvalue(res.get(), i, 0)));
-        double amount  = std::stod(PQgetvalue(res.get(), i, 1));
-        std::string desc = PQgetvalue(res.get(), i, 2);
-        auto type      = static_cast<FinanceEnum>(std::stoi(PQgetvalue(res.get(), i, 3)));
-        out.emplace_back(id, amount, desc, type);
-    }
-    return out;
-}
-
-User rowToUser(PGresult* res, int row, PGconn* conn) {
-    uint32_t uid = static_cast<uint32_t>(std::stoul(PQgetvalue(res, row, 0)));
-    std::string name = PQgetvalue(res, row, 1);
-    uint8_t age      = static_cast<uint8_t>(std::stoi(PQgetvalue(res, row, 2)));
-    auto status      = static_cast<EmploymentStatus>(std::stoi(PQgetvalue(res, row, 3)));
-    PersonalInfo pi(name, age, status);
-    return User(uid, pi, fetchFinancesForUser(conn, uid));
-}
-
-} // namespace
+#include "DateUtils.h"
+#include <pqxx/pqxx>
+#include <optional>
 
 PostgresUserRepository::PostgresUserRepository(DatabaseConnection& db) : db_(db) {}
 
-User PostgresUserRepository::create(const User& user, const std::string& email, const std::string& passwordHash) {
-    const auto& pi = user.getPersonalInfo();
-    std::string name   = pi.getName();
-    std::string age    = std::to_string(static_cast<int>(pi.getAge()));
-    std::string status = std::to_string(static_cast<int>(pi.getEmploymentStatus()));
+static User rowToUser(const pqxx::row& row) {
+    UserId userId{row["user_id"].as<std::string>()};
 
-    const char* p[] = { name.c_str(), age.c_str(), status.c_str(), email.c_str(), passwordHash.c_str() };
-    pg::Result res(PQexecParams(db_.get(),
-        "INSERT INTO users (name, age, employment_status, email, password_hash)"
-        " VALUES ($1, $2::smallint, $3::smallint, $4, $5) RETURNING id",
-        5, nullptr, p, nullptr, nullptr, 0));
-    pg::check(res.get(), PGRES_TUPLES_OK, db_.get(), "User::create");
+    std::optional<std::string> pwHash = row["password_hash"].is_null()
+        ? std::nullopt
+        : std::make_optional(row["password_hash"].as<std::string>());
+    UserLogin login{row["email"].as<std::string>(), pwHash};
 
-    uint32_t newId = static_cast<uint32_t>(std::stoul(PQgetvalue(res.get(), 0, 0)));
-    return User(newId, pi, user.getFinances());
+    auto optStr = [&](const char* col) -> std::optional<std::string> {
+        return row[col].is_null() ? std::nullopt : std::make_optional(row[col].as<std::string>());
+    };
+
+    std::optional<std::chrono::year_month_day> dob = row["date_of_birth"].is_null()
+        ? std::nullopt
+        : std::make_optional(dateFromStr(row["date_of_birth"].as<std::string>()));
+
+    auto optId = [&](const char* col) -> std::optional<std::string> {
+        return row[col].is_null() ? std::nullopt : std::make_optional(row[col].as<std::string>());
+    };
+
+    UserInformation info{
+        optStr("first_name"),
+        optStr("last_name"),
+        dob,
+        optId("country_id")           ? std::make_optional(CountryId{*optId("country_id")})                     : std::optional<CountryId>{},
+        optId("currency_id")          ? std::make_optional(CurrencyId{*optId("currency_id")})                   : std::optional<CurrencyId>{},
+        optId("language_id")          ? std::make_optional(LanguageId{*optId("language_id")})                   : std::optional<LanguageId>{},
+        optId("employment_status_id") ? std::make_optional(EmploymentStatusId{*optId("employment_status_id")}) : std::optional<EmploymentStatusId>{}
+    };
+
+    return User{
+        userId,
+        login,
+        info,
+        dateFromStr(row["created_at"].as<std::string>()),
+        dateFromStr(row["updated_at"].as<std::string>())
+    };
 }
 
-std::optional<User> PostgresUserRepository::findById(uint32_t id) {
-    std::string sid = std::to_string(id);
-    const char* p[] = { sid.c_str() };
-    pg::Result res(PQexecParams(db_.get(),
-        "SELECT id, name, age, employment_status FROM users WHERE id = $1",
-        1, nullptr, p, nullptr, nullptr, 0));
-    pg::check(res.get(), PGRES_TUPLES_OK, db_.get(), "User::findById");
+User PostgresUserRepository::create(const User& user) {
+    pqxx::work txn{db_.getConnection()};
+    const auto& info = user.getUserInformation();
+    const auto& login = user.getUserLogin();
 
-    if (PQntuples(res.get()) == 0) return std::nullopt;
-    return rowToUser(res.get(), 0, db_.get());
+    auto optIdStr = [](const auto& opt) -> std::optional<std::string> {
+        return opt.has_value() ? std::make_optional(opt->getId()) : std::nullopt;
+    };
+    std::optional<std::string> dobStr = info.getDateOfBirth().has_value()
+        ? std::make_optional(dateToStr(*info.getDateOfBirth())) : std::nullopt;
+
+    txn.exec_params(
+        "INSERT INTO users(user_id, email, password_hash, first_name, last_name, "
+        "date_of_birth, country_id, currency_id, language_id, employment_status_id, "
+        "created_at, updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
+        user.getId().getId(),
+        login.getEmail(),
+        login.getPasswordHash(),
+        info.getFirstName(),
+        info.getLastName(),
+        dobStr,
+        optIdStr(info.getCountryId()),
+        optIdStr(info.getCurrencyId()),
+        optIdStr(info.getLanguageId()),
+        optIdStr(info.getEmploymentStatusId()),
+        dateToStr(user.getCreatedAt()),
+        dateToStr(user.getUpdatedAt())
+    );
+    txn.commit();
+    return user;
+}
+
+std::optional<User> PostgresUserRepository::findById(UserId id) {
+    pqxx::work txn{db_.getConnection()};
+    auto r = txn.exec_params(
+        "SELECT user_id, email, password_hash, first_name, last_name, date_of_birth, "
+        "country_id, currency_id, language_id, employment_status_id, created_at, updated_at "
+        "FROM users WHERE user_id=$1",
+        id.getId());
+    txn.commit();
+    if (r.empty()) return std::nullopt;
+    return rowToUser(r[0]);
 }
 
 std::vector<User> PostgresUserRepository::findAll() {
-    pg::Result res(PQexec(db_.get(),
-        "SELECT id, name, age, employment_status FROM users ORDER BY id"));
-    pg::check(res.get(), PGRES_TUPLES_OK, db_.get(), "User::findAll");
-
+    pqxx::work txn{db_.getConnection()};
+    auto r = txn.exec(
+        "SELECT user_id, email, password_hash, first_name, last_name, date_of_birth, "
+        "country_id, currency_id, language_id, employment_status_id, created_at, updated_at "
+        "FROM users");
+    txn.commit();
     std::vector<User> users;
-    int n = PQntuples(res.get());
-    users.reserve(n);
-    for (int i = 0; i < n; ++i)
-        users.push_back(rowToUser(res.get(), i, db_.get()));
+    for (const auto& row : r)
+        users.push_back(rowToUser(row));
     return users;
 }
 
 bool PostgresUserRepository::update(const User& user) {
-    const auto& pi = user.getPersonalInfo();
-    std::string sid    = std::to_string(user.getId());
-    std::string name   = pi.getName();
-    std::string age    = std::to_string(static_cast<int>(pi.getAge()));
-    std::string status = std::to_string(static_cast<int>(pi.getEmploymentStatus()));
+    pqxx::work txn{db_.getConnection()};
+    const auto& info = user.getUserInformation();
+    const auto& login = user.getUserLogin();
 
-    const char* p[] = { name.c_str(), age.c_str(), status.c_str(), sid.c_str() };
-    pg::Result res(PQexecParams(db_.get(),
-        "UPDATE users SET name=$1, age=$2::smallint, employment_status=$3::smallint WHERE id=$4",
-        4, nullptr, p, nullptr, nullptr, 0));
-    pg::check(res.get(), PGRES_COMMAND_OK, db_.get(), "User::update");
-    return pg::rowsAffected(res.get());
+    auto optIdStr = [](const auto& opt) -> std::optional<std::string> {
+        return opt.has_value() ? std::make_optional(opt->getId()) : std::nullopt;
+    };
+    std::optional<std::string> dobStr = info.getDateOfBirth().has_value()
+        ? std::make_optional(dateToStr(*info.getDateOfBirth())) : std::nullopt;
+
+    auto res = txn.exec_params(
+        "UPDATE users SET email=$2, password_hash=$3, first_name=$4, last_name=$5, "
+        "date_of_birth=$6, country_id=$7, currency_id=$8, language_id=$9, "
+        "employment_status_id=$10, updated_at=$11 WHERE user_id=$1",
+        user.getId().getId(),
+        login.getEmail(),
+        login.getPasswordHash(),
+        info.getFirstName(),
+        info.getLastName(),
+        dobStr,
+        optIdStr(info.getCountryId()),
+        optIdStr(info.getCurrencyId()),
+        optIdStr(info.getLanguageId()),
+        optIdStr(info.getEmploymentStatusId()),
+        dateToStr(user.getUpdatedAt())
+    );
+    txn.commit();
+    return res.affected_rows() > 0;
 }
 
-bool PostgresUserRepository::remove(uint32_t id) {
-    std::string sid = std::to_string(id);
-    const char* p[] = { sid.c_str() };
-    pg::Result res(PQexecParams(db_.get(),
-        "DELETE FROM users WHERE id = $1",
-        1, nullptr, p, nullptr, nullptr, 0));
-    pg::check(res.get(), PGRES_COMMAND_OK, db_.get(), "User::remove");
-    return pg::rowsAffected(res.get());
+bool PostgresUserRepository::remove(UserId id) {
+    pqxx::work txn{db_.getConnection()};
+    auto res = txn.exec_params("DELETE FROM users WHERE user_id=$1", id.getId());
+    txn.commit();
+    return res.affected_rows() > 0;
 }
 
-std::optional<std::pair<uint32_t, std::string>> PostgresUserRepository::lookupCredentials(const std::string& email) {
-    const char* p[] = { email.c_str() };
-    pg::Result res(PQexecParams(db_.get(),
-        "SELECT id, password_hash FROM users WHERE email = $1",
-        1, nullptr, p, nullptr, nullptr, 0));
-    pg::check(res.get(), PGRES_TUPLES_OK, db_.get(), "User::lookupCredentials");
-    if (PQntuples(res.get()) == 0) return std::nullopt;
-    uint32_t uid = static_cast<uint32_t>(std::stoul(PQgetvalue(res.get(), 0, 0)));
-    std::string hash = PQgetvalue(res.get(), 0, 1);
-    return std::make_pair(uid, std::move(hash));
+std::optional<std::pair<UserId, std::string>> PostgresUserRepository::lookupCredentials(
+    const std::string& email)
+{
+    pqxx::work txn{db_.getConnection()};
+    auto r = txn.exec_params(
+        "SELECT user_id, password_hash FROM users WHERE email=$1", email);
+    txn.commit();
+    if (r.empty()) return std::nullopt;
+    std::string hash = r[0]["password_hash"].is_null() ? "" : r[0]["password_hash"].as<std::string>();
+    return std::make_pair(UserId{r[0]["user_id"].as<std::string>()}, std::move(hash));
 }

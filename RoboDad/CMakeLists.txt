@@ -31,6 +31,19 @@ FetchContent_Declare(crow
     GIT_SUBMODULES ""
 )
 FetchContent_MakeAvailable(crow)
+
+# ── libpqxx ───────────────────────────────────────────────────────────────────
+# Build from source so the ABI matches gcc-14; apt's libpqxx-dev was compiled
+# with an older toolchain and lacks the std::source_location exception ctors.
+set(SKIP_BUILD_TEST ON  CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(pqxx
+    GIT_REPOSITORY https://github.com/jtv/libpqxx.git
+    GIT_TAG        7.9.2
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""
+)
+FetchContent_MakeAvailable(pqxx)
 # Crow::Crow INTERFACE target is now available
 
 # ── INTERFACE target: Crow + standalone ASIO ──────────────────────────────────
@@ -41,6 +54,7 @@ target_include_directories(crow_asio INTERFACE
     ${asio_SOURCE_DIR}/asio/include
 )
 target_compile_definitions(crow_asio INTERFACE ASIO_STANDALONE)
+target_compile_options(crow_asio INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 target_link_libraries(crow_asio INTERFACE Crow::Crow)
 
 # ── Application-level headers (your own code under includes/server/) ──────────
@@ -48,12 +62,30 @@ add_library(server_headers INTERFACE)
 target_include_directories(server_headers INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server
     ${CMAKE_CURRENT_SOURCE_DIR}/sharedKernel
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/sharedKernel/domain
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/sharedKernel/infrastructure
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/sharedKernel/utilities
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/domain/aggregateRoots
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/domain/entities
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/domain/valueObjects
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/domain/valueObjects/ids
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/domain/referenceEntities
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/domain/services
+    ${CMAKE_CURRENT_SOURCE_DIR}/sharedKernel/infrastructureServices/security
+    ${CMAKE_CURRENT_SOURCE_DIR}/sharedKernel/infrastructureServices/apiClient
+    ${CMAKE_CURRENT_SOURCE_DIR}/sharedKernel/infrastructureServices/http
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/infrastructure/persistence
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/auth
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/chatSession
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/dto
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/persona
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/transaction
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/user
 )
 
 # ── External dependencies ─────────────────────────────────────────────────────
 find_package(Threads REQUIRED)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    find_package(PostgreSQL REQUIRED)
     find_package(CURL REQUIRED)
     find_package(OpenSSL REQUIRED)
 endif()

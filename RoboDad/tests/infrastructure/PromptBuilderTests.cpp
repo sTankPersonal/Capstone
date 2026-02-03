@@ -1,160 +1,103 @@
 #include <gtest/gtest.h>
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
-#include "domain/llm/SystemInstructions.h"
-#include "domain/llm/ChatHistory.h"
-#include "domain/budget/BudgetGoal.h"
-#include "domain/finance/Finance.h"
-#include "domain/finance/FinanceEnum.h"
+#include "Transactions.h"
+#include "TransactionId.h"
+#include "UserId.h"
+#include "TransactionCategoryId.h"
+#include "CurrencyId.h"
+#include "TransactionAmount.h"
+#include "TransactionDescription.h"
+#include <chrono>
 
-// ── defaultSystemInstructions ─────────────────────────────────────────────────
-
-TEST(PromptBuilderTest, DefaultSystemInstructionsAreNonEmpty) {
-    auto instr = PromptBuilder::defaultSystemInstructions();
-    EXPECT_FALSE(instr.getPersonality().empty());
-    EXPECT_FALSE(instr.getSafetyGuidelines().empty());
-    EXPECT_FALSE(instr.getGoal().empty());
+static std::chrono::year_month_day makeDate(int y, int m, int d) {
+    return {std::chrono::year{y}, std::chrono::month{static_cast<unsigned>(m)}, std::chrono::day{static_cast<unsigned>(d)}};
 }
 
-TEST(PromptBuilderTest, DefaultSystemInstructionsAreStable) {
-    // Two calls return equivalent content.
-    auto a = PromptBuilder::defaultSystemInstructions();
-    auto b = PromptBuilder::defaultSystemInstructions();
-    EXPECT_EQ(a.getPersonality(),      b.getPersonality());
-    EXPECT_EQ(a.getSafetyGuidelines(), b.getSafetyGuidelines());
-    EXPECT_EQ(a.getGoal(),             b.getGoal());
+static Transaction makeTransaction(const std::string& id, double amount, const std::string& desc) {
+    auto date = makeDate(2024, 1, 1);
+    return Transaction(
+        TransactionId{id}, UserId{"user-1"}, TransactionCategoryId{"cat-1"},
+        TransactionAmount(std::optional<double>{amount}, CurrencyId{"USD"}),
+        TransactionDescription(std::optional<std::string>{desc}),
+        date, date
+    );
 }
 
 // ── withUserMessage ───────────────────────────────────────────────────────────
 
-TEST(PromptBuilderTest, WithUserMessageSetsUserMessage) {
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
+TEST(PromptBuilderTest, WithUserMessageSetsMessage) {
+    std::string result = PromptBuilder()
         .withUserMessage("How am I doing?")
         .build();
-    EXPECT_EQ(p.getUserMessage(), "How am I doing?");
+    EXPECT_EQ(result, "How am I doing?");
 }
 
 TEST(PromptBuilderTest, EmptyUserMessageIsPreserved) {
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
+    std::string result = PromptBuilder()
         .withUserMessage("")
         .build();
-    EXPECT_TRUE(p.getUserMessage().empty());
+    EXPECT_TRUE(result.empty());
 }
 
-// ── withSystemInstructions ────────────────────────────────────────────────────
+// ── withTransactionContext ────────────────────────────────────────────────────
 
-TEST(PromptBuilderTest, WithSystemInstructionsSetsAllFields) {
-    SystemInstructions instr(0u, "TestPersona", "Safety rules", "Help users");
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(instr)
-        .withUserMessage("test")
+TEST(PromptBuilderTest, WithTransactionContextAppendsAmountAndDescription) {
+    Transaction tx = makeTransaction("tx-1", 45.0, "Groceries");
+    std::string result = PromptBuilder()
+        .withUserMessage("What did I spend?")
+        .withTransactionContext({tx})
         .build();
-    EXPECT_EQ(p.getSystemInstructions().getPersonality(),      "TestPersona");
-    EXPECT_EQ(p.getSystemInstructions().getSafetyGuidelines(), "Safety rules");
-    EXPECT_EQ(p.getSystemInstructions().getGoal(),             "Help users");
+    EXPECT_NE(result.find("45"),        std::string::npos);
+    EXPECT_NE(result.find("Groceries"), std::string::npos);
 }
 
-// ── withChatHistory ───────────────────────────────────────────────────────────
-
-TEST(PromptBuilderTest, WithChatHistoryStoresSingleTurn) {
-    ChatHistory h(1u, 1000u, "Hello", "Hi there!");
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withChatHistory({h})
-        .withUserMessage("Follow-up")
+TEST(PromptBuilderTest, WithTransactionContextMultipleTransactionsAllAppear) {
+    Transaction a = makeTransaction("tx-a", 1000.0, "Rent");
+    Transaction b = makeTransaction("tx-b",   25.5, "Coffee");
+    std::string result = PromptBuilder()
+        .withUserMessage("Summarize my spending.")
+        .withTransactionContext({a, b})
         .build();
-    ASSERT_EQ(p.getChatHistories().size(), 1u);
-    EXPECT_EQ(p.getChatHistories()[0].getUserMessage(), "Hello");
-    EXPECT_EQ(p.getChatHistories()[0].getLLMResponse(), "Hi there!");
+    EXPECT_NE(result.find("Rent"),   std::string::npos);
+    EXPECT_NE(result.find("Coffee"), std::string::npos);
 }
 
-TEST(PromptBuilderTest, WithChatHistoryPreservesOrder) {
-    ChatHistory h1(1u, 100u, "First",  "Reply 1");
-    ChatHistory h2(2u, 200u, "Second", "Reply 2");
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withChatHistory({h1, h2})
-        .withUserMessage("Third")
-        .build();
-    ASSERT_EQ(p.getChatHistories().size(), 2u);
-    EXPECT_EQ(p.getChatHistories()[0].getUserMessage(), "First");
-    EXPECT_EQ(p.getChatHistories()[1].getUserMessage(), "Second");
-}
-
-TEST(PromptBuilderTest, BuildWithNoHistoryProducesEmptyChatHistories) {
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withUserMessage("First message ever")
-        .build();
-    EXPECT_TRUE(p.getChatHistories().empty());
-}
-
-// ── withBudgetContext ─────────────────────────────────────────────────────────
-
-TEST(PromptBuilderTest, WithBudgetContextAppendsGoalDataToUserMessage) {
-    BudgetGoal goal(1u, 7u, 500.0, 200.0, "Emergency Fund");
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withUserMessage("Am I on track?")
-        .withBudgetContext({goal}, {})
-        .build();
-
-    const std::string& msg = p.getUserMessage();
-    EXPECT_NE(msg.find("500"),            std::string::npos); // endGoal
-    EXPECT_NE(msg.find("Emergency Fund"), std::string::npos); // description
-}
-
-TEST(PromptBuilderTest, WithBudgetContextAppendsExpenseDataToUserMessage) {
-    Finance expense(1u, 45.0, "Groceries", FinanceEnum::Expense);
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withUserMessage("Show expenses.")
-        .withBudgetContext({}, {expense})
-        .build();
-
-    const std::string& msg = p.getUserMessage();
-    EXPECT_NE(msg.find("45"),         std::string::npos); // amount
-    EXPECT_NE(msg.find("Groceries"),  std::string::npos); // description
-}
-
-TEST(PromptBuilderTest, WithBudgetContextMultipleGoalsAllAppear) {
-    BudgetGoal a(1u, 1u, 1000.0, 500.0, "Vacation");
-    BudgetGoal b(2u, 1u,  500.0, 100.0, "Emergency Fund");
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withUserMessage("Overview?")
-        .withBudgetContext({a, b}, {})
-        .build();
-
-    const std::string& msg = p.getUserMessage();
-    EXPECT_NE(msg.find("Vacation"),       std::string::npos);
-    EXPECT_NE(msg.find("Emergency Fund"), std::string::npos);
-}
-
-TEST(PromptBuilderTest, WithEmptyBudgetContextDoesNotCrash) {
-    Prompt p = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
+TEST(PromptBuilderTest, WithEmptyTransactionContextDoesNotAlterMessage) {
+    std::string result = PromptBuilder()
         .withUserMessage("Hello")
-        .withBudgetContext({}, {})
+        .withTransactionContext({})
         .build();
-    EXPECT_FALSE(p.getUserMessage().empty());
+    EXPECT_EQ(result, "Hello");
 }
 
-// ── builder reuse ─────────────────────────────────────────────────────────────
+// ── build ─────────────────────────────────────────────────────────────────────
+
+TEST(PromptBuilderTest, BuildReturnsNonEmptyStringWhenMessageSet) {
+    std::string result = PromptBuilder()
+        .withUserMessage("Test message")
+        .build();
+    EXPECT_FALSE(result.empty());
+}
 
 TEST(PromptBuilderTest, BuilderIsReusableAfterBuild) {
     PromptBuilder builder;
-    builder.withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-           .withUserMessage("First")
-           .build();
+    builder.withUserMessage("First").build();
 
-    // Second build should start from a clean slate.
-    Prompt p2 = builder
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
+    std::string second = builder
         .withUserMessage("Second")
         .build();
 
-    EXPECT_EQ(p2.getUserMessage(), "Second");
-    EXPECT_TRUE(p2.getChatHistories().empty());
+    EXPECT_EQ(second, "Second");
+}
+
+TEST(PromptBuilderTest, SecondBuildDoesNotCarryOverPreviousTransactions) {
+    Transaction tx = makeTransaction("tx-1", 99.0, "Subscription");
+    PromptBuilder builder;
+    builder.withUserMessage("First").withTransactionContext({tx}).build();
+
+    std::string second = builder
+        .withUserMessage("Clean slate")
+        .build();
+
+    EXPECT_EQ(second.find("Subscription"), std::string::npos);
 }
