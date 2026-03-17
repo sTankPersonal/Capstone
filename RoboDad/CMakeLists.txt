@@ -11,6 +11,12 @@ add_executable(RoboDad
 	src/main.cpp
 )
 
+# Include Crow + ASIO headers AFTER target is created
+target_include_directories(RoboDad PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/asio
+)
+
 # Link the combined library 
 target_link_libraries(RoboDad PRIVATE RoboDadLib)
 
