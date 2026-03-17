@@ -1,0 +1,74 @@
+services:
+
+  # ── C++ application server ────────────────────────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "18080:18080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: robodad
+      DB_USER: robodad
+      DB_PASSWORD: robodad_secret
+      LLM_BASE_URL: http://ollama:11434
+      LLM_MODEL: llama3.2:3b
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── PostgreSQL database ───────────────────────────────────────────────────
+  postgres:
+    build:
+      context: ./RoboDad/docker/db
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_DB: robodad
+      POSTGRES_USER: robodad
+      POSTGRES_PASSWORD: robodad_secret
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U robodad -d robodad"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Local LLM via Ollama ─────────────────────────────────────────────────
+  ollama:
+    build:
+      context: ./RoboDad/docker/llama
+      dockerfile: Dockerfile
+    environment:
+      OLLAMA_MODEL: llama3.2:3b
+    volumes:
+      - ollama_data:/root/.ollama   # model weights persist across restarts
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s            # model pull can take a few minutes
+    restart: unless-stopped
+    # Uncomment the section below if the host has an NVIDIA GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  postgres_data:
+  ollama_data:
