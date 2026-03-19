@@ -5,6 +5,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Add source directory to handle object libraries
 add_subdirectory("src")
+add_subdirectory("../../llama.cpp" llama_build)
 
 # Define the executable
 add_executable(RoboDad
@@ -17,9 +18,10 @@ target_include_directories(RoboDad PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/asio
 )
 
-# Link the combined library 
-target_link_libraries(RoboDad PRIVATE RoboDadLib)
-
 # Threads for async/networking
 find_package(Threads REQUIRED)
-target_link_libraries(RoboDad PRIVATE Threads::Threads)
+target_link_libraries(RoboDad PRIVATE 
+    RoboDadLib 
+    llama 
+    Threads::Threads
+)
