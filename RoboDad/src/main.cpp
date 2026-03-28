@@ -19,23 +19,39 @@
 #include <string>
 #include <vector>
 #include <clocale>
+#include <chrono>   // <-- include for timing
+
+#include "llama.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <clocale>
+#include <chrono>
+
+#include "llama.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <clocale>
+#include <chrono>
 
 int main() {
     std::setlocale(LC_NUMERIC, "C");
 
-    std::string model_path = "C:/Users/spide/source/repos/Capstone/RoboDad/includes/llama/refact-1_6b-fim-q4_k_m.gguf";
-    std::string prompt = "Is it okay if my code is terrible? Yes or no?";
-    int n_predict = 64;
+    std::string model_path = "C:/models/llama-3-8b-instruct-q4.gguf";
+    int n_predict = 128;
 
-    // load backend
+    // Preprompt for "dad persona" without explicit BOS
+    std::string preprompt =
+        "You are a caring, wise dad. Answer the user’s questions "
+        "like a supportive father would, giving advice and guidance.\n";
+
+    // Load backend
     ggml_backend_load_all();
 
-    std::cout << "load model\n";
-
-    // load model
+    std::cout << "Loading model...\n";
     llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = 0; // CPU only
-
+    model_params.n_gpu_layers = 35;
     llama_model* model = llama_model_load_from_file(model_path.c_str(), model_params);
     if (!model) {
         std::cerr << "Failed to load model\n";
@@ -44,21 +60,10 @@ int main() {
 
     const llama_vocab* vocab = llama_model_get_vocab(model);
 
-    std::cout << "tokenize prompt\n";
-    // tokenize prompt
-    int n_prompt = -llama_tokenize(vocab, prompt.c_str(), prompt.size(), NULL, 0, true, true);
-    std::vector<llama_token> tokens(n_prompt);
-
-    if (llama_tokenize(vocab, prompt.c_str(), prompt.size(), tokens.data(), tokens.size(), true, true) < 0) {
-        std::cerr << "Tokenization failed\n";
-        return 1;
-    }
-
-    std::cout << "context\n";
-    // context
     llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = n_prompt + n_predict;
-    ctx_params.n_batch = n_prompt;
+    ctx_params.n_ctx = 2048;
+    ctx_params.n_batch = 2048;
+    ctx_params.n_threads = 12;
 
     llama_context* ctx = llama_init_from_model(model, ctx_params);
     if (!ctx) {
@@ -66,42 +71,68 @@ int main() {
         return 1;
     }
 
-    // sampler (greedy)
     llama_sampler* smpl = llama_sampler_chain_init(llama_sampler_chain_default_params());
     llama_sampler_chain_add(smpl, llama_sampler_init_greedy());
 
+    std::cout << "Model loaded. You can now ask questions. Type 'exit' to quit.\n";
 
-    std::cout << "print prompt\n";
-    // print prompt
-    std::cout << prompt << std::endl;
+    while (true) {
+        std::string user_input;
+        std::cout << "\n> ";
+        std::getline(std::cin, user_input);
 
-    // first batch
-    llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
+        // Skip empty input
+        if (user_input.empty()) continue;
+        if (user_input == "exit" || user_input == "quit") break;
 
-    std::cout << "generation loop\n";
-    // generation loop
-    for (int i = 0; i < n_predict; i++) {
-        if (llama_decode(ctx, batch)) {
-            std::cerr << "Decode failed\n";
-            return 1;
+        // Combine preprompt with current user question
+        std::string prompt =
+            "<|start_header_id|>user<|end_header_id|>\n" +
+            preprompt +
+            "<|start_header_id|>user<|end_header_id|>\n" +
+            user_input + "\n<|eot_id|>"
+            "<|start_header_id|>assistant<|end_header_id|>\n";
+
+        // Tokenize
+        int n_prompt = -llama_tokenize(vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
+        std::vector<llama_token> tokens(n_prompt);
+        if (llama_tokenize(vocab, prompt.c_str(), prompt.size(), tokens.data(), tokens.size(), true, true) < 0) {
+            std::cerr << "Tokenization failed\n";
+            continue;
         }
 
-        llama_token new_token = llama_sampler_sample(smpl, ctx, -1);
+        llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
+        std::string out_buffer;
 
-        if (llama_vocab_is_eog(vocab, new_token)) break;
+        auto start_time = std::chrono::high_resolution_clock::now();
 
-        char buf[128];
-        int n = llama_token_to_piece(vocab, new_token, buf, sizeof(buf), 0, true);
-        std::cout << std::string(buf, n);
-        std::cout.flush();
+        for (int i = 0; i < n_predict; i++) {
+            if (llama_decode(ctx, batch)) {
+                std::cerr << "Decode failed\n";
+                break;
+            }
 
-        batch = llama_batch_get_one(&new_token, 1);
+            llama_token new_token = llama_sampler_sample(smpl, ctx, -1);
+            if (llama_vocab_is_eog(vocab, new_token)) break;
+
+            char buf[128];
+            int n = llama_token_to_piece(vocab, new_token, buf, sizeof(buf), 0, true);
+
+            // STREAM OUTPUT: print as we generate
+            std::cout.write(buf, n);
+            std::cout.flush();
+
+            batch = llama_batch_get_one(&new_token, 1);
+        }
+        std::cout << "\n";
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end_time - start_time;
+
+        std::cout << out_buffer << "\n";
+        std::cout << "(Response generated in " << elapsed.count() << " seconds)\n";
     }
 
-    std::cout << "\n";
-    std::cout << "Starting cleanup\n";
-
-    // cleanup
     llama_sampler_free(smpl);
     llama_free(ctx);
     llama_model_free(model);
