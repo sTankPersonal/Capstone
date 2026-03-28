@@ -24,13 +24,31 @@
 #include <chrono>
 #include <fstream>
 
-
+#include <map>
+#include <sstream>
+#include <iomanip> // for std::setprecision
 
 #pragma comment(lib, "winhttp.lib")
+#include <algorithm>
+#include <cctype>
 
+#include <random>
 
+struct Transaction {
+    std::string date;
+    std::string merchant;
+    double amount;
+};
+
+std::string trim(const std::string& s) {
+    size_t start = s.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) return "";
+    size_t end = s.find_last_not_of(" \t\r\n");
+    return s.substr(start, end - start + 1);
+}
 
 std::string escape_json(const std::string& input) {
+
     std::string output;
     for (char c : input) {
         switch (c) {
@@ -106,38 +124,30 @@ std::string read_api_key(const std::string& path) {
 }
 
 std::string extract_text(const std::string& response) {
-    size_t pos = response.find("\"text\":");
+    std::cout << "\n==== RAW RESPONSE ====\n" << response << "\n======================\n";
+    size_t pos = response.find("\"output_text\"");
     if (pos == std::string::npos) return "";
 
-    pos += 7; // skip "text":
-    while (pos < response.size() && (response[pos] == ' ' || response[pos] == '\"')) pos++;
+    pos = response.find("\"text\":", pos);
+    if (pos == std::string::npos) return "";
+
+    pos += 7;
+
+    while (pos < response.size() &&
+        (response[pos] == ' ' || response[pos] == '\"')) pos++;
 
     std::string result;
     bool escape = false;
 
     for (size_t i = pos; i < response.size(); i++) {
         char c = response[i];
+
         if (escape) {
             if (c == 'n') result += '\n';
             else if (c == 't') result += '\t';
             else if (c == 'r') result += '\r';
             else if (c == '\\') result += '\\';
             else if (c == '"') result += '"';
-            else if (c == 'u' && i + 4 < response.size()) {
-                std::string hex = response.substr(i + 1, 4);
-                int code = std::stoi(hex, nullptr, 16);
-                if (code <= 0x7F) result += static_cast<char>(code);
-                else if (code <= 0x7FF) {
-                    result += static_cast<char>(0xC0 | (code >> 6));
-                    result += static_cast<char>(0x80 | (code & 0x3F));
-                }
-                else {
-                    result += static_cast<char>(0xE0 | (code >> 12));
-                    result += static_cast<char>(0x80 | ((code >> 6) & 0x3F));
-                    result += static_cast<char>(0x80 | (code & 0x3F));
-                }
-                i += 4;
-            }
             escape = false;
         }
         else if (c == '\\') escape = true;
@@ -192,14 +202,15 @@ int main() {
             break;
         }
 
-        // Build JSON
         std::string preprompt = "You are a helpful, slightly sarcastic father figure who gives practical life advice. You only know so many things";
 
-       std::string data =
-    "{ \"model\": \"gpt-5-nano\", \"input\": ["
-    "{ \"role\": \"system\", \"content\": \"" + escape_json(preprompt) + "\" },"
-    "{ \"role\": \"user\", \"content\": \"" + escape_json(prompt) + "\" }"
-    "] }";
+  
+        // Build JSON to send
+        std::string data =
+            "{ \"model\": \"gpt-5-nano\", \"max_output_tokens\": 50, \"input\": ["
+            "{ \"role\": \"system\", \"content\": \"" + escape_json(preprompt) + "\" },"
+            "{ \"role\": \"user\", \"content\": \"" + escape_json(prompt) + "\" }"
+            "] }";
 
         HINTERNET hRequest = WinHttpOpenRequest(
             hConnect,
@@ -267,6 +278,7 @@ int main() {
         std::cout << "(Time: " << elapsed.count() << "s)\n";
 
         WinHttpCloseHandle(hRequest);
+        Sleep(1500);
     }
 
     WinHttpCloseHandle(hConnect);
