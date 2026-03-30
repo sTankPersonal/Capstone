@@ -21,16 +21,161 @@
 #include <clocale>
 #include <chrono>   // <-- include for timing
 
+
+#include <iostream>
+#include <vector>
+#include <random>
+#include <algorithm>
+#include <numeric>
+#include <unordered_map>
+#include <cmath>
+
+struct Stats {
+    int min;
+    int max;
+    double mean;
+    double stddev;
+    double median;
+
+    // Common percentiles
+    double p25;
+    double p50; // same as median
+    double p75;
+    double p90;
+    double p95;
+    double p99;
+
+    std::unordered_map<int, int> frequency;
+};
+
+// Helper to compute percentile
+double compute_percentile(const std::vector<int>& sorted, double percentile) {
+    double index = percentile * (sorted.size() - 1);
+    int lower = static_cast<int>(index);
+    int upper = lower + 1;
+
+    if (upper >= sorted.size())
+        return sorted[lower];
+
+    double fraction = index - lower;
+    return sorted[lower] + fraction * (sorted[upper] - sorted[lower]);
+}
+
+Stats analyze_random_numbers(int count = 500, int min_val = 0, int max_val = 100) {
+    std::vector<int> numbers;
+    numbers.reserve(count);
+
+    // RNG setup
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(min_val, max_val);
+
+    // Generate numbers
+    for (int i = 0; i < count; i++) {
+        numbers.push_back(dist(gen));
+    }
+
+    // Min / Max
+    auto [min_it, max_it] = std::minmax_element(numbers.begin(), numbers.end());
+
+    // Mean
+    double sum = std::accumulate(numbers.begin(), numbers.end(), 0.0);
+    double mean = sum / count;
+
+    // Std Dev
+    double variance = 0.0;
+    for (int num : numbers) {
+        variance += (num - mean) * (num - mean);
+    }
+    variance /= count;
+    double stddev = std::sqrt(variance);
+
+    // Frequency
+    std::unordered_map<int, int> freq;
+    for (int num : numbers) {
+        freq[num]++;
+    }
+
+    // Sort for median + percentiles
+    std::sort(numbers.begin(), numbers.end());
+
+    // Median
+    double median;
+    if (count % 2 == 0) {
+        median = (numbers[count / 2 - 1] + numbers[count / 2]) / 2.0;
+    }
+    else {
+        median = numbers[count / 2];
+    }
+
+    // Percentiles
+    double p25 = compute_percentile(numbers, 0.25);
+    double p50 = compute_percentile(numbers, 0.50);
+    double p75 = compute_percentile(numbers, 0.75);
+    double p90 = compute_percentile(numbers, 0.90);
+    double p95 = compute_percentile(numbers, 0.95);
+    double p99 = compute_percentile(numbers, 0.99);
+
+    return Stats{
+        *min_it,
+        *max_it,
+        mean,
+        stddev,
+        median,
+        p25,
+        p50,
+        p75,
+        p90,
+        p95,
+        p99,
+        freq
+    };
+}
+
+void print_stats(const Stats& s) {
+    std::cout << "Min: " << s.min << "\n";
+    std::cout << "Max: " << s.max << "\n";
+    std::cout << "Mean: " << s.mean << "\n";
+    std::cout << "Std Dev: " << s.stddev << "\n";
+    std::cout << "Median: " << s.median << "\n";
+
+    std::cout << "\nPercentiles:\n";
+    std::cout << "25%: " << s.p25 << "\n";
+    std::cout << "50%: " << s.p50 << "\n";
+    std::cout << "75%: " << s.p75 << "\n";
+    std::cout << "90%: " << s.p90 << "\n";
+    std::cout << "95%: " << s.p95 << "\n";
+    std::cout << "99%: " << s.p99 << "\n";
+
+    std::cout << "\nFrequencies:\n";
+    for (const auto& [value, count] : s.frequency) {
+        std::cout << value << ": " << count << "\n";
+    }
+}
+
+std::string stats_to_prompt(const Stats& s) {
+    std::string prompt;
+    prompt += "Here are some summary statistics of a set of numbers:\n";
+    prompt += "Min: " + std::to_string(s.min) + "\n";
+    prompt += "Max: " + std::to_string(s.max) + "\n";
+    prompt += "Mean: " + std::to_string(s.mean) + "\n";
+    prompt += "Median: " + std::to_string(s.median) + "\n";
+    prompt += "Std Dev: " + std::to_string(s.stddev) + "\n";
+    prompt += "25th percentile: " + std::to_string(s.p25) + "\n";
+    prompt += "50th percentile: " + std::to_string(s.p50) + "\n";
+    prompt += "75th percentile: " + std::to_string(s.p75) + "\n";
+    prompt += "90th percentile: " + std::to_string(s.p90) + "\n";
+    prompt += "95th percentile: " + std::to_string(s.p95) + "\n";
+    prompt += "99th percentile: " + std::to_string(s.p99) + "\n";
+    return prompt;
+}
+
+
 int main() {
     std::setlocale(LC_NUMERIC, "C");
 
     std::string model_path = "C:/models/llama-3-8b-instruct-q4.gguf";
     int n_predict = 128;
-
-    // Preprompt for "dad persona" without explicit BOS
-    std::string preprompt =
-        "You are a caring, wise dad. Answer the user’s questions "
-        "like a supportive father would, giving advice and guidance. Limit responses to 50 words\n";
 
     // Load backend
     ggml_backend_load_all();
@@ -62,6 +207,12 @@ int main() {
 
     std::cout << "Model loaded. You can now ask questions. Type 'exit' to quit.\n";
 
+
+    Stats stats = analyze_random_numbers();
+    print_stats(stats);
+    std::string num_insights = stats_to_prompt(stats);
+
+
     while (true) {
         std::string user_input;
         std::cout << "\n> ";
@@ -71,13 +222,20 @@ int main() {
         if (user_input.empty()) continue;
         if (user_input == "exit" || user_input == "quit") break;
 
+        // Preprompt for "dad persona" without explicit BOS
+        std::string preprompt =
+            "You are a caring, wise dad. Answer the user’s questions "
+            "like a supportive father would, giving advice and guidance. Limit responses to 50 words.\n"
+            "Here are some summary statistics of a set of numbers that you know about:\n" +
+            num_insights;
+
+
         // Combine preprompt with current user question
         std::string prompt =
             "<|start_header_id|>user<|end_header_id|>\n" +
             preprompt +
-            "<|start_header_id|>user<|end_header_id|>\n" +
-            user_input + "\n<|eot_id|>"
-            "<|start_header_id|>assistant<|end_header_id|>\n";
+            "Please give insights about these numbers in a supportive, dad-style manner.\n" +
+            "<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n";
 
         // Tokenize
         int n_prompt = -llama_tokenize(vocab, prompt.c_str(), prompt.size(), nullptr, 0, true, true);
