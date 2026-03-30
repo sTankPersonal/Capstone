@@ -21,20 +21,6 @@
 #include <clocale>
 #include <chrono>   // <-- include for timing
 
-#include "llama.h"
-#include <iostream>
-#include <string>
-#include <vector>
-#include <clocale>
-#include <chrono>
-
-#include "llama.h"
-#include <iostream>
-#include <string>
-#include <vector>
-#include <clocale>
-#include <chrono>
-
 int main() {
     std::setlocale(LC_NUMERIC, "C");
 
@@ -44,7 +30,7 @@ int main() {
     // Preprompt for "dad persona" without explicit BOS
     std::string preprompt =
         "You are a caring, wise dad. Answer the user’s questions "
-        "like a supportive father would, giving advice and guidance.\n";
+        "like a supportive father would, giving advice and guidance. Limit responses to 50 words\n";
 
     // Load backend
     ggml_backend_load_all();
