@@ -18,7 +18,7 @@ target_include_directories(RoboDad PUBLIC
 )
 
 # Link the combined library 
-target_link_libraries(RoboDad PRIVATE RoboDadLib)
+#target_link_libraries(RoboDad PRIVATE RoboDadLib)
 
 # Threads for async/networking
 find_package(Threads REQUIRED)

@@ -1,17 +1,15 @@
-#Add subdirectories for each DDD layer
-add_subdirectory("application")
-add_subdirectory("domain")
-add_subdirectory("infrastructure")
-add_subdirectory("presentation")
+#Create an interface library for header-only domain layer
+add_library(roboDadDomain INTERFACE)
 
-# Combine all layers into a single library
-add_library(RoboDadLib STATIC
-	$<TARGET_OBJECTS:roboDadDomain>
-    $<TARGET_OBJECTS:roboDadApplication>
-    $<TARGET_OBJECTS:roboDadInfrastructure>
-    $<TARGET_OBJECTS:roboDadPresentation>
+#Specify include directories
+target_include_directories(roboDadDomain INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+#List headers for IDE visibility
+target_sources(roboDadDomain INTERFACE
+    budget/BudgetGoal.hpp
+    finance/FinanceEnum.hpp
+    finance/Finance.hpp
+    user/FinacialProfile.hpp
+    user/PersonalInfo.hpp
+    user/User.hpp
 )
-
-# Link Threads globally
-find_package(Threads REQUIRED)
-target_link_libraries(RoboDadLib PRIVATE Threads::Threads)
