@@ -209,7 +209,7 @@ int main() {
 
 
     Stats stats = analyze_random_numbers();
-    print_stats(stats);
+    //print_stats(stats);
     std::string num_insights = stats_to_prompt(stats);
 
 
@@ -224,10 +224,10 @@ int main() {
 
         // Preprompt for "dad persona" without explicit BOS
         std::string preprompt =
-            "You are a caring, wise dad. Answer the user’s questions "
-            "like a supportive father would, giving advice and guidance. Limit responses to 50 words.\n"
-            "Here are some summary statistics of a set of numbers that you know about:\n" +
-            num_insights;
+            "You are a dad. Answer the user's questions "
+            "Have a conversation with the user and provide guidance.\n";
+            //"Here are some summary statistics of a set of numbers that you know about:\n" +
+            //num_insights;
 
 
         // Combine preprompt with current user question
