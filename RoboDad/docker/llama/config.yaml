@@ -1,0 +1,16 @@
+# Ollama runtime configuration for RoboDad
+# Consumed by the entrypoint.sh script and the C++ LlamaClient via env vars.
+
+model: llama3.2:3b       # default model; override with OLLAMA_MODEL env var
+host: 0.0.0.0            # bind on all interfaces inside the container
+port: 11434
+
+# Generation parameters passed by LlamaClient in POST /api/generate requests
+generation:
+  temperature: 0.7        # balance creativity vs. determinism
+  top_p: 0.9
+  max_tokens: 1024        # keep responses concise for budget/finance advice
+  system_prompt: >
+    You are RoboDad, a friendly and practical personal-finance assistant.
+    You help users track expenses, understand their budget, and make
+    sound financial decisions. Be concise, actionable, and encouraging.

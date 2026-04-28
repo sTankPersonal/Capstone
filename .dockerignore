@@ -1,0 +1,22 @@
+# Windows build output
+out/
+build/
+
+# IDE / tooling folders
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Git history (not needed inside the image)
+.git/
+.gitignore
+
+# Frontend assets are served at runtime via Crow; include them explicitly
+# if you ever embed them in the binary, but exclude for now.
+RoboDad/frontend/
+
+# Docs
+*.md
+README*

@@ -3,3 +3,7 @@
 
 # Ignore build directories
 out
+
+# Third-party headers — fetched automatically by CMake FetchContent at build time
+RoboDad/includes/asio/
+RoboDad/includes/crow/
