@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "compileCommands": "${workspaceFolder}/out/build/x64-debug/compile_commands.json",
+            "includePath": [
+                "${workspaceFolder}/RoboDad/includes/server",
+                "${workspaceFolder}/RoboDad/src/domain"
+            ],
+            "cppStandard": "c++23",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}

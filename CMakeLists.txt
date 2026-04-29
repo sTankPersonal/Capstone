@@ -9,6 +9,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(BUILD_TESTING "Build unit tests" ON)
 
+# Export compile commands for IDE IntelliSense (supported by Ninja generator)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 function(enable_recommended_warnings target)
 	target_compile_options(${target} PRIVATE
 		$<$<CXX_COMPILER_ID:MSVC>:/W4 /permissive->

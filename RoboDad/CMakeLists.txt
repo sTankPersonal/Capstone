@@ -53,9 +53,12 @@ target_include_directories(server_headers INTERFACE
 )
 
 # ── External dependencies ─────────────────────────────────────────────────────
-find_package(Threads    REQUIRED)
-find_package(PostgreSQL REQUIRED)
-find_package(CURL       REQUIRED)
+find_package(Threads REQUIRED)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(PostgreSQL REQUIRED)
+    find_package(CURL REQUIRED)
+endif()
+
 
 # ── DDD layers (inner → outer) ────────────────────────────────────────────────
 add_subdirectory(src)
