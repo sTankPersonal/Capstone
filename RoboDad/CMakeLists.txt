@@ -3,18 +3,15 @@ project("RoboDad")
 include(FetchContent)
 
 # ── Standalone ASIO ───────────────────────────────────────────────────────────
-# FetchContent_Populate (not MakeAvailable) so we only download the headers
-# without processing ASIO's own CMakeLists.txt.
+# SOURCE_SUBDIR points to the header-only path so MakeAvailable skips ASIO's root CMakeLists.txt.
 FetchContent_Declare(asio
     GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
     GIT_TAG        asio-1-30-2
     GIT_SHALLOW    TRUE
     GIT_SUBMODULES ""
+    SOURCE_SUBDIR  "asio/include"
 )
-FetchContent_GetProperties(asio)
-if(NOT asio_POPULATED)
-    FetchContent_Populate(asio)
-endif()
+FetchContent_MakeAvailable(asio)
 # asio_SOURCE_DIR is now set; headers live at asio_SOURCE_DIR/asio/include/
 
 # Crow's cmake/Findasio.cmake calls find_package(asio) and requires ASIO_INCLUDE_DIR
@@ -50,12 +47,16 @@ target_link_libraries(crow_asio INTERFACE Crow::Crow)
 add_library(server_headers INTERFACE)
 target_include_directories(server_headers INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/domain
 )
 
 # ── External dependencies ─────────────────────────────────────────────────────
-find_package(Threads    REQUIRED)
-find_package(PostgreSQL REQUIRED)
-find_package(CURL       REQUIRED)
+find_package(Threads REQUIRED)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(PostgreSQL REQUIRED)
+    find_package(CURL REQUIRED)
+endif()
+
 
 # ── DDD layers (inner → outer) ────────────────────────────────────────────────
 add_subdirectory(src)
