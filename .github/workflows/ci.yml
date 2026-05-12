@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  # ── Unit tests (domain + application + infrastructure services) ─────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache FetchContent downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cmake-deps
+          key: cmake-deps-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: cmake-deps-
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-14 g++-14 cmake ninja-build \
+            libpq-dev libcurl4-openssl-dev libssl-dev
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_C_COMPILER=gcc-14 \
+            -DBUILD_TESTING=ON \
+            -DRUN_INTEGRATION_TESTS=OFF \
+            -DFETCHCONTENT_BASE_DIR=$HOME/.cmake-deps
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Run unit tests
+        working-directory: build
+        run: ctest --output-on-failure -L unit
+
+  # ── Integration tests (PostgreSQL required) ─────────────────────────────────
+  integration-tests:
+    name: Integration Tests (PostgreSQL)
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: robodad
+          POSTGRES_PASSWORD: robodad
+          POSTGRES_DB: robodad_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache FetchContent downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cmake-deps
+          key: cmake-deps-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: cmake-deps-
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-14 g++-14 cmake ninja-build \
+            libpq-dev libcurl4-openssl-dev libssl-dev postgresql-client
+
+      - name: Apply schema
+        env:
+          PGPASSWORD: robodad
+        run: psql -h localhost -U robodad -d robodad_test -f RoboDad/sql/schema.sql
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_C_COMPILER=gcc-14 \
+            -DBUILD_TESTING=ON \
+            -DRUN_INTEGRATION_TESTS=ON \
+            -DFETCHCONTENT_BASE_DIR=$HOME/.cmake-deps
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Run integration tests
+        working-directory: build
+        env:
+          DATABASE_URL: postgresql://robodad:robodad@localhost:5432/robodad_test
+        run: ctest --output-on-failure -L integration
