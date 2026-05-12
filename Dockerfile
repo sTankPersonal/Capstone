@@ -1,7 +1,7 @@
-# ── Stage 1: Build ────────────────────────────────────────────────────────────
-# Ubuntu 24.04 (Noble) ships GLIBC 2.39 and GCC 14 in its main repos,
-# ensuring the builder and runtime share the exact same ABI.
-FROM ubuntu:24.04 AS builder
+# ── Stage 1: Dev environment ──────────────────────────────────────────────────
+# All build tools, no source copy. Used as the devcontainer base so the image
+# builds instantly and C++ compile errors never block container startup.
+FROM ubuntu:24.04 AS dev
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -14,9 +14,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
     libssl-dev \
     ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 14 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 14
 
 WORKDIR /src
+
+# ── Stage 2: Build ────────────────────────────────────────────────────────────
+# Ubuntu 24.04 (Noble) ships GLIBC 2.39 and GCC 14 in its main repos,
+# ensuring the builder and runtime share the exact same ABI.
+FROM dev AS builder
 
 # .dockerignore keeps Windows build artefacts and IDE folders out of context.
 COPY . .
