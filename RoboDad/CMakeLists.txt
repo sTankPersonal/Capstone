@@ -57,11 +57,16 @@ find_package(Threads REQUIRED)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_package(PostgreSQL REQUIRED)
     find_package(CURL REQUIRED)
+    find_package(OpenSSL REQUIRED)
 endif()
 
 
 # ── DDD layers (inner → outer) ────────────────────────────────────────────────
 add_subdirectory(src)
+
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 
 # ── Composition root ──────────────────────────────────────────────────────────
 # The executable wires all layers together; concrete infrastructure
