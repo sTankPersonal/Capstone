@@ -1,6 +1,6 @@
 #include "infrastructure/persistence/postgres/PostgresExpenseRepository.h"
 #include "infrastructure/persistence/postgres/PgUtils.hpp"
-#include "finance/FinanceEnum.hpp"
+#include "finance/Finance.hpp"
 #include <libpq-fe.h>
 #include <string>
 #include <vector>

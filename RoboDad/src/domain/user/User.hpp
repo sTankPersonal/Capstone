@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "Finance.hpp"
+#include "finance/Finance.hpp"
 #include "PersonalInfo.hpp"
 
 class User {
@@ -21,4 +21,4 @@ public:
 	void setId(uint32_t newId) { id = newId; }
 	void setPersonalInfo(const PersonalInfo& newPersonalInfo) { personalInfo = newPersonalInfo; }
 	void setFinances(const std::vector<Finance>& newFinances) { finances = newFinances; }
-}
+};
