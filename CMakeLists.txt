@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(BUILD_TESTING "Build unit tests" ON)
+if(BUILD_TESTING)
+    include(CTest)
+endif()
 
 # Export compile commands for IDE IntelliSense (supported by Ninja generator)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

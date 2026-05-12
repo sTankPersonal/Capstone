@@ -28,6 +28,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
         # Threading required by ASIO and Crow
         Threads::Threads
+
+        # Security services (PasswordHasher, JwtService)
+        OpenSSL::Crypto
     )
 else()
     # On non-Linux platforms, build a stub that compiles but doesn't link to
