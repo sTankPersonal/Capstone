@@ -1,7 +1,5 @@
 #include <iostream>
-#define ASIO_STANDALONE
-#include "asio.hpp"
-#include "crow/crow_all.h"
+#include "crow.h"
 
 int main() {
     crow::SimpleApp app;
@@ -12,5 +10,5 @@ int main() {
 
     std::cout << "Server running on http://127.0.0.1:18080\n";
 
-    app.bindaddr("127.0.0.1").port(18080).multithreaded().run();
+    app.bindaddr("0.0.0.0").port(18080).multithreaded().run();
 }
