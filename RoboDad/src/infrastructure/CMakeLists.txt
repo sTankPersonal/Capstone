@@ -22,7 +22,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         # Database service
         PostgreSQL::PostgreSQL
 
-        # LLM chat service – LlamaClient speaks to the local Ollama/llama.cpp
+        # LLM chat service – OpenAIClient speaks to the external API
         # REST endpoint over HTTP; libcurl is the transport.
         CURL::libcurl
 
