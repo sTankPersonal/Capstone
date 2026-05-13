@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "FinanceEnum.hpp"
+#include <cstdint>
 
 class Finance {
     uint32_t id;

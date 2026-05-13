@@ -2,10 +2,10 @@
 
 GetBudgetFeedback::GetBudgetFeedback(BudgetRepository& br, ExpenseRepository& er,
                                      PromptRepository& pr, ChatHistoryRepository& chr,
-                                     LlamaClient& lc, PromptBuilder& pb)
+                                     OpenAIClient& lc, PromptBuilder& pb)
     : budgetRepo_(br), expenseRepo_(er),
       promptRepo_(pr), chatHistoryRepo_(chr),
-      llamaClient_(lc), promptBuilder_(pb) {}
+      openAIClient_(lc), promptBuilder_(pb) {}
 
 std::string GetBudgetFeedback::execute(uint32_t userId, const std::string& userMessage) {
     // TODO 1 — Fetch context
@@ -23,7 +23,7 @@ std::string GetBudgetFeedback::execute(uint32_t userId, const std::string& userM
     //       .build()
 
     // TODO 3 — Call the LLM
-    //   Pass the built Prompt to llamaClient_.generate(prompt);
+    //   Pass the built Prompt to openAIClient_.generate(prompt);
     //   capture the returned response string
 
     // TODO 4 — Persist the exchange
