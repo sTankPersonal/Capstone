@@ -37,6 +37,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_executable(infrastructure_unit_tests
         infrastructure/PasswordHasherTests.cpp
         infrastructure/JwtServiceTests.cpp
+        infrastructure/HttpRequestTests.cpp
+        infrastructure/HttpResponseTests.cpp
+        infrastructure/PromptBuilderTests.cpp
     )
     target_link_libraries(infrastructure_unit_tests PRIVATE
         GTest::gtest_main
@@ -55,5 +58,19 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
             roboDadInfrastructure
         )
         gtest_discover_tests(infrastructure_integration_tests PROPERTIES LABELS "integration")
+    endif()
+
+    # AI integration tests require a running Ollama instance via OLLAMA_URL.
+    # Tests skip themselves gracefully if the env var is unset.
+    option(RUN_AI_INTEGRATION_TESTS "Build and register Ollama/LlamaClient integration tests" OFF)
+    if(RUN_AI_INTEGRATION_TESTS)
+        add_executable(infrastructure_ai_integration_tests
+            infrastructure/integration/LlamaClientTests.cpp
+        )
+        target_link_libraries(infrastructure_ai_integration_tests PRIVATE
+            GTest::gtest_main
+            roboDadInfrastructure
+        )
+        gtest_discover_tests(infrastructure_ai_integration_tests PROPERTIES LABELS "integration")
     endif()
 endif()
