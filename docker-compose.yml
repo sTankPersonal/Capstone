@@ -13,6 +13,7 @@ services:
       DB_NAME: robodad
       DB_USER: robodad
       DB_PASSWORD: robodad_secret
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
     depends_on:
       postgres:
         condition: service_healthy

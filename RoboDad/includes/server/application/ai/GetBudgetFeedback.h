@@ -3,8 +3,8 @@
 #include "domain/repositories/ExpenseRepository.h"
 #include "domain/repositories/PromptRepository.h"
 #include "domain/repositories/ChatHistoryRepository.h"
-#include "infrastructure/ai/OpenAIClient.h"
-#include "infrastructure/ai/PromptBuilder.h"
+#include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
+#include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include <cstdint>
 #include <string>
 

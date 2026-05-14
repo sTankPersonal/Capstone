@@ -1,22 +1,32 @@
 #include "infrastructure/http/HttpRequest.h"
+#include <iostream>
 
 HttpRequest::HttpRequest(const crow::request& req) : req_(req) {}
 
 std::string HttpRequest::getMethod() const {
-    // TODO: return crow::method_name(req_.method) converted to uppercase string
+    std::string method = crow::method_name(req_.method);
+    std::transform(method.begin(), method.end(), method.begin(), ::toupper);
+    return method;
 }
 
 std::string HttpRequest::getBody() const {
-    // TODO: return req_.body
+    return req_.body;
 }
 
 std::optional<std::string> HttpRequest::getHeader(const std::string& name) const {
-    // TODO: look up name in req_.headers (case-insensitive);
-    //       return the value, or nullopt if the header is not present
+    auto it = req_.headers.find(name);
+    if (it != req_.headers.end()) {
+        return std::string(it->second);
+    }
+    return std::nullopt;
 }
 
 std::optional<std::string> HttpRequest::getQueryParam(const std::string& key) const {
-    // TODO: parse req_.url_params; return the value for key, or nullopt if absent
+    const char* value = req_.url_params.get(key);
+    if (value) {
+        return std::string(value);
+    }
+    return std::nullopt;
 }
 
 std::optional<std::string> HttpRequest::getBearerToken() const {
@@ -26,7 +36,9 @@ std::optional<std::string> HttpRequest::getBearerToken() const {
 }
 
 crow::json::rvalue HttpRequest::getJsonBody() const {
-    // TODO: call crow::json::load(req_.body);
-    //       if the result is invalid JSON throw std::runtime_error with a descriptive message;
-    //       otherwise return the parsed rvalue
+    auto json = crow::json::load(req_.body);
+    if (!json) {
+        throw std::runtime_error("Invalid JSON in request body");
+    }
+    return json;
 }

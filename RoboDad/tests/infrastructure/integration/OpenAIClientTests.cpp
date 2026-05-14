@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <cstdlib>
-#include "infrastructure/ai/OpenAIClient.h"
-#include "infrastructure/ai/PromptBuilder.h"
+#include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
+#include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
 #include "budget/BudgetGoal.hpp"
 #include "finance/Finance.hpp"
 #include "finance/FinanceEnum.hpp"

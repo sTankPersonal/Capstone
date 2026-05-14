@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "infrastructure/ai/PromptBuilder.h"
+#include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include "llm/SystemInstructions.hpp"
 #include "llm/ChatHistory.hpp"
 #include "budget/BudgetGoal.hpp"
