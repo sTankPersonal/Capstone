@@ -37,6 +37,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_executable(infrastructure_unit_tests
         infrastructure/PasswordHasherTests.cpp
         infrastructure/JwtServiceTests.cpp
+        infrastructure/HttpRequestTests.cpp
+        infrastructure/HttpResponseTests.cpp
+        infrastructure/PromptBuilderTests.cpp
     )
     target_link_libraries(infrastructure_unit_tests PRIVATE
         GTest::gtest_main
