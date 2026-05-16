@@ -1,12 +1,20 @@
-#include "AiController.h"
+#include "ChatController.h"
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
 #include <crow.h>
 
-AIController::AIController(OpenAIClient& client)
+ChatController::ChatController(OpenAIClient& client)
     : client_(client) {}
 
-void AIController::registerRoutes(crow::SimpleApp& app) {
+void ChatController::registerRoutes(crow::SimpleApp& app) {
+
+    CROW_ROUTE(app, "/chat")
+        ([](const crow::request&, crow::response& res) {
+        res.set_static_file_info("public/chat.html");
+        res.end();
+            });
+
+
     CROW_ROUTE(app, "/api/ai/chat").methods("POST"_method)
     ([this](const crow::request& req) {
         auto body = crow::json::load(req.body);
