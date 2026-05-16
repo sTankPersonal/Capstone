@@ -6,7 +6,7 @@ file(GLOB_RECURSE PRESENTATION_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
 
-add_library(roboDadPresentation STATIC ${PRESENTATION_SOURCES} "controllers/AiController.h")
+add_library(roboDadPresentation STATIC ${PRESENTATION_SOURCES} "controllers/ChatController.h"  "routes/Routes.h" "controllers/AuthenticationController.h")
 
 target_link_libraries(roboDadPresentation PUBLIC
     roboDadApplication   # use cases this layer calls into
