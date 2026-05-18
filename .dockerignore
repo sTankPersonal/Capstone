@@ -13,10 +13,6 @@ build/
 .git/
 .gitignore
 
-# Frontend assets are served at runtime via Crow; include them explicitly
-# if you ever embed them in the binary, but exclude for now.
-RoboDad/frontend/
-
 # Docs
 *.md
 README*

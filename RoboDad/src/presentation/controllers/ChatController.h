@@ -3,9 +3,9 @@
 #include <crow.h>
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
 
-class AIController {
+class ChatController {
 public:
-    explicit AIController(OpenAIClient& client);
+    explicit ChatController(OpenAIClient& client);
 
     // Registers all AI-related HTTP routes
     void registerRoutes(crow::SimpleApp& app);

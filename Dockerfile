@@ -56,6 +56,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY --from=builder /build/bin/RoboDad ./RoboDad
+COPY ./RoboDad/frontend/public /app/public 
 
 EXPOSE 18080
 
