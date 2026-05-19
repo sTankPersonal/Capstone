@@ -30,9 +30,11 @@ std::optional<std::string> HttpRequest::getQueryParam(const std::string& key) co
 }
 
 std::optional<std::string> HttpRequest::getBearerToken() const {
-    // TODO: call getHeader("Authorization");
-    //       if present and starts with "Bearer ", strip the prefix and return the token;
-    //       otherwise return nullopt
+    auto header = getHeader("Authorization");
+    if (header && header->rfind("Bearer ", 0) == 0) {
+        return header->substr(7);
+    }
+    return std::nullopt;
 }
 
 crow::json::rvalue HttpRequest::getJsonBody() const {

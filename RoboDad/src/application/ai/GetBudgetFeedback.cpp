@@ -2,10 +2,10 @@
 
 GetBudgetFeedback::GetBudgetFeedback(BudgetRepository& br, ExpenseRepository& er,
                                      PromptRepository& pr, ChatHistoryRepository& chr,
-                                     OpenAIClient& lc, PromptBuilder& pb)
+                                     ILlmClient& lc, IPromptBuilder& pb)
     : budgetRepo_(br), expenseRepo_(er),
       promptRepo_(pr), chatHistoryRepo_(chr),
-      openAIClient_(lc), promptBuilder_(pb) {}
+      llmClient_(lc), promptBuilder_(pb) {}
 
 std::string GetBudgetFeedback::execute(uint32_t userId, const std::string& userMessage) {
     // TODO 1 — Fetch context
@@ -34,4 +34,5 @@ std::string GetBudgetFeedback::execute(uint32_t userId, const std::string& userM
 
     // TODO 5 — Return
     //   Return the LLM response string to the caller
+    return std::string();
 }

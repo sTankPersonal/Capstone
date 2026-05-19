@@ -1,33 +1,33 @@
 services:
 
-  # ── C++ application server ────────────────────────────────────────────────
   server:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "18080:18080"
+    env_file:
+      - secrets.env
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_NAME: robodad
       DB_USER: robodad
-      DB_PASSWORD: robodad_secret
-      OPENAI_API_KEY: "${OPENAI_API_KEY}"
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
 
-  # ── PostgreSQL database ───────────────────────────────────────────────────
+
   postgres:
     build:
       context: ./RoboDad/docker/db
       dockerfile: Dockerfile
+    env_file:
+      - secrets.env
     environment:
       POSTGRES_DB: robodad
       POSTGRES_USER: robodad
-      POSTGRES_PASSWORD: robodad_secret
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -38,6 +38,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    
+
 volumes:
   postgres_data:

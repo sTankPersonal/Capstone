@@ -8,7 +8,9 @@ CREATE TABLE users (
     id                SERIAL       PRIMARY KEY,
     name              VARCHAR(255) NOT NULL,
     age               SMALLINT     NOT NULL CHECK (age BETWEEN 0 AND 150),
-    employment_status SMALLINT     NOT NULL CHECK (employment_status BETWEEN 0 AND 3)
+    employment_status SMALLINT     NOT NULL CHECK (employment_status BETWEEN 0 AND 3),
+    email             VARCHAR(255) NOT NULL UNIQUE,
+    password_hash     VARCHAR(255) NOT NULL
 );
 
 -- ── Finances ──────────────────────────────────────────────────────────────────

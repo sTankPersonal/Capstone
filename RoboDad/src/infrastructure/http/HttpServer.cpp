@@ -84,4 +84,5 @@ std::optional<uint32_t> HttpServer::authenticate(const crow::request& req) const
     //       if nullopt return nullopt;
     //       call jwtService_.verify(token) and return its result directly
     //       (verify already returns optional<uint32_t>)
+    return std::nullopt;
 }

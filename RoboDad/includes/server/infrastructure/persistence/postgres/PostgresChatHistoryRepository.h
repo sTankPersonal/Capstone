@@ -1,5 +1,5 @@
 #pragma once
-#include "domain/repositories/ChatHistoryRepository.h"
+#include "infrastructureServices/persistance/ChatHistoryRepository.h"
 #include "infrastructure/persistence/DatabaseConnection.h"
 
 class PostgresChatHistoryRepository : public ChatHistoryRepository {

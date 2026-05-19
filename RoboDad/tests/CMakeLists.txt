@@ -52,6 +52,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     if(RUN_INTEGRATION_TESTS)
         add_executable(infrastructure_integration_tests
             infrastructure/integration/PostgresBudgetRepositoryTests.cpp
+            infrastructure/integration/PostgresUserRepositoryTests.cpp
         )
         target_link_libraries(infrastructure_integration_tests PRIVATE
             GTest::gtest_main

@@ -22,6 +22,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         });
 
+        // Logout: clear token then navigate to login
+        const logoutLink = container.querySelector("a[data-page='logout']");
+        if (logoutLink) {
+            logoutLink.addEventListener("click", async (e) => {
+                e.preventDefault();
+                await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+                localStorage.removeItem("token");
+                window.location.href = "/login";
+            });
+        }
+
     } catch (err) {
         console.error("Failed to load navbar:", err);
     }

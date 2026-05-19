@@ -1,12 +1,14 @@
 #pragma once
-#include "domain/repositories/UserRepository.h"
-#include "user/User.hpp"
-#include <cstdint>
+#include "infrastructureServices/persistance/UserRepository.h"
+#include "infrastructureServices/security/IPasswordHasher.h"
+#include "domain/user/User.h"
 #include <optional>
+#include <string>
 
 class LoginUser {
     UserRepository& repo_;
+    IPasswordHasher& hasher_;
 public:
-    explicit LoginUser(UserRepository& repo) : repo_(repo) {}
-    std::optional<User> execute(uint32_t userId);
+    LoginUser(UserRepository& repo, IPasswordHasher& hasher) : repo_(repo), hasher_(hasher) {}
+    std::optional<User> execute(const std::string& email, const std::string& password);
 };

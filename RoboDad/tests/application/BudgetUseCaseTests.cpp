@@ -1,9 +1,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "domain/repositories/BudgetRepository.h"
+#include "infrastructureServices/persistance/BudgetRepository.h"
 #include "application/budgets/GetBudgetStatus.h"
 #include "application/budgets/SetBudgetGoal.h"
-#include "budget/BudgetGoal.hpp"
+#include "domain/budget/BudgetGoal.h"
 
 using ::testing::Return;
 using ::testing::_;

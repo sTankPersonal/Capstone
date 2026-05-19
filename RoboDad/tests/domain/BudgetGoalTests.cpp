@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "budget/BudgetGoal.hpp"
+#include "domain/budget/BudgetGoal.h"
 
 TEST(BudgetGoalTest, NewGoalConstructorSetsIdAndUserIdToZero) {
     BudgetGoal goal(1000.0, 250.0, "Emergency fund");
