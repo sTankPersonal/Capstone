@@ -1,7 +1,7 @@
 #include "infrastructure/persistence/postgres/PostgresUserRepository.h"
 #include "infrastructure/persistence/postgres/PgUtils.hpp"
-#include "user/EmploymentStatus.hpp"
-#include "finance/Finance.hpp"
+#include "domain/user/EmploymentStatus.h"
+#include "domain/finance/Finance.h"
 #include <libpq-fe.h>
 #include <string>
 #include <vector>

@@ -3,9 +3,9 @@
 #include "infrastructureServices/persistance/UserRepository.h"
 #include "application/auth/LoginUser.h"
 #include "application/auth/RegisterUser.h"
-#include "user/EmploymentStatus.hpp"
-#include "user/PersonalInfo.hpp"
-#include "user/User.hpp"
+#include "domain/user/EmploymentStatus.h"
+#include "domain/user/PersonalInfo.h"
+#include "domain/user/User.h"
 
 using ::testing::Return;
 using ::testing::_;

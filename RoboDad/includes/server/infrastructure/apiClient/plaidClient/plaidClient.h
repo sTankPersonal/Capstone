@@ -1,7 +1,7 @@
 #pragma once
 #include "infrastructure/apiClient/ApiClient.h"
 #include "infrastructureServices/apiClient/IPlaidClient.h"
-#include "finance/Finance.hpp"
+#include "domain/finance/Finance.h"
 #include <string>
 #include <vector>
 

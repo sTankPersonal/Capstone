@@ -1,6 +1,6 @@
 #pragma once
 #include "infrastructureServices/persistance/UserRepository.h"
-#include "user/User.hpp"
+#include "domain/user/User.h"
 #include <cstdint>
 #include <optional>
 

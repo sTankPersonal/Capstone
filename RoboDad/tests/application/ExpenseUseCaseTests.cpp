@@ -3,8 +3,8 @@
 #include "infrastructureServices/persistance/ExpenseRepository.h"
 #include "application/expenses/AddExpense.h"
 #include "application/expenses/ListExpenses.h"
-#include "finance/Finance.hpp"
-#include "finance/FinanceEnum.hpp"
+#include "domain/finance/Finance.h"
+#include "domain/finance/FinanceEnum.h"
 
 using ::testing::Return;
 using ::testing::_;

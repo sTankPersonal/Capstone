@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "IRepository.h"
-#include "user/User.hpp"
+#include "domain/user/User.h"
 
 class UserRepository : public IRepository<User> {
 public:

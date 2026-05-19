@@ -1,7 +1,7 @@
 #pragma once
 #include "infrastructureServices/persistance/UserRepository.h"
-#include "user/User.hpp"
-#include "user/PersonalInfo.hpp"
+#include "domain/user/User.h"
+#include "domain/user/PersonalInfo.h"
 
 class RegisterUser {
     UserRepository& repo_;

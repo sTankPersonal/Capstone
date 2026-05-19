@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "IRepository.h"
-#include "finance/Finance.hpp"
+#include "domain/finance/Finance.h"
 
 class ExpenseRepository : public IRepository<Finance> {
 public:

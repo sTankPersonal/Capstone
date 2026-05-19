@@ -2,10 +2,10 @@
 #include <cstdlib>
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
-#include "budget/BudgetGoal.hpp"
-#include "finance/Finance.hpp"
-#include "finance/FinanceEnum.hpp"
-#include "llm/ChatHistory.hpp"
+#include "domain/budget/BudgetGoal.h"
+#include "domain/finance/Finance.h"
+#include "domain/finance/FinanceEnum.h"
+#include "domain/llm/ChatHistory.h"
 
 class OpenAIClientTest : public ::testing::Test {
 protected:

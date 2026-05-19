@@ -1,6 +1,6 @@
 #pragma once
 #include "infrastructureServices/apiClient/IPromptBuilder.h"
-#include "llm/SystemInstructions.hpp"
+#include "domain/llm/SystemInstructions.h"
 #include <string>
 #include <vector>
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "infrastructure/apiClient/ApiClient.h"
 #include "infrastructureServices/apiClient/ILlmClient.h"
-#include "llm/Prompt.hpp"
+#include "domain/llm/Prompt.h"
 #include <string>
 
 // HTTP client for OpenAI's /v1/chat/completions endpoint.

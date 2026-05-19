@@ -4,10 +4,10 @@
 #include "infrastructure/persistence/DatabaseConnection.h"
 #include "infrastructure/persistence/postgres/PostgresBudgetRepository.h"
 #include "infrastructure/persistence/postgres/PostgresUserRepository.h"
-#include "budget/BudgetGoal.hpp"
-#include "user/EmploymentStatus.hpp"
-#include "user/PersonalInfo.hpp"
-#include "user/User.hpp"
+#include "domain/budget/BudgetGoal.h"
+#include "domain/user/EmploymentStatus.h"
+#include "domain/user/PersonalInfo.h"
+#include "domain/user/User.h"
 
 class PostgresBudgetRepositoryTest : public ::testing::Test {
 protected:

@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "finance/Finance.hpp"
+#include "domain/finance/Finance.h"
 
 class IPlaidClient {
 public:

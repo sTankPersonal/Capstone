@@ -1,6 +1,6 @@
 #pragma once
 #include "infrastructureServices/persistance/ExpenseRepository.h"
-#include "finance/Finance.hpp"
+#include "domain/finance/Finance.h"
 #include <cstdint>
 #include <vector>
 

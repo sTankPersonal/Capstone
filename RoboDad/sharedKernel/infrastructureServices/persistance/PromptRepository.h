@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "IRepository.h"
-#include "llm/Prompt.hpp"
+#include "domain/llm/Prompt.h"
 
 class PromptRepository : public IRepository<Prompt> {
 public:

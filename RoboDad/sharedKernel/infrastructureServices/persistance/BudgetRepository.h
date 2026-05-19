@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "IRepository.h"
-#include "budget/BudgetGoal.hpp"
+#include "domain/budget/BudgetGoal.h"
 
 class BudgetRepository : public IRepository<BudgetGoal> {
 public:

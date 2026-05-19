@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "llm/Prompt.hpp"
+#include "domain/llm/Prompt.h"
 
 class ILlmClient {
 public:

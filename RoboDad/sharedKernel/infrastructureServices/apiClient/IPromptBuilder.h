@@ -1,11 +1,11 @@
 #pragma once
 #include <string>
 #include <vector>
-#include "llm/Prompt.hpp"
-#include "llm/ChatHistory.hpp"
-#include "llm/SystemInstructions.hpp"
-#include "budget/BudgetGoal.hpp"
-#include "finance/Finance.hpp"
+#include "domain/llm/Prompt.h"
+#include "domain/llm/ChatHistory.h"
+#include "domain/llm/SystemInstructions.h"
+#include "domain/budget/BudgetGoal.h"
+#include "domain/finance/Finance.h"
 
 class IPromptBuilder {
 public:

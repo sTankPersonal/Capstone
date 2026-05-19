@@ -1,6 +1,6 @@
 #pragma once
 #include "IRepository.h"
-#include "llm/SystemInstructions.hpp"
+#include "domain/llm/SystemInstructions.h"
 
 class SystemInstructionsRepository : public IRepository<SystemInstructions> {
 public:

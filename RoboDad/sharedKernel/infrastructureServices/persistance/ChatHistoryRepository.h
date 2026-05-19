@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <vector>
 #include "IRepository.h"
-#include "llm/ChatHistory.hpp"
+#include "domain/llm/ChatHistory.h"
 
 class ChatHistoryRepository : public IRepository<ChatHistory> {
 public:
