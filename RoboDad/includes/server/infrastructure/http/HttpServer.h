@@ -1,4 +1,5 @@
 #pragma once
+#include "infrastructureServices/http/IHttpServer.h"
 #include <crow.h>
 #include <cstdint>
 #include <optional>
@@ -16,7 +17,7 @@ class JwtService;
 
 // Owns the Crow application and all use-case references.
 // Responsible for registering every route and starting the server.
-class HttpServer {
+class HttpServer : public IHttpServer {
     crow::SimpleApp app_;
 
     LoginUser&        loginUser_;
@@ -36,7 +37,7 @@ public:
 
     // Registers all route groups and begins Crow's event loop on the given port.
     // Blocks until the server shuts down.
-    void start(uint16_t port);
+    void start(uint16_t port) override;
 
 private:
     // Registers POST /auth/register and POST /auth/login.

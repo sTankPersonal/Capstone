@@ -1,47 +1,35 @@
 -- RoboDad schema
--- Matches the domain model: User, Expense, BudgetGoal
+-- employment_status maps to EmploymentStatus enum: 0=Employed 1=Unemployed 2=Student 3=Retired
+-- finance type maps to FinanceEnum: 0=Salary 1=Bonus 2=Investment 3=Expense 4=Tax
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- for gen_random_uuid()
-
--- ── Users ────────────────────────────────────────────────────────────────────
+-- ── Users ─────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
-    id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    email             TEXT        NOT NULL UNIQUE,
-    password_hash     TEXT        NOT NULL,
-    first_name        TEXT        NOT NULL,
-    last_name         TEXT        NOT NULL,
-    employment_status TEXT        NOT NULL DEFAULT 'employed',
-    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id                SERIAL      PRIMARY KEY,
+    name              VARCHAR(255) NOT NULL,
+    age               SMALLINT     NOT NULL CHECK (age BETWEEN 0 AND 150),
+    employment_status SMALLINT     NOT NULL CHECK (employment_status BETWEEN 0 AND 3),
+    email             VARCHAR(255) NOT NULL UNIQUE,
+    password_hash     VARCHAR(255) NOT NULL
+);
+
+-- ── Finances ──────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS finances (
+    id          SERIAL           PRIMARY KEY,
+    user_id     INTEGER          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    amount      DOUBLE PRECISION NOT NULL,
+    description TEXT             NOT NULL,
+    type        SMALLINT         NOT NULL CHECK (type BETWEEN 0 AND 4)
 );
 
 -- ── Budget goals ──────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS budget_goals (
-    id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id    UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    category   TEXT         NOT NULL,
-    amount     NUMERIC(12,2) NOT NULL CHECK (amount > 0),
-    period     TEXT         NOT NULL DEFAULT 'monthly',  -- monthly | weekly | yearly
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    UNIQUE (user_id, category, period)
+    id          SERIAL           PRIMARY KEY,
+    user_id     INTEGER          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    end_goal    DOUBLE PRECISION NOT NULL CHECK (end_goal > 0),
+    amount      DOUBLE PRECISION NOT NULL CHECK (amount >= 0),
+    description TEXT             NOT NULL
 );
 
--- ── Expenses ──────────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS expenses (
-    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    amount      NUMERIC(12,2) NOT NULL CHECK (amount > 0),
-    category    TEXT         NOT NULL,
-    description TEXT,
-    incurred_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
-);
-
--- ── Indexes for common query patterns ────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_expenses_user_date
-    ON expenses (user_id, incurred_at DESC);
-
-CREATE INDEX IF NOT EXISTS idx_expenses_user_category
-    ON expenses (user_id, category);
-
-CREATE INDEX IF NOT EXISTS idx_budget_goals_user
-    ON budget_goals (user_id);
+-- ── Indexes ───────────────────────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_finances_user_id     ON finances(user_id);
+CREATE INDEX IF NOT EXISTS idx_budget_goals_user_id ON budget_goals(user_id);

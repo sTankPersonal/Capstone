@@ -1,9 +1,10 @@
 #pragma once
+#include "infrastructureServices/persistance/IDatabaseConnection.h"
 #include <string>
 #include <stdexcept>
 #include <libpq-fe.h>
 
-class DatabaseConnection {
+class DatabaseConnection : public IDatabaseConnection {
     PGconn* conn_ = nullptr;
 
 public:
@@ -16,7 +17,7 @@ public:
     DatabaseConnection& operator=(DatabaseConnection&& other) noexcept;
 
     PGconn* get() const noexcept { return conn_; }
-    bool isConnected() const noexcept;
+    bool isConnected() const noexcept override;
 
     // Reads DATABASE_URL from the environment. Throws if unset or connection fails.
     static DatabaseConnection fromEnv();

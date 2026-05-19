@@ -1,6 +1,7 @@
 #pragma once
 #include "infrastructure/apiClient/ApiClient.h"
-#include "finance/Finance.hpp"
+#include "infrastructureServices/apiClient/IPlaidClient.h"
+#include "domain/finance/Finance.h"
 #include <string>
 #include <vector>
 
@@ -10,7 +11,7 @@
 //
 // Plaid uses client_id + secret rather than a single bearer token.
 // clientId_ is stored in the parent's apiKey_ field; secret_ is stored separately.
-class PlaidClient : public ApiClient {
+class PlaidClient : public ApiClient, public IPlaidClient {
     std::string secret_;
 
 public:
@@ -22,7 +23,7 @@ public:
     // then immediately exchanges it for a persistent access token.
     // Call this once per seeding session; pass the returned token to fetchTransactionsAsFinances().
     // Throws std::runtime_error on HTTP error or malformed response.
-    std::string createSandboxAccessToken(const std::string& institutionId = "ins_109508");
+    std::string createSandboxAccessToken(const std::string& institutionId = "ins_109508") override;
 
     // Fetches up to `count` transactions in [startDate, endDate] (format: "YYYY-MM-DD")
     // and maps each one to a Finance domain object:
@@ -33,7 +34,7 @@ public:
     std::vector<Finance> fetchTransactionsAsFinances(const std::string& accessToken,
                                                      const std::string& startDate,
                                                      const std::string& endDate,
-                                                     int count = 100);
+                                                     int count = 100) override;
 
 private:
     // Builds the JSON auth block shared by every Plaid request.

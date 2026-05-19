@@ -1,5 +1,5 @@
 #pragma once
-#include "domain/repositories/UserRepository.h"
+#include "infrastructureServices/persistance/UserRepository.h"
 #include "infrastructure/persistence/DatabaseConnection.h"
 
 class PostgresUserRepository : public UserRepository {
@@ -8,9 +8,10 @@ class PostgresUserRepository : public UserRepository {
 public:
     explicit PostgresUserRepository(DatabaseConnection& db);
 
-    User create(const User& user) override;
+    User create(const User& user, const std::string& email, const std::string& passwordHash) override;
     std::optional<User> findById(uint32_t id) override;
     std::vector<User> findAll() override;
     bool update(const User& user) override;
     bool remove(uint32_t id) override;
+    std::optional<std::pair<uint32_t, std::string>> lookupCredentials(const std::string& email) override;
 };

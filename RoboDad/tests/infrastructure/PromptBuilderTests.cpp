@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
-#include "llm/SystemInstructions.hpp"
-#include "llm/ChatHistory.hpp"
-#include "budget/BudgetGoal.hpp"
-#include "finance/Finance.hpp"
-#include "finance/FinanceEnum.hpp"
+#include "domain/llm/SystemInstructions.h"
+#include "domain/llm/ChatHistory.h"
+#include "domain/budget/BudgetGoal.h"
+#include "domain/finance/Finance.h"
+#include "domain/finance/FinanceEnum.h"
 
 // ── defaultSystemInstructions ─────────────────────────────────────────────────
 

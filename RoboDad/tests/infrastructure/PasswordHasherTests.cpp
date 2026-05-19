@@ -2,28 +2,33 @@
 #include "infrastructure/security/PasswordHasher.h"
 
 TEST(PasswordHasherTest, HashProducesStoredStringWithSaltSeparator) {
-    std::string stored = PasswordHasher::hash("secret");
+    PasswordHasher hasher;
+    std::string stored = hasher.hash("secret");
     EXPECT_FALSE(stored.empty());
     EXPECT_NE(stored.find(':'), std::string::npos);
 }
 
 TEST(PasswordHasherTest, VerifyReturnsTrueForCorrectPassword) {
-    std::string stored = PasswordHasher::hash("mypassword");
-    EXPECT_TRUE(PasswordHasher::verify("mypassword", stored));
+    PasswordHasher hasher;
+    std::string stored = hasher.hash("mypassword");
+    EXPECT_TRUE(hasher.verify("mypassword", stored));
 }
 
 TEST(PasswordHasherTest, VerifyReturnsFalseForWrongPassword) {
-    std::string stored = PasswordHasher::hash("correct");
-    EXPECT_FALSE(PasswordHasher::verify("wrong", stored));
+    PasswordHasher hasher;
+    std::string stored = hasher.hash("correct");
+    EXPECT_FALSE(hasher.verify("wrong", stored));
 }
 
 TEST(PasswordHasherTest, TwoHashesOfSamePasswordDifferDueToSalt) {
-    std::string a = PasswordHasher::hash("password");
-    std::string b = PasswordHasher::hash("password");
+    PasswordHasher hasher;
+    std::string a = hasher.hash("password");
+    std::string b = hasher.hash("password");
     EXPECT_NE(a, b);
 }
 
 TEST(PasswordHasherTest, VerifyReturnsFalseForMalformedStoredString) {
-    EXPECT_FALSE(PasswordHasher::verify("password", "nocolon"));
-    EXPECT_FALSE(PasswordHasher::verify("password", ""));
+    PasswordHasher hasher;
+    EXPECT_FALSE(hasher.verify("password", "nocolon"));
+    EXPECT_FALSE(hasher.verify("password", ""));
 }

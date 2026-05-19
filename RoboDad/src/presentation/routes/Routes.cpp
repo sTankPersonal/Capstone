@@ -5,7 +5,8 @@
 #include "../controllers/ActivityController.h"
 #include "../controllers/AuthenticationController.h"
 
-void registerAllRoutes(crow::SimpleApp& app, OpenAIClient& openai) {
+void registerAllRoutes(crow::SimpleApp& app, OpenAIClient& openai,
+                       UserRepository& userRepo, IJwtService& jwt, IPasswordHasher& hasher) {
     // Static assets
     CROW_ROUTE(app, "/assets/<path>")
         ([](const crow::request&, crow::response& res, std::string path) {
@@ -13,12 +14,13 @@ void registerAllRoutes(crow::SimpleApp& app, OpenAIClient& openai) {
         res.end();
             });
 
-    // Controllers
-    ChatController(openai).registerRoutes(app);
+    // Controllers — heap-allocate any controller whose lambdas capture [this],
+    // so the object outlives registerAllRoutes and remains valid for every request.
+    (new ChatController(openai))->registerRoutes(app);
     DashboardController().registerRoutes(app);
     SettingsController().registerRoutes(app);
     ActivityController().registerRoutes(app);
-    AuthenticationController().registerRoutes(app);
+    (new AuthenticationController(userRepo, hasher, jwt))->registerRoutes(app);
 
     // Root
     CROW_ROUTE(app, "/")([] {

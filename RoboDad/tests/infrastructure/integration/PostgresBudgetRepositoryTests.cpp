@@ -4,10 +4,10 @@
 #include "infrastructure/persistence/DatabaseConnection.h"
 #include "infrastructure/persistence/postgres/PostgresBudgetRepository.h"
 #include "infrastructure/persistence/postgres/PostgresUserRepository.h"
-#include "budget/BudgetGoal.hpp"
-#include "user/EmploymentStatus.hpp"
-#include "user/PersonalInfo.hpp"
-#include "user/User.hpp"
+#include "domain/budget/BudgetGoal.h"
+#include "domain/user/EmploymentStatus.h"
+#include "domain/user/PersonalInfo.h"
+#include "domain/user/User.h"
 
 class PostgresBudgetRepositoryTest : public ::testing::Test {
 protected:
@@ -19,7 +19,7 @@ protected:
         budgetRepo_ = std::make_unique<PostgresBudgetRepository>(*db_);
 
         PersonalInfo info("TestUser", 25, EmploymentStatus::Employed);
-        testUser_ = userRepo_->create(User(0, info, {}));
+        testUser_ = userRepo_->create(User(0, info, {}), "budgettest@example.com", "placeholder_hash");
     }
 
     void TearDown() override {

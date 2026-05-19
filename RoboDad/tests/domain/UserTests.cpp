@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include "user/User.hpp"
-#include "user/PersonalInfo.hpp"
-#include "user/EmploymentStatus.hpp"
-#include "finance/Finance.hpp"
-#include "finance/FinanceEnum.hpp"
+#include "domain/user/User.h"
+#include "domain/user/PersonalInfo.h"
+#include "domain/user/EmploymentStatus.h"
+#include "domain/finance/Finance.h"
+#include "domain/finance/FinanceEnum.h"
 
 TEST(UserTest, ConstructorPreservesIdAndPersonalInfo) {
     PersonalInfo info("Alice", 30, EmploymentStatus::Employed);

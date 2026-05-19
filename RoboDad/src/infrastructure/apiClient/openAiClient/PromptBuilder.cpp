@@ -18,12 +18,25 @@ PromptBuilder& PromptBuilder::withUserMessage(const std::string& message) {
 
 PromptBuilder& PromptBuilder::withBudgetContext(const std::vector<BudgetGoal>& goals,
                                                 const std::vector<Finance>& expenses) {
-    // TODO: format goals into a human-readable string
-    //       (e.g. "Budget Goals:\n- Save $500 for vacation by ...\n");
-    //       format expenses into a summary string
-    //       (e.g. "Recent Expenses:\n- $45.00 Groceries (Expense)\n");
-    //       append both summaries to userMessage_;
-    //       return *this
+    std::ostringstream oss;
+
+    if (!goals.empty()) {
+        oss << "\nBudget Goals:\n";
+        for (const auto& g : goals) {
+            oss << "- " << g.getDescription()
+                << ": $" << g.getAmount() << " saved of $" << g.getEndGoal() << " goal\n";
+        }
+    }
+
+    if (!expenses.empty()) {
+        oss << "\nRecent Expenses:\n";
+        for (const auto& e : expenses) {
+            oss << "- $" << e.getAmount() << " " << e.getDescription() << "\n";
+        }
+    }
+
+    userMessage_ += oss.str();
+    return *this;
 }
 
 Prompt PromptBuilder::build() {

@@ -1,7 +1,7 @@
 #pragma once
-#include "domain/repositories/ExpenseRepository.h"
-#include "finance/Finance.hpp"
-#include "finance/FinanceEnum.hpp"
+#include "infrastructureServices/persistance/ExpenseRepository.h"
+#include "domain/finance/Finance.h"
+#include "domain/finance/FinanceEnum.h"
 #include <cstdint>
 #include <string>
 

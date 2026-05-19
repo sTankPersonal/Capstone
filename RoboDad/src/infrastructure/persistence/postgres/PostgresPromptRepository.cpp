@@ -1,7 +1,7 @@
 #include "infrastructure/persistence/postgres/PostgresPromptRepository.h"
 #include "infrastructure/persistence/postgres/PgUtils.hpp"
-#include "llm/SystemInstructions.hpp"
-#include "llm/ChatHistory.hpp"
+#include "domain/llm/SystemInstructions.h"
+#include "domain/llm/ChatHistory.h"
 #include <libpq-fe.h>
 #include <string>
 #include <vector>

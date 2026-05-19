@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "finance/Finance.hpp"
-#include "finance/FinanceEnum.hpp"
+#include "domain/finance/Finance.h"
+#include "domain/finance/FinanceEnum.h"
 
 TEST(FinanceTest, FullConstructorSetsAllFields) {
     Finance f(1u, 5000.0, "Monthly salary", FinanceEnum::Salary);

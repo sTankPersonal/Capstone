@@ -1,7 +1,7 @@
 #include "infrastructure/persistence/postgres/PostgresUserRepository.h"
 #include "infrastructure/persistence/postgres/PgUtils.hpp"
-#include "user/EmploymentStatus.hpp"
-#include "finance/Finance.hpp"
+#include "domain/user/EmploymentStatus.h"
+#include "domain/finance/Finance.h"
 #include <libpq-fe.h>
 #include <string>
 #include <vector>
@@ -42,17 +42,17 @@ User rowToUser(PGresult* res, int row, PGconn* conn) {
 
 PostgresUserRepository::PostgresUserRepository(DatabaseConnection& db) : db_(db) {}
 
-User PostgresUserRepository::create(const User& user) {
+User PostgresUserRepository::create(const User& user, const std::string& email, const std::string& passwordHash) {
     const auto& pi = user.getPersonalInfo();
     std::string name   = pi.getName();
     std::string age    = std::to_string(static_cast<int>(pi.getAge()));
     std::string status = std::to_string(static_cast<int>(pi.getEmploymentStatus()));
 
-    const char* p[] = { name.c_str(), age.c_str(), status.c_str() };
+    const char* p[] = { name.c_str(), age.c_str(), status.c_str(), email.c_str(), passwordHash.c_str() };
     pg::Result res(PQexecParams(db_.get(),
-        "INSERT INTO users (name, age, employment_status)"
-        " VALUES ($1, $2::smallint, $3::smallint) RETURNING id",
-        3, nullptr, p, nullptr, nullptr, 0));
+        "INSERT INTO users (name, age, employment_status, email, password_hash)"
+        " VALUES ($1, $2::smallint, $3::smallint, $4, $5) RETURNING id",
+        5, nullptr, p, nullptr, nullptr, 0));
     pg::check(res.get(), PGRES_TUPLES_OK, db_.get(), "User::create");
 
     uint32_t newId = static_cast<uint32_t>(std::stoul(PQgetvalue(res.get(), 0, 0)));
@@ -107,4 +107,16 @@ bool PostgresUserRepository::remove(uint32_t id) {
         1, nullptr, p, nullptr, nullptr, 0));
     pg::check(res.get(), PGRES_COMMAND_OK, db_.get(), "User::remove");
     return pg::rowsAffected(res.get());
+}
+
+std::optional<std::pair<uint32_t, std::string>> PostgresUserRepository::lookupCredentials(const std::string& email) {
+    const char* p[] = { email.c_str() };
+    pg::Result res(PQexecParams(db_.get(),
+        "SELECT id, password_hash FROM users WHERE email = $1",
+        1, nullptr, p, nullptr, nullptr, 0));
+    pg::check(res.get(), PGRES_TUPLES_OK, db_.get(), "User::lookupCredentials");
+    if (PQntuples(res.get()) == 0) return std::nullopt;
+    uint32_t uid = static_cast<uint32_t>(std::stoul(PQgetvalue(res.get(), 0, 0)));
+    std::string hash = PQgetvalue(res.get(), 0, 1);
+    return std::make_pair(uid, std::move(hash));
 }

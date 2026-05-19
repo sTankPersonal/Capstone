@@ -36,6 +36,23 @@ bool DatabaseConnection::isConnected() const noexcept {
 
 DatabaseConnection DatabaseConnection::fromEnv() {
     const char* url = std::getenv("DATABASE_URL");
-    if (!url) throw std::runtime_error("DATABASE_URL environment variable is not set");
-    return DatabaseConnection(url);
+    if (url && *url) return DatabaseConnection(url);
+
+    auto require = [](const char* name) -> std::string {
+        const char* v = std::getenv(name);
+        if (!v || !*v) throw std::runtime_error(std::string(name) + " environment variable is not set");
+        return v;
+    };
+    auto opt = [](const char* name, const char* def) -> std::string {
+        const char* v = std::getenv(name);
+        return (v && *v) ? v : def;
+    };
+
+    return DatabaseConnection(
+        "host="     + require("DB_HOST") +
+        " port="    + opt("DB_PORT", "5432") +
+        " dbname="  + require("DB_NAME") +
+        " user="    + require("DB_USER") +
+        " password=" + require("DB_PASSWORD")
+    );
 }
