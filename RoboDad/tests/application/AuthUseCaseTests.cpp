@@ -1,6 +1,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "infrastructureServices/UserRepository.h"
+#include "infrastructureServices/persistance/UserRepository.h"
 #include "application/auth/LoginUser.h"
 #include "application/auth/RegisterUser.h"
 #include "user/EmploymentStatus.hpp"

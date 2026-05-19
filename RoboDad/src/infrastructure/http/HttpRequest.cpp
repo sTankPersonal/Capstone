@@ -33,6 +33,7 @@ std::optional<std::string> HttpRequest::getBearerToken() const {
     // TODO: call getHeader("Authorization");
     //       if present and starts with "Bearer ", strip the prefix and return the token;
     //       otherwise return nullopt
+    return std::nullopt;
 }
 
 crow::json::rvalue HttpRequest::getJsonBody() const {

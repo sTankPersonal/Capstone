@@ -1,5 +1,5 @@
 #pragma once
-#include "infrastructureServices/UserRepository.h"
+#include "infrastructureServices/persistance/UserRepository.h"
 #include "user/User.hpp"
 #include <cstdint>
 #include <optional>

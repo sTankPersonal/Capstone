@@ -24,6 +24,7 @@ PromptBuilder& PromptBuilder::withBudgetContext(const std::vector<BudgetGoal>& g
     //       (e.g. "Recent Expenses:\n- $45.00 Groceries (Expense)\n");
     //       append both summaries to userMessage_;
     //       return *this
+    return *this;
 }
 
 Prompt PromptBuilder::build() {

@@ -1,5 +1,5 @@
 #pragma once
-#include "infrastructureServices/BudgetRepository.h"
+#include "infrastructureServices/persistance/BudgetRepository.h"
 #include "infrastructure/persistence/DatabaseConnection.h"
 
 class PostgresBudgetRepository : public BudgetRepository {

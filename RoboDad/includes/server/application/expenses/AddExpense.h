@@ -1,5 +1,5 @@
 #pragma once
-#include "infrastructureServices/ExpenseRepository.h"
+#include "infrastructureServices/persistance/ExpenseRepository.h"
 #include "finance/Finance.hpp"
 #include "finance/FinanceEnum.hpp"
 #include <cstdint>

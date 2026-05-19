@@ -1,9 +1,8 @@
 #pragma once
-#include <string>
+#include "infrastructureServices/security/IPasswordHasher.h"
 
-class PasswordHasher {
+class PasswordHasher : public IPasswordHasher {
 public:
-    // Returns "salt:sha256hex" where salt is a random 16-byte hex string.
-    static std::string hash(const std::string& password);
-    static bool verify(const std::string& password, const std::string& stored);
+    std::string hash(const std::string& password) override;
+    bool verify(const std::string& password, const std::string& stored) override;
 };

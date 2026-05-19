@@ -1,10 +1,10 @@
 #pragma once
-#include "infrastructureServices/BudgetRepository.h"
-#include "infrastructureServices/ExpenseRepository.h"
-#include "infrastructureServices/PromptRepository.h"
-#include "infrastructureServices/ChatHistoryRepository.h"
-#include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
-#include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
+#include "infrastructureServices/persistance/BudgetRepository.h"
+#include "infrastructureServices/persistance/ExpenseRepository.h"
+#include "infrastructureServices/persistance/PromptRepository.h"
+#include "infrastructureServices/persistance/ChatHistoryRepository.h"
+#include "infrastructureServices/apiClient/ILlmClient.h"
+#include "infrastructureServices/apiClient/IPromptBuilder.h"
 #include <cstdint>
 #include <string>
 
@@ -16,13 +16,13 @@ class GetBudgetFeedback {
     ExpenseRepository&     expenseRepo_;
     PromptRepository&      promptRepo_;
     ChatHistoryRepository& chatHistoryRepo_;
-    OpenAIClient&           openAIClient_;
-    PromptBuilder&         promptBuilder_;
+    ILlmClient&            llmClient_;
+    IPromptBuilder&        promptBuilder_;
 
 public:
     GetBudgetFeedback(BudgetRepository&, ExpenseRepository&,
                       PromptRepository&, ChatHistoryRepository&,
-        OpenAIClient&, PromptBuilder&);
+                      ILlmClient&, IPromptBuilder&);
 
     // 1. Fetches the user's active budget goals and full expense history.
     // 2. Builds a Prompt via PromptBuilder (system instructions + prior history + context).

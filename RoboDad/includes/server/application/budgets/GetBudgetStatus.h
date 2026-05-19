@@ -1,5 +1,5 @@
 #pragma once
-#include "infrastructureServices/BudgetRepository.h"
+#include "infrastructureServices/persistance/BudgetRepository.h"
 #include "budget/BudgetGoal.hpp"
 #include <cstdint>
 #include <vector>

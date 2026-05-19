@@ -1,6 +1,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "infrastructureServices/ExpenseRepository.h"
+#include "infrastructureServices/persistance/ExpenseRepository.h"
 #include "application/expenses/AddExpense.h"
 #include "application/expenses/ListExpenses.h"
 #include "finance/Finance.hpp"
