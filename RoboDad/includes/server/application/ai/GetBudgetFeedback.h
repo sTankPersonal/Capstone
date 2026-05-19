@@ -1,8 +1,8 @@
 #pragma once
-#include "domain/repositories/BudgetRepository.h"
-#include "domain/repositories/ExpenseRepository.h"
-#include "domain/repositories/PromptRepository.h"
-#include "domain/repositories/ChatHistoryRepository.h"
+#include "infrastructureServices/BudgetRepository.h"
+#include "infrastructureServices/ExpenseRepository.h"
+#include "infrastructureServices/PromptRepository.h"
+#include "infrastructureServices/ChatHistoryRepository.h"
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include <cstdint>

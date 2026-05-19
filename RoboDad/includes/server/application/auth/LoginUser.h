@@ -1,5 +1,5 @@
 #pragma once
-#include "domain/repositories/UserRepository.h"
+#include "infrastructureServices/UserRepository.h"
 #include "user/User.hpp"
 #include <cstdint>
 #include <optional>

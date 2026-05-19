@@ -1,6 +1,6 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "domain/repositories/BudgetRepository.h"
+#include "infrastructureServices/BudgetRepository.h"
 #include "application/budgets/GetBudgetStatus.h"
 #include "application/budgets/SetBudgetGoal.h"
 #include "budget/BudgetGoal.hpp"

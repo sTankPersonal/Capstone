@@ -48,6 +48,7 @@ add_library(server_headers INTERFACE)
 target_include_directories(server_headers INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server
     ${CMAKE_CURRENT_SOURCE_DIR}/src/domain
+    ${CMAKE_CURRENT_SOURCE_DIR}/sharedKernel
 )
 
 # ── External dependencies ─────────────────────────────────────────────────────
