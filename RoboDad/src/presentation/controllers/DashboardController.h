@@ -1,9 +1,12 @@
 #pragma once
 
 #include <crow.h>
+#include "infrastructureServices/security/IJwtService.h"
 
 class DashboardController {
 public:
-    // Registers all AI-related HTTP routes
+    explicit DashboardController(IJwtService& jwt) : jwt_(jwt) {}
     void registerRoutes(crow::SimpleApp& app);
+private:
+    IJwtService& jwt_;
 };

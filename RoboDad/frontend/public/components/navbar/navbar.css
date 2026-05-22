@@ -49,3 +49,77 @@
             margin-right: 15px;
         }
 }
+
+/* Logout modal */
+#logout-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+#logout-modal-box {
+    background: #1e1e2f;
+    color: white;
+    border-radius: 10px;
+    padding: 2rem;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+    #logout-modal-box h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.2rem;
+        letter-spacing: 0.5px;
+    }
+
+    #logout-modal-box p {
+        margin: 0 0 1.5rem 0;
+        color: #d0d0ff;
+        font-size: 0.9rem;
+    }
+
+#logout-modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+    #logout-modal-actions button {
+        padding: 0.5rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+
+        #logout-modal-actions button:hover {
+            opacity: 0.85;
+        }
+
+#logout-cancel {
+    background: #2e2e45;
+    color: #d0d0ff;
+}
+
+#logout-confirm {
+    background: #7ab4ff;
+    color: #1e1e2f;
+    font-weight: bold;
+}
+#nav-greeting {
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    background: #2e2e45;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-right: 20px;
+    letter-spacing: 0.3px;
+    border: 1px solid #7ab4ff;
+}
