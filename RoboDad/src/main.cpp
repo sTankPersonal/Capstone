@@ -19,7 +19,7 @@ int main() {
     JwtService jwt(config.jwtSecret());
     PasswordHasher hasher;
 
-    registerAllRoutes(app, openai, userRepo, jwt, hasher);
+    registerAllRoutes(app, openai, userRepo, jwt, hasher, config);
 
     app.bindaddr("0.0.0.0").port(18080).multithreaded().run();
 }

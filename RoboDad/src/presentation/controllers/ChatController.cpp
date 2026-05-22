@@ -1,22 +1,35 @@
 #include "ChatController.h"
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
+#include "../routes/Routes.h"
 #include <crow.h>
 
-ChatController::ChatController(OpenAIClient& client)
-    : client_(client) {}
+ChatController::ChatController(OpenAIClient& client, IJwtService& jwt)
+    : client_(client), jwt_(jwt) {
+}
 
 void ChatController::registerRoutes(crow::SimpleApp& app) {
 
     CROW_ROUTE(app, "/chat")
-        ([](const crow::request&, crow::response& res) {
+        ([this](const crow::request& req, crow::response& res) {
+        if (!requireAuth(req, jwt_)) {
+            res.code = 302;
+            res.set_header("Location", "/login");
+            res.end();
+            return;
+        }
+        res.set_header("Cache-Control", "no-store, no-cache, must-revalidate");
+        res.set_header("Pragma", "no-cache");
         res.set_static_file_info("public/chat.html");
         res.end();
             });
 
-
     CROW_ROUTE(app, "/api/ai/chat").methods("POST"_method)
-    ([this](const crow::request& req) {
+        ([this](const crow::request& req) {
+        if (!requireAuth(req, jwt_)) {
+            return crow::response(401, R"({"error":"Unauthorized"})");
+        }
+
         auto body = crow::json::load(req.body);
         if (!body || !body.has("message")) {
             return crow::response(400, "Missing 'message'");
@@ -24,14 +37,12 @@ void ChatController::registerRoutes(crow::SimpleApp& app) {
 
         std::string userMessage = body["message"].s();
 
-        // Build a prompt using your new PromptBuilder
         PromptBuilder builder;
         Prompt prompt = builder
             .withUserMessage(userMessage)
-            .build();  // uses default RoboDad system instructions
+            .build();
 
         try {
-            // If no API key is set, return a stub response instead of calling OpenAI
             if (client_.apiKey().empty()) {
                 crow::json::wvalue out;
                 out["reply"] = "AI disabled (no API key). This is a stub response.";
@@ -47,5 +58,5 @@ void ChatController::registerRoutes(crow::SimpleApp& app) {
         catch (const std::exception& ex) {
             return crow::response(500, ex.what());
         }
-    });
+            });
 }
