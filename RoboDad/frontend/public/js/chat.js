@@ -9,7 +9,6 @@ function addMessage(text, sender) {
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
 }
-
 async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
@@ -21,20 +20,23 @@ async function sendMessage() {
         const res = await fetch("/api/ai/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include", // <-- send JWT cookie
             body: JSON.stringify({ message: text })
         });
 
         if (!res.ok) {
-            addMessage("Error: " + res.status, "bot");
+            const errText = await res.text();
+            addMessage("Error " + res.status + ": " + errText, "bot");
             return;
         }
 
         const data = await res.json();
         addMessage(data.reply, "bot");
     } catch (err) {
-        addMessage("Network error", "bot");
+        addMessage("Network error: " + err.message, "bot");
     }
 }
+
 
 sendBtn.onclick = sendMessage;
 input.addEventListener("keydown", e => {
