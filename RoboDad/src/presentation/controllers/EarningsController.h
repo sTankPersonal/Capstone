@@ -3,9 +3,9 @@
 #include <crow.h>
 #include "infrastructureServices/security/IJwtService.h"
 
-class ActivityController {
+class EarningsController {
 public:
-    explicit ActivityController(IJwtService& jwt) : jwt_(jwt) {}
+    explicit EarningsController(IJwtService& jwt) : jwt_(jwt) {}
     void registerRoutes(crow::SimpleApp& app);
 private:
     IJwtService& jwt_;

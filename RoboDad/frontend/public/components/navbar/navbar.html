@@ -4,10 +4,25 @@
     </div>
 
     <div class="nav-links">
-        <a href="/chat" data-page="chat">Chat</a>
-        <a href="/activity" data-page="activity">Activity</a>
         <a href="/dashboard" data-page="dashboard">Dashboard</a>
-        <a href="/settings" data-page="settings">Settings</a>
-        <a href="/logout" data-page="logout">Logout</a>
+
+        <div class="dropdown">
+            <span class="dropdown-title">Activity</span>
+            <div class="dropdown-menu">
+                <a href="/earnings" data-page="earnings">Earnings</a>
+                <a href="/expenses" data-page="expenses">Expenses</a>
+            </div>
+        </div>
+
+        <a href="/chat" data-page="chat">Chat</a>
+
+        <div class="dropdown">
+            <span class="dropdown-title">Profile</span>
+            <div class="dropdown-menu">
+                <a href="/settings" data-page="settings">Settings</a>
+                <a href="/logout" data-page="logout">Logout</a>
+            </div>
+        </div>
     </div>
+
 </nav>

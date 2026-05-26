@@ -11,6 +11,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         cssLink.href = "/assets/components/navbar/navbar.css";
         document.head.appendChild(cssLink);
 
+        const profileContainer = container.querySelector("#profile");
+        if (profileContainer) {
+            const profileHtml = await fetch("/assets/components/profile/profile.html").then(r => r.text());
+            profileContainer.innerHTML = profileHtml;
+
+            const profileCss = document.createElement("link");
+            profileCss.rel = "stylesheet";
+            profileCss.href = "/assets/components/profile/profile.css";
+            document.head.appendChild(profileCss);
+
+            const profileScript = document.createElement("script");
+            profileScript.src = "/assets/components/profile/profile.js";
+            document.body.appendChild(profileScript);
+        }
+
+
         const current = window.location.pathname.replace("/", "");
         const links = container.querySelectorAll("a[data-page]");
         links.forEach(link => {
