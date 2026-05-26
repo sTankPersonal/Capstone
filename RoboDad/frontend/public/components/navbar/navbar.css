@@ -14,10 +14,16 @@
     letter-spacing: 1px;
 }
 
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 20px; 
+}
+
+
 .nav-links a {
     color: #d0d0ff;
     text-decoration: none;
-    margin-left: 20px;
     font-size: 16px;
     transition: color 0.2s ease;
 }
@@ -123,3 +129,56 @@
     letter-spacing: 0.3px;
     border: 1px solid #7ab4ff;
 }
+
+
+
+/* Activity label */
+.dropdown-title {
+    color: #d0d0ff;
+    font-size: 16px;
+    cursor: default;
+    transition: color 0.2s ease;
+}
+
+.dropdown:hover .dropdown-title {
+    color: white;
+}
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%; /* sits directly under Activity */
+    right: 0;
+    background: #2e2e45;
+    border: 1px solid #7ab4ff;
+    border-radius: 6px;
+    min-width: 150px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 20;
+}
+
+
+/* Show on hover */
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+/* Dropdown links */
+.dropdown-menu a {
+    display: block;
+    padding: 10px 14px;
+    color: #d0d0ff;
+    text-decoration: none;
+    font-size: 16px; 
+    transition: color 0.2s ease; 
+}
+
+
+    .dropdown-menu a:hover {
+        background: #1e1e2f;
+        color: white;
+    }
