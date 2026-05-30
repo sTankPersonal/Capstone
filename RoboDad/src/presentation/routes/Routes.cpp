@@ -3,7 +3,8 @@
 #include "../controllers/ChatController.h"
 #include "../controllers/DashboardController.h"
 #include "../controllers/SettingsController.h"
-#include "../controllers/ActivityController.h"
+#include "../controllers/EarningsController.h"
+#include "../controllers/ExpensesController.h"
 #include "../controllers/AuthenticationController.h"
 #include "../controllers/GoogleAuthController.h"
 
@@ -40,7 +41,8 @@ void registerAllRoutes(crow::SimpleApp& app, OpenAIClient& openai,
     (new ChatController(openai, jwt))->registerRoutes(app);
     (new DashboardController(jwt))->registerRoutes(app);
     (new SettingsController(jwt))->registerRoutes(app);
-    (new ActivityController(jwt))->registerRoutes(app);
+    (new EarningsController(jwt))->registerRoutes(app);
+    (new ExpensesController(jwt))->registerRoutes(app);
     (new AuthenticationController(userRepo, hasher, jwt))->registerRoutes(app);
     (new GoogleAuthController(userRepo, jwt, hasher,
         config.googleClientId(),

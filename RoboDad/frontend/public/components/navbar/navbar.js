@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         cssLink.href = "/assets/components/navbar/navbar.css";
         document.head.appendChild(cssLink);
 
+
         const current = window.location.pathname.replace("/", "");
         const links = container.querySelectorAll("a[data-page]");
         links.forEach(link => {
