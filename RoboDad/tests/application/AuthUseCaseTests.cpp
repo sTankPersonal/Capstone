@@ -1,25 +1,37 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include "infrastructureServices/persistance/UserRepository.h"
-#include "infrastructureServices/security/IPasswordHasher.h"
-#include "application/auth/LoginUser.h"
-#include "application/auth/RegisterUser.h"
-#include "domain/user/EmploymentStatus.h"
-#include "domain/user/PersonalInfo.h"
-#include "domain/user/User.h"
+#include "IUserRepository.h"
+#include "IPasswordHasher.h"
+#include "LoginUser.h"
+#include "RegisterUser.h"
+#include "User.h"
+#include "UserId.h"
+#include "UserLogin.h"
+#include "UserInformation.h"
+#include <chrono>
 
 using ::testing::Return;
 using ::testing::_;
 
-class MockUserRepository : public UserRepository {
+static std::chrono::year_month_day today() {
+    return std::chrono::year_month_day{
+        std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())};
+}
+
+static User makeUser(const std::string& id, const std::string& email) {
+    auto d = today();
+    return User(UserId{id}, UserLogin(email, std::nullopt), UserInformation{}, d, d);
+}
+
+class MockUserRepository : public IUserRepository {
 public:
-    MOCK_METHOD(User,                  create,            (const User&, const std::string&, const std::string&), (override));
-    MOCK_METHOD(std::optional<User>,   findById,          (uint32_t),                (override));
-    MOCK_METHOD(std::vector<User>,     findAll,           (),                        (override));
-    MOCK_METHOD(bool,                  update,            (const User&),             (override));
-    MOCK_METHOD(bool,                  remove,            (uint32_t),                (override));
-    MOCK_METHOD((std::optional<std::pair<uint32_t, std::string>>),
-                                       lookupCredentials, (const std::string&),      (override));
+    MOCK_METHOD(User,                          create,            (const User&),        (override));
+    MOCK_METHOD(std::optional<User>,           findById,          (UserId),             (override));
+    MOCK_METHOD(std::vector<User>,             findAll,           (),                   (override));
+    MOCK_METHOD(bool,                          update,            (const User&),        (override));
+    MOCK_METHOD(bool,                          remove,            (UserId),             (override));
+    MOCK_METHOD((std::optional<std::pair<UserId, std::string>>),
+                                               lookupCredentials, (const std::string&), (override));
 };
 
 class MockPasswordHasher : public IPasswordHasher {
@@ -28,37 +40,36 @@ public:
     MOCK_METHOD(bool,        verify, (const std::string&, const std::string&), (override));
 };
 
-// ── RegisterUser ─────────────────────────────────────────────────────────────
+// ── RegisterUser ──────────────────────────────────────────────────────────────
 
 TEST(RegisterUserTest, ExecuteHashesPasswordBeforeStoring) {
     MockUserRepository repo;
     MockPasswordHasher hasher;
-    PersonalInfo info("Alice", 30, EmploymentStatus::Employed);
-    User expected(1u, info, {});
+    User expected = makeUser("uuid-1", "alice@example.com");
 
     EXPECT_CALL(hasher, hash("secret")).WillOnce(Return(std::string("hashed_secret")));
-    EXPECT_CALL(repo, create(_, "alice@example.com", "hashed_secret")).WillOnce(Return(expected));
+    EXPECT_CALL(repo, create(_)).WillOnce(Return(expected));
 
     RegisterUser useCase(repo, hasher);
-    User result = useCase.execute(info, "alice@example.com", "secret");
+    User result = useCase.execute("alice@example.com", "secret", UserInformation{});
 
-    EXPECT_EQ(result.getId(), 1u);
+    EXPECT_EQ(result.getId().getId(), "uuid-1");
 }
 
 TEST(RegisterUserTest, ExecuteReturnsCreatedUser) {
     MockUserRepository repo;
     MockPasswordHasher hasher;
-    PersonalInfo info("Bob", 25, EmploymentStatus::Unemployed);
-    User expected(2u, info, {});
+    UserInformation info("Bob", "Jones", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt);
+    User expected = makeUser("uuid-2", "bob@example.com");
 
     EXPECT_CALL(hasher, hash(_)).WillOnce(Return(std::string("any_hash")));
-    EXPECT_CALL(repo, create(_, _, _)).WillOnce(Return(expected));
+    EXPECT_CALL(repo, create(_)).WillOnce(Return(expected));
 
     RegisterUser useCase(repo, hasher);
-    User result = useCase.execute(info, "bob@example.com", "pass123");
+    User result = useCase.execute("bob@example.com", "pass123", info);
 
-    EXPECT_EQ(result.getId(), 2u);
-    EXPECT_EQ(result.getPersonalInfo().getName(), "Bob");
+    EXPECT_EQ(result.getId().getId(), "uuid-2");
+    EXPECT_EQ(result.getUserLogin().getEmail(), "bob@example.com");
 }
 
 // ── LoginUser ─────────────────────────────────────────────────────────────────
@@ -66,20 +77,19 @@ TEST(RegisterUserTest, ExecuteReturnsCreatedUser) {
 TEST(LoginUserTest, ExecuteReturnsUserOnValidCredentials) {
     MockUserRepository repo;
     MockPasswordHasher hasher;
-    PersonalInfo info("Alice", 30, EmploymentStatus::Employed);
-    User expected(1u, info, {});
+    User expected = makeUser("uuid-1", "alice@example.com");
 
     EXPECT_CALL(repo, lookupCredentials("alice@example.com"))
-        .WillOnce(Return(std::make_optional(std::make_pair(1u, std::string("hashed")))));
+        .WillOnce(Return(std::make_optional(std::make_pair(UserId{"uuid-1"}, std::string("hashed")))));
     EXPECT_CALL(hasher, verify("secret", "hashed")).WillOnce(Return(true));
-    EXPECT_CALL(repo, findById(1u)).WillOnce(Return(std::optional<User>{expected}));
+    EXPECT_CALL(repo, findById(UserId{"uuid-1"})).WillOnce(Return(std::optional<User>{expected}));
 
     LoginUser useCase(repo, hasher);
     auto result = useCase.execute("alice@example.com", "secret");
 
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->getId(), 1u);
-    EXPECT_EQ(result->getPersonalInfo().getName(), "Alice");
+    EXPECT_EQ(result->getId().getId(), "uuid-1");
+    EXPECT_EQ(result->getUserLogin().getEmail(), "alice@example.com");
 }
 
 TEST(LoginUserTest, ExecuteReturnsNulloptWhenEmailNotFound) {
@@ -98,7 +108,7 @@ TEST(LoginUserTest, ExecuteReturnsNulloptOnWrongPassword) {
     MockPasswordHasher hasher;
 
     EXPECT_CALL(repo, lookupCredentials("alice@example.com"))
-        .WillOnce(Return(std::make_optional(std::make_pair(1u, std::string("hashed")))));
+        .WillOnce(Return(std::make_optional(std::make_pair(UserId{"uuid-1"}, std::string("hashed")))));
     EXPECT_CALL(hasher, verify("wrong", "hashed")).WillOnce(Return(false));
 
     LoginUser useCase(repo, hasher);
@@ -110,9 +120,9 @@ TEST(LoginUserTest, ExecuteReturnsNulloptWhenUserNotFoundAfterCredentialLookup) 
     MockPasswordHasher hasher;
 
     EXPECT_CALL(repo, lookupCredentials("alice@example.com"))
-        .WillOnce(Return(std::make_optional(std::make_pair(1u, std::string("hashed")))));
+        .WillOnce(Return(std::make_optional(std::make_pair(UserId{"uuid-1"}, std::string("hashed")))));
     EXPECT_CALL(hasher, verify("secret", "hashed")).WillOnce(Return(true));
-    EXPECT_CALL(repo, findById(1u)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(repo, findById(UserId{"uuid-1"})).WillOnce(Return(std::nullopt));
 
     LoginUser useCase(repo, hasher);
     EXPECT_FALSE(useCase.execute("alice@example.com", "secret").has_value());

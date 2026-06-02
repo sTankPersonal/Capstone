@@ -1,8 +1,8 @@
-#include "GoogleAuthController.h"
-#include "../routes/Routes.h"
+#include "presentation/controllers/GoogleAuthController.h"
+#include "presentation/routes/Routes.h"
 #include "application/auth/RegisterUser.h"
-#include "domain/user/PersonalInfo.h"
-#include "domain/user/EmploymentStatus.h"
+#include "UserInformation.h"
+#include "EmploymentStatusId.h"
 #include <crow.h>
 #include <curl/curl.h>
 #include <sstream>
@@ -106,16 +106,16 @@ void GoogleAuthController::registerRoutes(crow::SimpleApp& app) {
             // Check if user already exists
             auto existing = repo_.lookupCredentials(email);
             if (existing) {
-                // Existing user — just log them in
+                // Existing user ï¿½ just log them in
                 res.code = 302;
-                res.set_header("Set-Cookie", "token=" + jwt_.generate(existing->first) +
+                res.set_header("Set-Cookie", "token=" + jwt_.generate(existing->first.getId()) +
                     "; HttpOnly; Path=/; Max-Age=86400");
                 res.set_header("Location", "/chat");
                 res.end();
                 return;
             }
 
-            // New user — redirect to complete profile
+            // New user ï¿½ redirect to complete profile
             res.code = 302;
             res.set_header("Location",
                 "/complete-profile?name=" + urlEncode(name) +
@@ -156,17 +156,20 @@ void GoogleAuthController::registerRoutes(crow::SimpleApp& app) {
                 return res;
             }
 
-            // Generate a random password since Google users won't use one
-            std::string randomPassword = "google_oauth_" + std::to_string(std::rand());
+            auto spacePos = name.find(' ');
+            std::optional<std::string> firstName = spacePos != std::string::npos ? name.substr(0, spacePos) : name;
+            std::optional<std::string> lastName  = spacePos != std::string::npos ? std::optional<std::string>{name.substr(spacePos + 1)} : std::nullopt;
+            std::optional<EmploymentStatusId> empStatus = statusInt > 0
+                ? std::optional<EmploymentStatusId>{EmploymentStatusId(std::to_string(statusInt))}
+                : std::nullopt;
 
-            PersonalInfo info(name, static_cast<uint8_t>(age),
-                static_cast<EmploymentStatus>(statusInt));
+            UserInformation info(firstName, lastName, std::nullopt, std::nullopt, std::nullopt, std::nullopt, empStatus);
 
             RegisterUser registerUser(repo_, hasher_);
-            auto user = registerUser.execute(info, email, randomPassword);
+            auto user = registerUser.execute(email, "", info);
 
             crow::response res(302);
-            res.set_header("Set-Cookie", "token=" + jwt_.generate(user.getId()) +
+            res.set_header("Set-Cookie", "token=" + jwt_.generate(user.getId().getId()) +
                 "; HttpOnly; Path=/; Max-Age=86400");
             res.set_header("Location", "/chat");
             return res;

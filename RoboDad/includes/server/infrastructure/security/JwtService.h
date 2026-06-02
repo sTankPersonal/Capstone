@@ -7,6 +7,6 @@ class JwtService : public IJwtService {
 public:
     explicit JwtService(const std::string& secret) : secret_(secret) {}
 
-    std::string generate(uint32_t userId) override;
-    std::optional<uint32_t> verify(const std::string& token) override;
+    std::string generate(const std::string& userId) override;
+    std::optional<std::string> verify(const std::string& token) override;
 };

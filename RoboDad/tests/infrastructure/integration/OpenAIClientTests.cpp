@@ -1,11 +1,17 @@
 #include <gtest/gtest.h>
 #include <cstdlib>
-#include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
-#include "domain/budget/BudgetGoal.h"
-#include "domain/finance/Finance.h"
-#include "domain/finance/FinanceEnum.h"
-#include "domain/llm/ChatHistory.h"
+#include "ChatMessage.h"
+#include "ChatMessageId.h"
+#include "ChatSessionId.h"
+#include "MessageSenderId.h"
+#include "ChatMessageContent.h"
+#include <chrono>
+
+static std::chrono::year_month_day today() {
+    return std::chrono::year_month_day{
+        std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())};
+}
 
 class OpenAIClientTest : public ::testing::Test {
 protected:
@@ -13,57 +19,47 @@ protected:
     std::string model_;
 
     void SetUp() override {
-        apiKey_ = std::getenv("OPENAI_API_KEY");
-        model_ = "gpt-4o-mini";
+        const char* key = std::getenv("OPENAI_API_KEY");
+        apiKey_ = key ? key : "";
+        model_  = "gpt-4o-mini";
 
-        if (!apiKey_ || apiKey_.empty()) {
+        if (apiKey_.empty())
             GTEST_SKIP() << "OPENAI_API_KEY not set; skipping integration tests.";
-        }
-
     }
 };
 
 TEST_F(OpenAIClientTest, GenerateReturnsNonEmptyResponse) {
     OpenAIClient client(apiKey_, model_);
-    Prompt prompt = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withUserMessage("Say hello in one word.")
-        .build();
-
-    const std::string response = client.generate(prompt);
+    const std::string response = client.generate(
+        "You are a helpful assistant.",
+        {},
+        "Say hello in one word."
+    );
     EXPECT_FALSE(response.empty());
 }
 
 TEST_F(OpenAIClientTest, GenerateWithChatHistoryDoesNotCrash) {
-    // Verifies that prior conversation turns are serialized without error.
     OpenAIClient client(apiKey_, model_);
-    ChatHistory prior(0u, 0u, "My name is Alice.", "Nice to meet you, Alice!");
-    Prompt prompt = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withChatHistory({prior})
-        .withUserMessage("Repeat my name.")
-        .build();
-
+    ChatMessage prior(
+        ChatMessageId{"msg-1"}, ChatSessionId{"session-1"},
+        MessageSenderId{"user"},
+        ChatMessageContent(std::optional<std::string>{"My name is Alice."}),
+        today()
+    );
     EXPECT_NO_THROW({
-        const std::string response = client.generate(prompt);
+        const std::string response = client.generate(
+            "You are a helpful assistant.",
+            {prior},
+            "Repeat my name."
+        );
         EXPECT_FALSE(response.empty());
     });
 }
 
-TEST_F(OpenAIClientTest, GenerateWithBudgetContextDoesNotCrash) {
-    // Verifies that financial context is serialized and sent correctly.
+TEST_F(OpenAIClientTest, GenerateWithEmptySystemPromptDoesNotCrash) {
     OpenAIClient client(apiKey_, model_);
-    BudgetGoal goal(0u, 1u, 1000.0, 200.0, "Emergency Fund");
-    Finance    expense(0u, 500.0, "Rent", FinanceEnum::Expense);
-
-    Prompt prompt = PromptBuilder()
-        .withSystemInstructions(PromptBuilder::defaultSystemInstructions())
-        .withBudgetContext({goal}, {expense})
-        .withUserMessage("Am I on track with my emergency fund?")
-        .build();
-
     EXPECT_NO_THROW({
-        const std::string response = client.generate(prompt);
+        const std::string response = client.generate("", {}, "What is 2 + 2?");
         EXPECT_FALSE(response.empty());
     });
 }

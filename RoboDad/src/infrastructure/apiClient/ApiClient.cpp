@@ -1,9 +1,8 @@
 #include "infrastructure/apiClient/ApiClient.h"
-#include <curl/curl.h>
 #include <stdexcept>
 
-ApiClient::ApiClient(std::string apiKey, std::string baseUrl)
-    : apiKey_(std::move(apiKey)), baseUrl_(std::move(baseUrl)) {}
+#ifdef __linux__
+#include <curl/curl.h>
 
 static size_t writeCallback(char* ptr, size_t size, size_t nmemb, void* userdata) {
     size_t total = size * nmemb;
@@ -33,6 +32,9 @@ static std::string performRequest(CURL* curl) {
 
     return buffer;
 }
+
+ApiClient::ApiClient(std::string apiKey, std::string baseUrl)
+    : apiKey_(std::move(apiKey)), baseUrl_(std::move(baseUrl)) {}
 
 std::string ApiClient::httpPost(const std::string& url, const std::string& body,
                                 const std::vector<std::string>& headers) const {
@@ -87,3 +89,20 @@ std::string ApiClient::httpGet(const std::string& url,
     curl_easy_cleanup(curl);
     return result;
 }
+
+#else
+
+ApiClient::ApiClient(std::string apiKey, std::string baseUrl)
+    : apiKey_(std::move(apiKey)), baseUrl_(std::move(baseUrl)) {}
+
+std::string ApiClient::httpPost(const std::string&, const std::string&,
+                                const std::vector<std::string>&) const {
+    throw std::runtime_error("ApiClient: HTTP not supported on this platform");
+}
+
+std::string ApiClient::httpGet(const std::string&,
+                               const std::vector<std::string>&) const {
+    throw std::runtime_error("ApiClient: HTTP not supported on this platform");
+}
+
+#endif // __linux__
