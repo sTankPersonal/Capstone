@@ -6,12 +6,12 @@
 #include <chrono>
 
 SendChatMessage::SendChatMessage(IChatSessionRepository& sessionRepo,
-                                 IChatMessageRepository& messageRepo,
+    IChatMessageRepository& messageRepo,
                                  ILlmPersonaRepository&  personaRepo,
-                                 ITransactionRepository& transactionRepo,
+    ITransactionRepository& transactionRepo,
                                  ILlmClient&             llmClient,
                                  IPromptBuilder&         promptBuilder,
-                                 int historyLimit)
+    int historyLimit)
     : sessionRepo_(sessionRepo)
     , messageRepo_(messageRepo)
     , personaRepo_(personaRepo)
@@ -36,8 +36,6 @@ std::string SendChatMessage::execute(const SendChatMessageCommand& request) {
         .withTransactionContext(transactions)
         .build();
 
-    const std::string response = llmClient_.generate(systemPrompt, history, enriched);
-
     const auto today = std::chrono::year_month_day{
         std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())
     };
@@ -50,6 +48,16 @@ std::string SendChatMessage::execute(const SendChatMessageCommand& request) {
         ChatMessageContent(request.userMessage),
         today
     ));
+
+    std::string response;
+    try {
+        response = llmClient_.generate(systemPrompt, history, enriched);
+    }
+    catch (const std::exception& ex) {
+        response = "I'm running into an issue and can't generate a full response right now.";
+    }
+
+    //Save assistant message (real or fallback)
     messageRepo_.create(ChatMessage(
         ChatMessageId(UuidGenerator::generate()),
         request.sessionId,

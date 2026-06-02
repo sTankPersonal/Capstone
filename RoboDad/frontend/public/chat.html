@@ -1,27 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>RoboDad Chat</title>
 
-    <link rel="stylesheet" href="/css/global.css">
-    <link rel="stylesheet" href="/css/chat.css">
+    <link rel="stylesheet" href="/assets/css/global.css">
+    <link rel="stylesheet" href="/assets/css/chat.css">
 </head>
 
 <body>
 
-    <div id="navbar" data-username="{{user.first_name}}"></div>
-    <script src="/components/navbar/navbar.js"></script>
+    <!-- Navbar -->
+    <div id="navbar"></div>
+    <script src="/assets/components/navbar/navbar.js"></script>
 
-    <div id="chat-data" data-session-id="{{chat_session_id}}" hidden></div>
+    <div id="chatContainer">
 
-    <div id="chat"></div>
+        <!-- New Chat Modal -->
+        <div id="newChatModal" class="modal hidden">
+            <div class="modal-content">
+                <h3>Create New Chat</h3>
 
-    <div id="inputBar">
-        <input id="messageInput" type="text" placeholder="Type a message..." />
-        <button id="sendBtn">Send</button>
+                <label for="newChatDescription">Description</label>
+                <input id="newChatDescription" type="text">
+
+                <label for="newChatPersona">Persona</label>
+                <select id="newChatPersona">
+                    <option value="robodad">RoboDad</option>
+                    <option value="budget_coach">Budget Coach</option>
+                    <option value="investment_mentor">Investment Mentor</option>
+                </select>
+
+                <div class="modal-actions">
+                    <button id="createChatConfirm">Create</button>
+                    <button id="createChatCancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Selector -->
+        <div id="sessionBar">
+            <select id="sessionSelect"></select>
+            <button id="newSessionBtn">+ New Chat</button>
+        </div>
+
+        <!-- Chat Window -->
+        <div id="chat"></div>
+
+        <!-- Input Bar -->
+        <div id="inputBar">
+            <input id="messageInput" type="text" placeholder="Type a message...">
+            <button id="sendBtn">Send</button>
+        </div>
+
     </div>
 
-    <script src="/js/chat.js"></script>
+    <script src="/assets/js/chat.js"></script>
 </body>
 </html>
