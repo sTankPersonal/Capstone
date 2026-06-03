@@ -1,5 +1,5 @@
 #pragma once
-#include "infrastructureServices/apiClient/IPromptBuilder.h"
+#include "IPromptBuilder.h"
 #include "Transactions.h"
 #include <string>
 #include <vector>

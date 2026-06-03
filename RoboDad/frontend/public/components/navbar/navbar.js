@@ -3,34 +3,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!container) return;
 
     try {
-        const htmlRes = await fetch("/assets/components/navbar/navbar.html");
+        const htmlRes = await fetch("/components/navbar/navbar.html");
         container.innerHTML = await htmlRes.text();
 
         const cssLink = document.createElement("link");
         cssLink.rel = "stylesheet";
-        cssLink.href = "/assets/components/navbar/navbar.css";
+        cssLink.href = "/components/navbar/navbar.css";
         document.head.appendChild(cssLink);
 
-
-        const current = window.location.pathname.replace("/", "");
-        const links = container.querySelectorAll("a[data-page]");
-        links.forEach(link => {
-            if (link.dataset.page === current) {
+        const path = window.location.pathname;
+        container.querySelectorAll("a[href]").forEach(link => {
+            const href = link.getAttribute("href");
+            if (href && (path === href || path.startsWith(href + "/"))) {
                 link.classList.add("active");
             }
         });
 
-        // Fetch and display logged-in user's name
-        try {
-            const meRes = await fetch("/api/user/me");
-            if (meRes.ok) {
-                const me = await meRes.json();
-                const greeting = document.createElement("span");
-                greeting.id = "nav-greeting";
-                greeting.textContent = "Hello, " + me.name;
-                container.querySelector(".nav-links").prepend(greeting);
-            }
-        } catch (_) { }
+        const username = container.dataset.username;
+        if (username) {
+            const greeting = document.createElement("span");
+            greeting.id = "nav-greeting";
+            greeting.textContent = "Hello, " + username;
+            container.querySelector(".nav-links").prepend(greeting);
+        }
 
         // Inject logout modal
         const modal = document.createElement("div");
@@ -51,7 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             modal.style.display = "none";
         });
         document.getElementById("logout-confirm").addEventListener("click", () => {
-            window.location.href = "/logout";
+            window.location.href = "/auth/logout";
         });
         modal.addEventListener("click", (e) => {
             if (e.target === modal) modal.style.display = "none";

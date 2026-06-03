@@ -1,6 +1,6 @@
 #pragma once
 #include "infrastructure/apiClient/ApiClient.h"
-#include "infrastructureServices/apiClient/IPlaidClient.h"
+#include "IPlaidClient.h"
 #include "PlaidTransactionData.h"
 #include <string>
 #include <vector>

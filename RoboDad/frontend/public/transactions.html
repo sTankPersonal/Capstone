@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>RoboDad - Transactions</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/transactions.css">
+</head>
+
+<body>
+
+    <div id="navbar" data-username="{{user.first_name}}"></div>
+    <script src="/components/navbar/navbar.js"></script>
+
+    <div class="transactions-container">
+        <div class="transactions-header">
+            <h1>All Transactions</h1>
+        </div>
+
+        <table class="transaction-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#transactions}}
+                <tr>
+                    <td data-label="Date">{{transactionDate}}</td>
+                    <td data-label="Description">{{description}}</td>
+                    <td data-label="Amount" class="amount-cell">${{amount}}</td>
+                    <td data-label="Actions">
+                        <div class="actions-cell">
+                            <a href="/user/transactions/{{id}}" class="btn btn-secondary">View</a>
+                            <a href="/user/transactions/{{id}}/edit" class="btn btn-primary">Edit</a>
+                            <a href="/user/transactions/{{id}}/delete" class="btn btn-danger">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+                {{/transactions}}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

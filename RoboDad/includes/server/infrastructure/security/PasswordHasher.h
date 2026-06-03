@@ -1,5 +1,5 @@
 #pragma once
-#include "infrastructureServices/security/IPasswordHasher.h"
+#include "IPasswordHasher.h"
 
 class PasswordHasher : public IPasswordHasher {
 public:

@@ -1,0 +1,330 @@
+.transactions-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.transactions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.transactions-header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    color: #1e1e2f;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    font-family: Arial, sans-serif;
+}
+
+.btn:hover {
+    opacity: 0.85;
+}
+
+.btn-primary {
+    background: #7ab4ff;
+    color: #1e1e2f;
+    font-weight: bold;
+}
+
+.btn-secondary {
+    background: #2e2e45;
+    color: #d0d0ff;
+}
+
+.btn-danger {
+    background: #e05c5c;
+    color: white;
+    font-weight: bold;
+}
+
+/* Summary cards */
+.summary-cards {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    flex: 1;
+    background: #1e1e2f;
+    color: white;
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card .label {
+    font-size: 0.8rem;
+    color: #d0d0ff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+}
+
+.summary-card .value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #7ab4ff;
+}
+
+/* Transaction table */
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.transaction-table thead {
+    background: #1e1e2f;
+    color: #d0d0ff;
+}
+
+.transaction-table th {
+    padding: 0.9rem 1rem;
+    text-align: left;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.transaction-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.transaction-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.transaction-table tbody tr:hover {
+    background: #f9f9ff;
+}
+
+.amount-cell {
+    font-weight: bold;
+    color: #1e1e2f;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.actions-cell a {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #888;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* Transaction form */
+.transaction-form-card {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-width: 500px;
+    margin: 2rem auto;
+}
+
+.transaction-form-card h2 {
+    margin: 0 0 1.5rem 0;
+    color: #1e1e2f;
+    font-size: 1.4rem;
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #7ab4ff;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+}
+
+/* Delete confirmation */
+.delete-card {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-width: 480px;
+    margin: 2rem auto;
+    text-align: center;
+}
+
+.delete-card h2 {
+    color: #e05c5c;
+    margin: 0 0 1rem 0;
+}
+
+.delete-card .transaction-summary {
+    background: #f9f9ff;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1.2rem 0;
+    text-align: left;
+}
+
+.delete-card .transaction-summary p {
+    margin: 0.4rem 0;
+    font-size: 0.95rem;
+    color: #444;
+}
+
+.delete-card .transaction-summary strong {
+    color: #1e1e2f;
+}
+
+/* Detail card */
+.detail-card {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    max-width: 500px;
+    margin: 2rem auto;
+}
+
+.detail-card h2 {
+    margin: 0 0 1.5rem 0;
+    color: #1e1e2f;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
+}
+
+.detail-row:last-of-type {
+    border-bottom: none;
+}
+
+.detail-row .field-label {
+    color: #888;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.detail-row .field-value {
+    color: #1e1e2f;
+    font-weight: bold;
+}
+
+.detail-actions {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+}
+
+/* Alert messages */
+.alert {
+    padding: 0.8rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.alert-success {
+    background: #d4f4e8;
+    color: #1a7a4a;
+    border: 1px solid #a3e4c3;
+}
+
+.alert-error {
+    background: #fde8e8;
+    color: #a02020;
+    border: 1px solid #f5b8b8;
+}
+
+@media (max-width: 600px) {
+    .summary-cards {
+        flex-direction: column;
+    }
+
+    .transaction-table thead {
+        display: none;
+    }
+
+    .transaction-table td {
+        display: block;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    .transaction-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        font-weight: bold;
+        color: #888;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .actions-cell {
+        justify-content: flex-end;
+    }
+}

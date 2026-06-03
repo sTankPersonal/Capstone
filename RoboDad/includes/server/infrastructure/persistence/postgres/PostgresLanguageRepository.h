@@ -1,14 +1,12 @@
 #pragma once
 
-#include "IRepository.h"
-#include "Language.h"
-#include "LanguageId.h"
+#include "ILanguageRepository.h"
 #include "DatabaseConnection.h"
 #include <optional>
 #include <string>
 #include <vector>
 
-class PostgresLanguageRepository : public IRepository<Language, LanguageId> {
+class PostgresLanguageRepository : public ILanguageRepository {
     DatabaseConnection& db_;
 
 public:

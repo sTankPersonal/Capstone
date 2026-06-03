@@ -1,14 +1,12 @@
 #pragma once
 
-#include "IRepository.h"
-#include "EmploymentStatus.h"
-#include "EmploymentStatusId.h"
+#include "IEmploymentStatusRepository.h"
 #include "DatabaseConnection.h"
 #include <optional>
 #include <string>
 #include <vector>
 
-class PostgresEmploymentStatusRepository : public IRepository<EmploymentStatus, EmploymentStatusId> {
+class PostgresEmploymentStatusRepository : public IEmploymentStatusRepository {
     DatabaseConnection& db_;
 
 public:

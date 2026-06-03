@@ -2,6 +2,14 @@
 #include <string>
 
 class AppConfig {
+private:
+    std::string openAiApiKey_;
+    std::string openAiModel_;
+    std::string jwtSecret_;
+    std::string googleClientId_;
+    std::string googleClientSecret_;
+    std::string plaidClientId_;
+    std::string plaidSecret_;
 public:
     static AppConfig fromEnv();
     const std::string& plaidClientId()  const { return plaidClientId_; }
@@ -12,14 +20,7 @@ public:
     const std::string& googleClientId()      const { return googleClientId_; }
     const std::string& googleClientSecret()  const { return googleClientSecret_; }
 
-private:
-    std::string openAiApiKey_;
-    std::string openAiModel_;
-    std::string jwtSecret_;
-    std::string googleClientId_;
-    std::string googleClientSecret_;
-    std::string plaidClientId_;
-    std::string plaidSecret_;
+
 
     AppConfig(std::string openAiApiKey, std::string openAiModel, std::string jwtSecret,
         std::string googleClientId, std::string googleClientSecret,
