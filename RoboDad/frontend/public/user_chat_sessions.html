@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>RoboDad - Chats</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/chat_sessions.css">
+</head>
+
+<body>
+
+    <div id="navbar" data-username="{{user.firstName}}"></div>
+    <script src="/components/navbar/navbar.js"></script>
+
+    <div class="chats-layout">
+
+        <!-- Left Sidebar -->
+        <aside class="chat-sidebar">
+            <div class="sidebar-header">
+                <h3>Your Chats</h3>
+                <a href="/user/chats/new" class="sidebar-new-btn">+ New</a>
+            </div>
+            <nav class="chat-list">
+                {{#chat_sessions}}
+                <a class="chat-list-item" href="/user/chats/{{id}}/messages">{{description}}</a>
+                {{/chat_sessions}}
+                {{^chat_sessions}}
+                <p class="sidebar-empty">No chats yet</p>
+                {{/chat_sessions}}
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="chats-main">
+            <div class="sessions-header">
+                <h1>Chat Sessions</h1>
+                <a href="/user/chats/new" class="btn btn-primary">+ New Chat</a>
+            </div>
+
+            <table class="session-table">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Persona</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#chat_sessions}}
+                    <tr>
+                        <td>{{description}}</td>
+                        <td>{{personaId}}</td>
+                        <td>{{createdAt}}</td>
+                        <td>
+                            <div class="actions-cell">
+                                <a href="/user/chats/{{id}}/messages" class="btn btn-primary">Chat</a>
+                                <a href="/user/chats/{{id}}" class="btn btn-secondary">Details</a>
+                                <a href="/user/chats/{{id}}/delete" class="btn btn-danger">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {{/chat_sessions}}
+                </tbody>
+            </table>
+
+            {{^chat_sessions}}
+            <div class="empty-state">
+                <p>You have no chat sessions yet.</p>
+                <a href="/user/chats/new" class="btn btn-primary">Start your first chat</a>
+            </div>
+            {{/chat_sessions}}
+        </main>
+
+    </div>
+
+    <script>
+        var path = window.location.pathname;
+        document.querySelectorAll('.chat-list-item').forEach(function (a) {
+            if (a.getAttribute('href') === path) a.classList.add('active');
+        });
+    </script>
+
+</body>
+</html>

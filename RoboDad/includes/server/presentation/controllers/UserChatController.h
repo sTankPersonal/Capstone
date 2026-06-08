@@ -59,4 +59,7 @@ public:
 
     crow::response getMessages(const crow::request& req, UserId user_id, ChatSessionId chat_session_id);
     crow::response postNewMessage(const crow::request& req, UserId user_id, ChatSessionId chat_session_id);
+
+private:
+    crow::json::wvalue::list buildSessionList(UserId user_id);
 };
