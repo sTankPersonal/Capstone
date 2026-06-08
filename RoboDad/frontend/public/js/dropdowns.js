@@ -1,4 +1,4 @@
-async function populateDropdown(selectId, endpoint, dataKey) {
+async function populateDropdown(selectId, endpoint, dataKey, labelKey = 'value') {
     const select = document.getElementById(selectId);
     if (!select) return;
     try {
@@ -9,7 +9,7 @@ async function populateDropdown(selectId, endpoint, dataKey) {
         for (const item of data[dataKey]) {
             const opt = document.createElement('option');
             opt.value = item.id;
-            opt.textContent = item.value;
+            opt.textContent = item[labelKey];
             select.appendChild(opt);
         }
     } catch {

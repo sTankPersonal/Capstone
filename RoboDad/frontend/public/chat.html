@@ -1,60 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>RoboDad Chat</title>
-
-    <link rel="stylesheet" href="/assets/css/global.css">
-    <link rel="stylesheet" href="/assets/css/chat.css">
+    <meta charset="UTF-8" />
+    <title>RoboDad - Chat</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/chat_sessions.css">
 </head>
 
 <body>
 
-    <!-- Navbar -->
-    <div id="navbar"></div>
-    <script src="/assets/components/navbar/navbar.js"></script>
+    <div id="navbar" data-username="{{user.firstName}}"></div>
+    <script src="/components/navbar/navbar.js"></script>
 
-    <div id="chatContainer">
+    <div class="chats-layout">
 
-        <!-- New Chat Modal -->
-        <div id="newChatModal" class="modal hidden">
-            <div class="modal-content">
-                <h3>Create New Chat</h3>
+        <!-- Left Sidebar -->
+        <aside class="chat-sidebar">
+            <div class="sidebar-header">
+                <h3>Your Chats</h3>
+                <a href="/user/chats/new" class="sidebar-new-btn">+ New</a>
+            </div>
+            <nav class="chat-list">
+                {{#chat_sessions}}
+                <a class="chat-list-item" href="/user/chats/{{id}}/messages">{{description}}</a>
+                {{/chat_sessions}}
+                {{^chat_sessions}}
+                <p class="sidebar-empty">No chats yet</p>
+                {{/chat_sessions}}
+            </nav>
+        </aside>
 
-                <label for="newChatDescription">Description</label>
-                <input id="newChatDescription" type="text">
+        <!-- Main Content -->
+        <main class="chats-main"
+              data-userid="{{user.id}}"
+              data-sessionid="{{chat_session_id}}">
 
-                <label for="newChatPersona">Persona</label>
-                <select id="newChatPersona">
-                    <option value="robodad">RoboDad</option>
-                    <option value="budget_coach">Budget Coach</option>
-                    <option value="investment_mentor">Investment Mentor</option>
-                </select>
+            <div class="chat-window">
+                <div class="chat-window-header">
+                    <h2>Chat</h2>
+                    <a href="/user/chats/{{chat_session_id}}" class="btn btn-secondary" style="font-size:0.85rem;padding:0.35rem 0.8rem;">Details</a>
+                </div>
 
-                <div class="modal-actions">
-                    <button id="createChatConfirm">Create</button>
-                    <button id="createChatCancel">Cancel</button>
+                <div id="chat">
+                    {{#messages}}
+                    <div class="msg" data-sender="{{messageSenderId}}">{{content}}</div>
+                    {{/messages}}
+                </div>
+
+                <div id="inputBar">
+                    <input id="messageInput" type="text" placeholder="Type a message..." autocomplete="off" />
+                    <button id="sendBtn">Send</button>
                 </div>
             </div>
-        </div>
 
-        <!-- Session Selector -->
-        <div id="sessionBar">
-            <select id="sessionSelect"></select>
-            <button id="newSessionBtn">+ New Chat</button>
-        </div>
-
-        <!-- Chat Window -->
-        <div id="chat"></div>
-
-        <!-- Input Bar -->
-        <div id="inputBar">
-            <input id="messageInput" type="text" placeholder="Type a message...">
-            <button id="sendBtn">Send</button>
-        </div>
+        </main>
 
     </div>
 
-    <script src="/assets/js/chat.js"></script>
+    <script>
+        var main = document.querySelector('.chats-main');
+        var userId = main.dataset.userid;
+        var sessionId = main.dataset.sessionid;
+        var chat = document.getElementById('chat');
+        var input = document.getElementById('messageInput');
+
+        // Classify server-rendered messages
+        document.querySelectorAll('#chat .msg').forEach(function (msg) {
+            msg.classList.add(msg.dataset.sender === userId ? 'user' : 'bot');
+        });
+
+        // Scroll to bottom on load
+        chat.scrollTop = chat.scrollHeight;
+
+        function addMessage(text, role) {
+            var div = document.createElement('div');
+            div.className = 'msg ' + role;
+            div.textContent = text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function sendMessage() {
+            var text = input.value.trim();
+            if (!text) return;
+
+            addMessage(text, 'user');
+            input.value = '';
+
+            var params = new URLSearchParams({ message: text });
+            fetch('/user/chats/' + sessionId + '/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            }).then(function (res) {
+                if (res.status === 401) { window.location.href = '/login'; return null; }
+                if (!res.ok) { addMessage('Error sending message. Please try again.', 'bot'); return null; }
+                return res.json();
+            }).then(function (data) {
+                if (data) addMessage(data.reply, 'bot');
+            }).catch(function () {
+                addMessage('Error sending message. Please try again.', 'bot');
+            });
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Highlight active sidebar item
+        var activePath = '/user/chats/' + sessionId + '/messages';
+        document.querySelectorAll('.chat-list-item').forEach(function (a) {
+            if (a.getAttribute('href') === activePath) a.classList.add('active');
+        });
+    </script>
+
 </body>
 </html>

@@ -19,12 +19,12 @@ void UserChatController::registerRoutes(RoboDadApp& app) {
         return getChatSessions(req, UserId(app.get_context<AuthMiddleware>(req).userId));
     });
 
-    CROW_ROUTE(app, "/user/chats/<string>").methods(crow::HTTPMethod::GET)([this, &app](const crow::request& req, const std::string& chat_session_id) {
-        return getChatSessionDetails(req, UserId(app.get_context<AuthMiddleware>(req).userId), ChatSessionId(chat_session_id));
-    });
-
     CROW_ROUTE(app, "/user/chats/new").methods(crow::HTTPMethod::GET)([this, &app](const crow::request& req) {
         return getNewChatSessionPage(req, UserId(app.get_context<AuthMiddleware>(req).userId));
+    });
+
+    CROW_ROUTE(app, "/user/chats/<string>").methods(crow::HTTPMethod::GET)([this, &app](const crow::request& req, const std::string& chat_session_id) {
+        return getChatSessionDetails(req, UserId(app.get_context<AuthMiddleware>(req).userId), ChatSessionId(chat_session_id));
     });
 
     CROW_ROUTE(app, "/user/chats/<string>/edit").methods(crow::HTTPMethod::GET)([this, &app](const crow::request& req, const std::string& chat_session_id) {
@@ -56,15 +56,19 @@ void UserChatController::registerRoutes(RoboDadApp& app) {
     });
 }
 
-crow::response UserChatController::getChatSessions(const crow::request& req, UserId user_id) {
-    std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
+crow::json::wvalue::list UserChatController::buildSessionList(UserId user_id) {
     std::vector<ChatSessionDto> chatSessions = listChatSessions_.execute(ListChatSessionsQuery(user_id));
     crow::json::wvalue::list sessionList;
     for (const ChatSessionDto& session : chatSessions) {
         sessionList.push_back(static_cast<crow::json::wvalue>(session));
     }
+    return sessionList;
+}
+
+crow::response UserChatController::getChatSessions(const crow::request& req, UserId user_id) {
+    std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
     crow::mustache::context ctx;
-    ctx["chat_sessions"] = std::move(sessionList);
+    ctx["chat_sessions"] = buildSessionList(user_id);
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
     return crow::response(crow::mustache::load("user_chat_sessions.html").render(ctx));
 }
@@ -76,6 +80,7 @@ crow::response UserChatController::getChatSessionDetails(const crow::request& re
         return crow::response(404, "Chat session not found");
     }
     crow::mustache::context ctx;
+    ctx["chat_sessions"] = buildSessionList(user_id);
     ctx["chat_session"] = static_cast<crow::json::wvalue>(*chatSessionOpt);
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
     return crow::response(crow::mustache::load("user_chat_session_details.html").render(ctx));
@@ -84,6 +89,7 @@ crow::response UserChatController::getChatSessionDetails(const crow::request& re
 crow::response UserChatController::getNewChatSessionPage(const crow::request& req, UserId user_id) {
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
     crow::mustache::context ctx;
+    ctx["chat_sessions"] = buildSessionList(user_id);
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
     return crow::response(crow::mustache::load("new_chat_session.html").render(ctx));
 }
@@ -95,6 +101,7 @@ crow::response UserChatController::getEditChatSessionPage(const crow::request& r
         return crow::response(404, "Chat session not found");
     }
     crow::mustache::context ctx;
+    ctx["chat_sessions"] = buildSessionList(user_id);
     ctx["chat_session"] = static_cast<crow::json::wvalue>(*chatSessionOpt);
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
     return crow::response(crow::mustache::load("edit_chat_session.html").render(ctx));
@@ -107,6 +114,7 @@ crow::response UserChatController::getDeleteChatSessionPage(const crow::request&
         return crow::response(404, "Chat session not found");
     }
     crow::mustache::context ctx;
+    ctx["chat_sessions"] = buildSessionList(user_id);
     ctx["chat_session"] = static_cast<crow::json::wvalue>(*chatSessionOpt);
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
     return crow::response(crow::mustache::load("delete_chat_session.html").render(ctx));
@@ -157,6 +165,7 @@ crow::response UserChatController::getMessages(const crow::request& req, UserId 
         messageList.push_back(static_cast<crow::json::wvalue>(message));
     }
     crow::mustache::context ctx;
+    ctx["chat_sessions"] = buildSessionList(user_id);
     ctx["messages"] = std::move(messageList);
     ctx["chat_session_id"] = chat_session_id.getId();
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
