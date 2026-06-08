@@ -1,14 +1,12 @@
 #pragma once
 
-#include "IRepository.h"
-#include "Country.h"
-#include "CountryId.h"
+#include "ICountryRepository.h"
 #include "DatabaseConnection.h"
 #include <optional>
 #include <string>
 #include <vector>
 
-class PostgresCountryRepository : public IRepository<Country, CountryId> {
+class PostgresCountryRepository : public ICountryRepository {
     DatabaseConnection& db_;
 
 public:

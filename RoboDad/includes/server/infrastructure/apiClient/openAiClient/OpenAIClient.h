@@ -1,6 +1,6 @@
 #pragma once
 #include "infrastructure/apiClient/ApiClient.h"
-#include "infrastructureServices/apiClient/ILlmClient.h"
+#include "ILlmClient.h"
 #include "ChatMessage.h"
 #include <string>
 #include <vector>

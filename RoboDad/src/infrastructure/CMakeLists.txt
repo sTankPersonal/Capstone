@@ -7,23 +7,18 @@ file(GLOB_RECURSE INFRA_SOURCES
 
 add_library(roboDadInfrastructure STATIC ${INFRA_SOURCES})
 
+target_link_libraries(roboDadInfrastructure PUBLIC
+    roboDadApplication
+    roboDadDomain
+    server_headers
+    crow_asio
+    pqxx
+    jwt-cpp::jwt-cpp
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Threads::Threads
+)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_libraries(roboDadInfrastructure PUBLIC
-        roboDadApplication
-        roboDadDomain
-        server_headers
-        crow_asio
-        pqxx
-        CURL::libcurl
-        Threads::Threads
-        OpenSSL::Crypto
-    )
-else()
-    target_link_libraries(roboDadInfrastructure PUBLIC
-        roboDadApplication
-        roboDadDomain
-        server_headers
-        crow_asio
-        Threads::Threads
-    )
+    target_link_libraries(roboDadInfrastructure PUBLIC CURL::libcurl)
 endif()

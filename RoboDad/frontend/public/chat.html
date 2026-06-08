@@ -1,22 +1,19 @@
-<!-- Chat, talk to RoboDad here -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <title>RoboDad Chat</title>
 
-    <!-- Shared styles -->
-    <link rel="stylesheet" href="/assets/css/global.css">
-
-    <!-- Chat-specific styles -->
-    <link rel="stylesheet" href="/assets/css/chat.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/chat.css">
 </head>
 
 <body>
 
-    <div id="navbar"></div>
-    <script src="/assets/components/navbar/navbar.js"></script>
+    <div id="navbar" data-username="{{user.first_name}}"></div>
+    <script src="/components/navbar/navbar.js"></script>
+
+    <div id="chat-data" data-session-id="{{chat_session_id}}" hidden></div>
 
     <div id="chat"></div>
 
@@ -25,6 +22,6 @@
         <button id="sendBtn">Send</button>
     </div>
 
-    <script src="/assets/js/chat.js"></script>
+    <script src="/js/chat.js"></script>
 </body>
 </html>

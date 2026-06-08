@@ -1,14 +1,12 @@
 #pragma once
 
-#include "IRepository.h"
-#include "MessageSender.h"
-#include "MessageSenderId.h"
+#include "IMessageSenderRepository.h"
 #include "DatabaseConnection.h"
 #include <optional>
 #include <string>
 #include <vector>
 
-class PostgresMessageSenderRepository : public IRepository<MessageSender, MessageSenderId> {
+class PostgresMessageSenderRepository : public IMessageSenderRepository {
     DatabaseConnection& db_;
 
 public:
