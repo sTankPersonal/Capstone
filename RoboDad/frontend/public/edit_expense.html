@@ -16,9 +16,7 @@
         <div class="transaction-form-card">
             <h2>Edit Expense</h2>
 
-            <div id="alert" class="alert" style="display:none;"></div>
-
-            <form id="transaction-form">
+            <form method="POST" action="">
                 <input type="hidden" name="category_id" value="{{transaction.categoryId}}" />
 
                 <div class="form-group">
@@ -44,38 +42,6 @@
             </form>
         </div>
     </div>
-
-    <script>
-        document.getElementById('transaction-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            var form = e.target;
-            var params = new URLSearchParams({
-                category_id: form.category_id.value,
-                amount: form.amount.value,
-                description: form.description.value,
-                date: form.date.value
-            });
-            fetch(window.location.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString(),
-                redirect: 'follow'
-            }).then(function (res) {
-                if (res.ok) {
-                    window.location.href = res.url || '/user/transactions/{{transaction.id}}';
-                } else {
-                    return res.text().then(function (msg) { showAlert(msg || 'Failed to update. Please try again.', false); });
-                }
-            }).catch(function () { showAlert('An error occurred. Please try again.', false); });
-        });
-
-        function showAlert(msg, success) {
-            var el = document.getElementById('alert');
-            el.textContent = msg;
-            el.className = 'alert ' + (success ? 'alert-success' : 'alert-error');
-            el.style.display = 'block';
-        }
-    </script>
 
 </body>
 </html>

@@ -99,23 +99,8 @@ CREATE TABLE transaction_categories (
 );
 
 INSERT INTO transaction_categories (transaction_category_id, value) VALUES
-    ('housing',         'Housing'),
-    ('food',            'Food & Dining'),
-    ('transportation',  'Transportation'),
-    ('utilities',       'Utilities'),
-    ('healthcare',      'Healthcare'),
-    ('entertainment',   'Entertainment'),
-    ('education',       'Education'),
-    ('clothing',        'Clothing & Apparel'),
-    ('savings',         'Savings'),
-    ('income',          'Income'),
-    ('investments',     'Investments'),
-    ('insurance',       'Insurance'),
-    ('personal',        'Personal Care'),
-    ('travel',          'Travel'),
-    ('subscriptions',   'Subscriptions'),
-    ('gifts',           'Gifts & Donations'),
-    ('other',           'Other');
+    ('earnings', 'Earnings'),
+    ('expenses', 'Expenses');
 
 -- ── Reference: Message Senders ────────────────────────────────────────────────
 CREATE TABLE message_senders (

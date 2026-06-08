@@ -23,38 +23,14 @@
                 <p><strong>Date:</strong> {{transaction.transactionDate}}</p>
             </div>
 
-            <div id="alert" class="alert" style="display:none;"></div>
-
             <div class="form-actions" style="justify-content:center;">
-                <button id="confirm-btn" class="btn btn-danger">Yes, Delete</button>
+                <form method="POST" action="" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </form>
                 <a href="/user/transactions/{{transaction.id}}" class="btn btn-secondary">Cancel</a>
             </div>
         </div>
     </div>
-
-    <script>
-        document.getElementById('confirm-btn').addEventListener('click', function () {
-            fetch(window.location.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: '',
-                redirect: 'follow'
-            }).then(function (res) {
-                if (res.ok) {
-                    window.location.href = res.url || '/user/transactions/category/expenses';
-                } else {
-                    return res.text().then(function (msg) { showAlert(msg || 'Failed to delete. Please try again.', false); });
-                }
-            }).catch(function () { showAlert('An error occurred. Please try again.', false); });
-        });
-
-        function showAlert(msg, success) {
-            var el = document.getElementById('alert');
-            el.textContent = msg;
-            el.className = 'alert ' + (success ? 'alert-success' : 'alert-error');
-            el.style.display = 'block';
-        }
-    </script>
 
 </body>
 </html>

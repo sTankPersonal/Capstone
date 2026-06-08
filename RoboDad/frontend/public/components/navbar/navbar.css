@@ -132,11 +132,11 @@
 
 
 
-/* Activity label */
+/* Transactions dropdown title link */
 .dropdown-title {
     color: #d0d0ff;
+    text-decoration: none;
     font-size: 16px;
-    cursor: default;
     transition: color 0.2s ease;
 }
 

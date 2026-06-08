@@ -105,21 +105,20 @@ crow::response UserTransactionsController::getTransactionsByCategory(const crow:
     ctx["category_id"] = category_id.getId();
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
 
-    std::string tmpl = "transactions_by_category.html";
-    if (category_id.getId() == "income")   tmpl = "earnings.html";
-    if (category_id.getId() == "expenses") tmpl = "expenses.html";
+    const std::string& catId = category_id.getId();
+    if (catId != "earnings" && catId != "expenses") return crow::response(404, "Unknown category");
+    std::string tmpl = (catId == "earnings") ? "earnings.html" : "expenses.html";
     return crow::response(crow::mustache::load(tmpl).render(ctx));
 }
 
 crow::response UserTransactionsController::getNewTransactionPage(const crow::request& req, UserId user_id, TransactionCategoryId category_id) {
+    const std::string& catId = category_id.getId();
+    if (catId != "earnings" && catId != "expenses") return crow::response(404, "Unknown category");
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
     crow::mustache::context ctx;
-    ctx["category_id"] = category_id.getId();
+    ctx["category_id"] = catId;
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
-
-    std::string tmpl = "new_transaction.html";
-    if (category_id.getId() == "income")   tmpl = "new_earning.html";
-    if (category_id.getId() == "expenses") tmpl = "new_expense.html";
+    std::string tmpl = (catId == "earnings") ? "new_earning.html" : "new_expense.html";
     return crow::response(crow::mustache::load(tmpl).render(ctx));
 }
 
@@ -134,9 +133,8 @@ crow::response UserTransactionsController::getEditTransactionPage(const crow::re
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
 
     const std::string& catId = transactionOpt->getCategoryId();
-    std::string tmpl = "edit_transaction.html";
-    if (catId == "income")   tmpl = "edit_earning.html";
-    if (catId == "expenses") tmpl = "edit_expense.html";
+    std::string tmpl = "edit_expense.html";
+    if (catId == "earnings") tmpl = "edit_earning.html";
     return crow::response(crow::mustache::load(tmpl).render(ctx));
 }
 
@@ -151,9 +149,8 @@ crow::response UserTransactionsController::getDeleteTransactionPage(const crow::
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
 
     const std::string& catId = transactionOpt->getCategoryId();
-    std::string tmpl = "delete_transaction.html";
-    if (catId == "income")   tmpl = "delete_earning.html";
-    if (catId == "expenses") tmpl = "delete_expense.html";
+    std::string tmpl = "delete_expense.html";
+    if (catId == "earnings") tmpl = "delete_earning.html";
     return crow::response(crow::mustache::load(tmpl).render(ctx));
 }
 
@@ -216,9 +213,14 @@ crow::response UserTransactionsController::postEditTransaction(const crow::reque
 }
 
 crow::response UserTransactionsController::postDeleteTransaction(const crow::request& req, UserId user_id, TransactionId transaction_id) {
+    std::optional<TransactionDto> transactionOpt = getTransactions_.execute(GetTransactionQuery(transaction_id));
+    if (!transactionOpt || transactionOpt->getUserId() != user_id.getId()) {
+        return crow::response(404, "Transaction not found");
+    }
+    std::string categoryId = transactionOpt->getCategoryId();
     deleteTransactions_.execute(DeleteTransactionCommand(transaction_id));
     crow::response res(302);
-    res.add_header("Location", "/user/transactions");
+    res.add_header("Location", "/user/transactions/category/" + categoryId);
     return res;
 }
 
