@@ -20,74 +20,6 @@ function addMessage(text, sender) {
     chat.scrollTop = chat.scrollHeight;
 }
 
-function clearChat() {
-    chat.innerHTML = "";
-}
-
-function redirectIfUnauthorized(res) {
-    if (res.status === 401) {
-        window.location.href = "/login";
-        return true;
-    }
-    return false;
-}
-
-// ------------------------------------------------------
-// API Calls
-// ------------------------------------------------------
-async function loadSessions() {
-    const res = await fetch("/api/ai/sessions", { credentials: "include" });
-    if (redirectIfUnauthorized(res)) return;
-
-    const sessions = await res.json();
-    sessionSelect.innerHTML = "";
-
-    sessions.forEach(s => {
-        const opt = document.createElement("option");
-        opt.value = s.id;
-        opt.textContent = s.description;
-        sessionSelect.appendChild(opt);
-    });
-
-    if (sessions.length > 0) {
-        if (!currentSessionId) currentSessionId = sessions[0].id;
-        sessionSelect.value = currentSessionId;
-        loadHistory();
-    }
-}
-
-async function createSession(description, personaId = "robodad") {
-    const res = await fetch("/api/ai/sessions", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ personaId, description })
-    });
-
-    if (redirectIfUnauthorized(res)) return null;
-    if (!res.ok) {
-        alert("Failed to create session");
-        return null;
-    }
-
-    return res.json();
-}
-
-async function loadHistory() {
-    clearChat();
-
-    const res = await fetch(`/api/ai/sessions/${currentSessionId}/history`, {
-        credentials: "include"
-    });
-
-    if (redirectIfUnauthorized(res)) return;
-
-    const messages = await res.json();
-    messages.forEach(m => {
-        addMessage(m.content, m.role === "user" ? "user" : "bot");
-    });
-}
-
 async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
@@ -95,12 +27,12 @@ async function sendMessage() {
     addMessage(text, "user");
     input.value = "";
 
-    const res = await fetch(`/api/ai/sessions/${currentSessionId}/messages`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text })
-    });
+    try {
+        const res = await fetch(`/user/chats/${sessionId}/messages`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ message: text })
+        });
 
     if (redirectIfUnauthorized(res)) return;
 

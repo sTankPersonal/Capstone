@@ -133,7 +133,9 @@ crow::response AuthController::postAuthLogout(const crow::request& req, RoboDadA
     ctx.set_cookie("userId", "")
         .path("/")
         .max_age(0);
-    return crow::response(200, "User logged out successfully");
+    crow::response res(302);
+    res.add_header("Location", "/auth/login");
+    return res;
 }
 
 crow::response AuthController::getAuthGoogle(const crow::request& req) {

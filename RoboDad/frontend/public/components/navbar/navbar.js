@@ -11,6 +11,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         cssLink.href = "/components/navbar/navbar.css";
         document.head.appendChild(cssLink);
 
+        await new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = '/js/dropdowns.js';
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+        initializeNavDropdown({
+            menuId: 'transactions-menu',
+            apiUrl: '/references/transaction-categories',
+            routeBuilder: id => `/user/transactions/category/${id}`
+        });
+
         const path = window.location.pathname;
         container.querySelectorAll("a[href]").forEach(link => {
             const href = link.getAttribute("href");
@@ -27,7 +40,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             container.querySelector(".nav-links").prepend(greeting);
         }
 
-        // Inject logout modal
         const modal = document.createElement("div");
         modal.id = "logout-modal";
         modal.innerHTML = `
