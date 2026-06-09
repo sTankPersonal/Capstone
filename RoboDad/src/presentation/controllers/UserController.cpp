@@ -144,19 +144,25 @@ crow::response UserController::getDeleteUserSettingsPage(const crow::request& re
 
 crow::response UserController::postEditUserSettingsLogin(const crow::request& req, UserId user_id){
     crow::query_string params("?" + req.body);
-    std::string newEmail    = params.get("email")    ? params.get("email")    : "";
-    std::string newPassword = params.get("password") ? params.get("password") : "";
+    std::string currentPassword = params.get("current_password") ? params.get("current_password") : "";
+    std::string newPassword     = params.get("new_password")     ? params.get("new_password")     : "";
+    std::string confirmPassword = params.get("confirm_password") ? params.get("confirm_password") : "";
 
-    if (newEmail.empty() || newPassword.empty()) {
+    if (currentPassword.empty() || newPassword.empty()) {
         return crow::response(400, "Missing required fields");
     }
-
-    try {
-        updateUserPassword_.execute(UpdateUserPasswordCommand(user_id, "", newPassword));
-        return crow::response(200, "User login information updated successfully");
-    } catch (const std::exception& e) {
-        return crow::response(500, e.what());
+    if (newPassword != confirmPassword) {
+        return crow::response(400, "Passwords do not match");
     }
+
+    bool success = updateUserPassword_.execute(UpdateUserPasswordCommand(user_id, currentPassword, newPassword));
+    if (!success) {
+        return crow::response(401, "Current password is incorrect");
+    }
+
+    crow::response res(302);
+    res.add_header("Location", "/user/settings/userLogin");
+    return res;
 }
 
 crow::response UserController::postEditUserSettingsInformation(const crow::request& req, UserId user_id){
@@ -169,20 +175,34 @@ crow::response UserController::postEditUserSettingsInformation(const crow::reque
     std::string newLanguage         = params.get("language")           ? params.get("language")           : "";
     std::string newEmploymentStatus = params.get("employment_status")  ? params.get("employment_status")  : "";
 
+    std::optional<std::chrono::year_month_day> dob = std::nullopt;
+    if (!newDateOfBirth.empty()) {
+        int y = 0, m = 0, d = 0;
+        if (std::sscanf(newDateOfBirth.c_str(), "%d-%d-%d", &y, &m, &d) == 3) {
+            dob = std::chrono::year_month_day{
+                std::chrono::year{y},
+                std::chrono::month{static_cast<unsigned>(m)},
+                std::chrono::day{static_cast<unsigned>(d)}
+            };
+        }
+    }
+
     try {
         updateUserProfile_.execute(UpdateUserProfileCommand(
             user_id,
             UserInformation(
                 newFirstName.empty()        ? std::nullopt : std::optional<std::string>{newFirstName},
                 newLastName.empty()         ? std::nullopt : std::optional<std::string>{newLastName},
-                std::nullopt,
+                dob,
                 newCountry.empty()          ? std::nullopt : std::optional<CountryId>{CountryId(newCountry)},
                 newCurrency.empty()         ? std::nullopt : std::optional<CurrencyId>{CurrencyId(newCurrency)},
                 newLanguage.empty()         ? std::nullopt : std::optional<LanguageId>{LanguageId(newLanguage)},
                 newEmploymentStatus.empty() ? std::nullopt : std::optional<EmploymentStatusId>{EmploymentStatusId(newEmploymentStatus)}
             )
         ));
-        return crow::response(200, "User information updated successfully");
+        crow::response res(302);
+        res.add_header("Location", "/user/settings/userInformation");
+        return res;
     } catch (const std::exception& e) {
         return crow::response(500, e.what());
     }
