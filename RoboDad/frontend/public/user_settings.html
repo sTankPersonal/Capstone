@@ -1,22 +1,48 @@
-<!-- Settings, toggle different things, change prompt here -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>RoboDad Settings</title>
-
-    <!-- Shared styles -->
+    <title>RoboDad - Settings</title>
     <link rel="stylesheet" href="/css/global.css">
-
+    <link rel="stylesheet" href="/css/settings.css">
 </head>
 
 <body>
 
-    <div id="navbar"></div>
+    <div id="navbar" data-username="{{user.firstName}}"></div>
     <script src="/components/navbar/navbar.js"></script>
 
-    <p>Settings Page</p>
+    <div class="settings-container">
+        <div class="settings-header">
+            <h1>Settings</h1>
+        </div>
+
+        <div class="settings-nav">
+            <a href="/user/settings/userLogin" class="settings-card">
+                <div class="settings-card-info">
+                    <h3>Login &amp; Security</h3>
+                    <p>Manage your email address and password</p>
+                </div>
+                <span class="settings-card-arrow">&#8250;</span>
+            </a>
+
+            <a href="/user/settings/userInformation" class="settings-card">
+                <div class="settings-card-info">
+                    <h3>Personal Information</h3>
+                    <p>Update your name, date of birth, and regional preferences</p>
+                </div>
+                <span class="settings-card-arrow">&#8250;</span>
+            </a>
+
+            <a href="/user/settings/delete" class="settings-card">
+                <div class="settings-card-info settings-card-danger">
+                    <h3>Delete Account</h3>
+                    <p>Permanently delete your account and all associated data</p>
+                </div>
+                <span class="settings-card-arrow">&#8250;</span>
+            </a>
+        </div>
+    </div>
 
 </body>
 </html>

@@ -1,15 +1,16 @@
-async function populateDropdown(selectId, endpoint, dataKey, labelKey = 'value') {
+async function populateDropdown(selectId, endpoint, dataKey, selectedValue = '', labelKey = 'value') {
     const select = document.getElementById(selectId);
     if (!select) return;
     try {
-        const res = await fetch(apiUrl);
+        const res = await fetch(endpoint);
         if (!res.ok) throw new Error('Failed to load');
         const data = await res.json();
-        select.innerHTML = '';
+        select.innerHTML = '<option value="">-- Select --</option>';
         for (const item of data[dataKey]) {
             const opt = document.createElement('option');
             opt.value = item.id;
             opt.textContent = item[labelKey];
+            if (item.id === selectedValue) opt.selected = true;
             select.appendChild(opt);
         }
     } catch {

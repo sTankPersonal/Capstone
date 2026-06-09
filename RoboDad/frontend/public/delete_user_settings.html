@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>RoboDad - Delete Account</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/transactions.css">
+    <link rel="stylesheet" href="/css/settings.css">
+</head>
+
+<body>
+
+    <div id="navbar" data-username="{{user.firstName}}"></div>
+    <script src="/components/navbar/navbar.js"></script>
+
+    <div class="settings-container">
+        <div class="delete-card">
+            <h2>Delete Account?</h2>
+            <p>This action is <strong>permanent</strong> and cannot be undone. All of your data, including transactions and chat history, will be deleted.</p>
+
+            <div class="transaction-summary">
+                <p><strong>Account:</strong> {{user.email}}</p>
+                <p><strong>Member Since:</strong> {{user.createdAt}}</p>
+            </div>
+
+            <div class="form-actions" style="justify-content:center;">
+                <form method="POST" action="" style="display:inline;">
+                    <button type="submit" class="btn btn-danger">Yes, Delete My Account</button>
+                </form>
+                <a href="/user/settings" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
