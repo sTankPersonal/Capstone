@@ -7,6 +7,13 @@
 #include "GetTransaction.h"
 #include "UpdateTransaction.h"
 #include "DeleteTransaction.h"
+#include "CreateTransactionCommand.h"
+#include "UpdateTransactionCommand.h"
+#include "DeleteTransactionCommand.h"
+#include "ListTransactionsQuery.h"
+#include "GetTransactionQuery.h"
+#include "ListTransactionsByCategoryQuery.h"
+#include "TransactionDto.h"
 #include "Transactions.h"
 #include "TransactionId.h"
 #include "UserId.h"
@@ -29,7 +36,7 @@ static Transaction makeTransaction(const std::string& id, const std::string& use
     auto date = makeDate(2024, 1, 1);
     return Transaction(
         TransactionId{id}, UserId{userId}, TransactionCategoryId{categoryId},
-        TransactionAmount(std::optional<double>{amount}, CurrencyId{"USD"}),
+        TransactionAmount(std::optional<double>{amount}, std::optional<CurrencyId>{CurrencyId{"USD"}}),
         TransactionDescription(std::optional<std::string>{desc}),
         date, date
     );
@@ -53,14 +60,15 @@ TEST(CreateTransactionTest, ExecuteCreatesTransactionAndReturnsResult) {
     EXPECT_CALL(repo, create(_)).WillOnce(Return(expected));
 
     CreateTransaction useCase(repo);
-    Transaction result = useCase.execute(
-        UserId{"user-1"}, TransactionCategoryId{"cat-1"},
-        49.99, CurrencyId{"USD"}, "Grocery run",
-        makeDate(2024, 5, 1)
+    TransactionDto result = useCase.execute(
+        CreateTransactionCommand{
+            UserId{"user-1"}, TransactionCategoryId{"cat-1"},
+            49.99, std::optional<CurrencyId>{CurrencyId{"USD"}}, "Grocery run",
+            makeDate(2024, 5, 1)
+        }
     );
 
-    EXPECT_EQ(result.getId().getId(), "tx-1");
-    EXPECT_EQ(result.getUserId().getId(), "user-1");
+    EXPECT_EQ(result.getUserId(), "user-1");
 }
 
 TEST(CreateTransactionTest, ExecuteAcceptsNoCurrency) {
@@ -69,13 +77,15 @@ TEST(CreateTransactionTest, ExecuteAcceptsNoCurrency) {
     EXPECT_CALL(repo, create(_)).WillOnce(Return(expected));
 
     CreateTransaction useCase(repo);
-    Transaction result = useCase.execute(
-        UserId{"user-2"}, TransactionCategoryId{"cat-1"},
-        25.0, std::nullopt, "Cash purchase",
-        makeDate(2024, 6, 15)
+    TransactionDto result = useCase.execute(
+        CreateTransactionCommand{
+            UserId{"user-2"}, TransactionCategoryId{"cat-1"},
+            25.0, std::nullopt, "Cash purchase",
+            makeDate(2024, 6, 15)
+        }
     );
 
-    EXPECT_EQ(result.getId().getId(), "tx-2");
+    EXPECT_EQ(result.getUserId(), "user-2");
 }
 
 // ── ListTransactions ──────────────────────────────────────────────────────────
@@ -89,11 +99,11 @@ TEST(ListTransactionsTest, ExecuteReturnsAllTransactionsForUser) {
     EXPECT_CALL(repo, findByUserId(UserId{"user-1"})).WillOnce(Return(txns));
 
     ListTransactions useCase(repo);
-    auto result = useCase.execute(UserId{"user-1"});
+    auto result = useCase.execute(ListTransactionsQuery{UserId{"user-1"}});
 
     ASSERT_EQ(result.size(), 2u);
-    EXPECT_EQ(result[0].getId().getId(), "tx-a");
-    EXPECT_EQ(result[1].getId().getId(), "tx-b");
+    EXPECT_EQ(result[0].getUserId(), "user-1");
+    EXPECT_EQ(result[1].getUserId(), "user-1");
 }
 
 TEST(ListTransactionsTest, ExecuteReturnsEmptyVectorForNewUser) {
@@ -102,7 +112,7 @@ TEST(ListTransactionsTest, ExecuteReturnsEmptyVectorForNewUser) {
         .WillOnce(Return(std::vector<Transaction>{}));
 
     ListTransactions useCase(repo);
-    EXPECT_TRUE(useCase.execute(UserId{"user-99"}).empty());
+    EXPECT_TRUE(useCase.execute(ListTransactionsQuery{UserId{"user-99"}}).empty());
 }
 
 // ── GetTransaction ────────────────────────────────────────────────────────────
@@ -114,10 +124,10 @@ TEST(GetTransactionTest, ExecuteReturnsTransactionWhenFound) {
         .WillOnce(Return(std::optional<Transaction>{expected}));
 
     GetTransaction useCase(repo);
-    auto result = useCase.execute(TransactionId{"tx-1"});
+    auto result = useCase.execute(GetTransactionQuery{TransactionId{"tx-1"}});
 
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->getId().getId(), "tx-1");
+    EXPECT_EQ(result->getUserId(), "user-1");
 }
 
 TEST(GetTransactionTest, ExecuteReturnsNulloptWhenNotFound) {
@@ -126,7 +136,7 @@ TEST(GetTransactionTest, ExecuteReturnsNulloptWhenNotFound) {
         .WillOnce(Return(std::nullopt));
 
     GetTransaction useCase(repo);
-    EXPECT_FALSE(useCase.execute(TransactionId{"missing"}).has_value());
+    EXPECT_FALSE(useCase.execute(GetTransactionQuery{TransactionId{"missing"}}).has_value());
 }
 
 // ── UpdateTransaction ─────────────────────────────────────────────────────────
@@ -139,9 +149,11 @@ TEST(UpdateTransactionTest, ExecuteReturnsTrueOnSuccess) {
 
     UpdateTransaction useCase(repo);
     EXPECT_TRUE(useCase.execute(
-        TransactionId{"tx-1"}, TransactionCategoryId{"cat-2"},
-        200.0, CurrencyId{"CAD"}, "Updated description",
-        makeDate(2024, 6, 1)
+        UpdateTransactionCommand{
+            TransactionId{"tx-1"}, TransactionCategoryId{"cat-2"},
+            200.0, std::optional<CurrencyId>{CurrencyId{"CAD"}}, "Updated description",
+            makeDate(2024, 6, 1)
+        }
     ));
 }
 
@@ -152,9 +164,11 @@ TEST(UpdateTransactionTest, ExecuteReturnsFalseForMissingTransaction) {
 
     UpdateTransaction useCase(repo);
     EXPECT_FALSE(useCase.execute(
-        TransactionId{"missing"}, TransactionCategoryId{"cat-1"},
-        100.0, std::nullopt, "Any description",
-        makeDate(2024, 1, 1)
+        UpdateTransactionCommand{
+            TransactionId{"missing"}, TransactionCategoryId{"cat-1"},
+            100.0, std::nullopt, "Any description",
+            makeDate(2024, 1, 1)
+        }
     ));
 }
 
@@ -165,7 +179,7 @@ TEST(DeleteTransactionTest, ExecuteReturnsTrueOnSuccess) {
     EXPECT_CALL(repo, remove(TransactionId{"tx-1"})).WillOnce(Return(true));
 
     DeleteTransaction useCase(repo);
-    EXPECT_TRUE(useCase.execute(TransactionId{"tx-1"}));
+    EXPECT_TRUE(useCase.execute(DeleteTransactionCommand{TransactionId{"tx-1"}}));
 }
 
 TEST(DeleteTransactionTest, ExecuteReturnsFalseForMissingTransaction) {
@@ -173,7 +187,7 @@ TEST(DeleteTransactionTest, ExecuteReturnsFalseForMissingTransaction) {
     EXPECT_CALL(repo, remove(TransactionId{"missing"})).WillOnce(Return(false));
 
     DeleteTransaction useCase(repo);
-    EXPECT_FALSE(useCase.execute(TransactionId{"missing"}));
+    EXPECT_FALSE(useCase.execute(DeleteTransactionCommand{TransactionId{"missing"}}));
 }
 
 // ── ListTransactionsByCategory ────────────────────────────────────────────────
@@ -188,11 +202,11 @@ TEST(ListTransactionsByCategoryTest, ExecuteReturnsOnlyMatchingCategory) {
     EXPECT_CALL(repo, findByUserId(UserId{"user-1"})).WillOnce(Return(all));
 
     ListTransactionsByCategory useCase(repo);
-    auto result = useCase.execute(UserId{"user-1"}, TransactionCategoryId{"cat-food"});
+    auto result = useCase.execute(ListTransactionsByCategoryQuery{UserId{"user-1"}, TransactionCategoryId{"cat-food"}});
 
     ASSERT_EQ(result.size(), 2u);
-    EXPECT_EQ(result[0].getId().getId(), "tx-a");
-    EXPECT_EQ(result[1].getId().getId(), "tx-c");
+    EXPECT_EQ(result[0].getCategoryId(), "cat-food");
+    EXPECT_EQ(result[1].getCategoryId(), "cat-food");
 }
 
 TEST(ListTransactionsByCategoryTest, ExecuteReturnsEmptyWhenNoCategoryMatch) {
@@ -203,7 +217,7 @@ TEST(ListTransactionsByCategoryTest, ExecuteReturnsEmptyWhenNoCategoryMatch) {
     EXPECT_CALL(repo, findByUserId(UserId{"user-1"})).WillOnce(Return(all));
 
     ListTransactionsByCategory useCase(repo);
-    auto result = useCase.execute(UserId{"user-1"}, TransactionCategoryId{"cat-travel"});
+    auto result = useCase.execute(ListTransactionsByCategoryQuery{UserId{"user-1"}, TransactionCategoryId{"cat-travel"}});
 
     EXPECT_TRUE(result.empty());
 }
@@ -214,7 +228,7 @@ TEST(ListTransactionsByCategoryTest, ExecuteReturnsEmptyForUserWithNoTransaction
         .WillOnce(Return(std::vector<Transaction>{}));
 
     ListTransactionsByCategory useCase(repo);
-    auto result = useCase.execute(UserId{"user-99"}, TransactionCategoryId{"cat-food"});
+    auto result = useCase.execute(ListTransactionsByCategoryQuery{UserId{"user-99"}, TransactionCategoryId{"cat-food"}});
 
     EXPECT_TRUE(result.empty());
 }
