@@ -130,8 +130,10 @@ crow::response UserChatController::postNewChatSession(const crow::request& req, 
     }
 
     CreateChatSessionCommand createRequest(user_id, LlmPersonaId(personaId), description);
-    ChatSessionDto newSession = createChatSession_.execute(createRequest);
-    return crow::response(201, "Chat session created successfully");
+    createChatSession_.execute(createRequest);
+    crow::response res(302);
+    res.add_header("Location", "/user/chats");
+    return res;
 }
 
 crow::response UserChatController::postEditChatSession(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {
@@ -148,13 +150,17 @@ crow::response UserChatController::postEditChatSession(const crow::request& req,
 
     UpdateChatSessionCommand updateRequest(chat_session_id, description, additionalInfo);
     updateChatSession_.execute(updateRequest);
-    return crow::response(200, "Chat session updated successfully");
+    crow::response res(302);
+    res.add_header("Location", "/user/chats/" + chat_session_id.getId());
+    return res;
 }
 
 crow::response UserChatController::postDeleteChatSession(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {
     DeleteChatSessionCommand deleteRequest(chat_session_id);
     deleteChatSession_.execute(deleteRequest);
-    return crow::response(200, "Chat session deleted successfully");
+    crow::response res(302);
+    res.add_header("Location", "/user/chats");
+    return res;
 }
 
 crow::response UserChatController::getMessages(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {

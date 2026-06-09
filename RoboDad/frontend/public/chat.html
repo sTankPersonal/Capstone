@@ -66,8 +66,10 @@
 
         // Classify server-rendered messages
         document.querySelectorAll('#chat .msg').forEach(function (msg) {
-            msg.classList.add(msg.dataset.sender === userId ? 'user' : 'bot');
+            msg.classList.add(msg.dataset.sender === 'user' ? 'user' : 'assistant');
         });
+
+
 
         // Scroll to bottom on load
         chat.scrollTop = chat.scrollHeight;
@@ -94,12 +96,12 @@
                 body: params.toString()
             }).then(function (res) {
                 if (res.status === 401) { window.location.href = '/login'; return null; }
-                if (!res.ok) { addMessage('Error sending message. Please try again.', 'bot'); return null; }
+                if (!res.ok) { addMessage('Error sending message. Please try again.', 'assistant'); return null; }
                 return res.json();
             }).then(function (data) {
-                if (data) addMessage(data.reply, 'bot');
+                if (data) addMessage(data.reply, 'assistant');
             }).catch(function () {
-                addMessage('Error sending message. Please try again.', 'bot');
+                addMessage('Error sending message. Please try again.', 'assistant');
             });
         }
 

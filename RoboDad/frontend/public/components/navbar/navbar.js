@@ -58,7 +58,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             modal.style.display = "none";
         });
         document.getElementById("logout-confirm").addEventListener("click", () => {
-            window.location.href = "/auth/logout";
+            const form = document.createElement("form");
+            form.method = "POST";
+            form.action = "/auth/logout";
+            document.body.appendChild(form);
+            form.submit();
         });
         modal.addEventListener("click", (e) => {
             if (e.target === modal) modal.style.display = "none";
