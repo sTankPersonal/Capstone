@@ -5,6 +5,7 @@
 #include "ICurrencyRepository.h"
 #include "IPlaidClient.h"
 #include "ImportPlaidTransactions.h"
+#include "ImportPlaidTransactionsCommand.h"
 #include "Transactions.h"
 #include "TransactionId.h"
 #include "UserId.h"
@@ -108,7 +109,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteCreatesOneTransactionPerPlaidRecord) {
         .WillOnce(Return(makeTx("tx-2", "user-1")));
 
     ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(UserId{"user-1"}, "2024-03-01", "2024-03-31");
+    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-03-01", "2024-03-31", 100});
 
     ASSERT_EQ(result.size(), 2u);
 }
@@ -132,7 +133,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteFallsBackToOtherCategoryWhenCategoryNot
     EXPECT_CALL(txRepo, create(_)).WillOnce(Return(makeTx("tx-1", "user-1")));
 
     ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(UserId{"user-1"}, "2024-04-01", "2024-04-30");
+    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-04-01", "2024-04-30", 100});
 
     ASSERT_EQ(result.size(), 1u);
 }
@@ -156,7 +157,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteSetsNulloptCurrencyWhenCurrencyNotFound
     EXPECT_CALL(txRepo, create(_)).WillOnce(Return(makeTx("tx-1", "user-1")));
 
     ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(UserId{"user-1"}, "2024-04-01", "2024-04-30");
+    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-04-01", "2024-04-30", 100});
 
     ASSERT_EQ(result.size(), 1u);
 }
@@ -172,7 +173,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteReturnsEmptyWhenPlaidHasNoTransactions)
         .WillOnce(Return(std::vector<PlaidTransactionData>{}));
 
     ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(UserId{"user-1"}, "2024-05-01", "2024-05-31");
+    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-05-01", "2024-05-31", 100});
 
     EXPECT_TRUE(result.empty());
 }

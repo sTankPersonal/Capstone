@@ -4,6 +4,9 @@
 #include "IPasswordHasher.h"
 #include "LoginUser.h"
 #include "RegisterUser.h"
+#include "RegisterUserCommand.h"
+#include "LoginUserCommand.h"
+#include "UserProfileDto.h"
 #include "User.h"
 #include "UserId.h"
 #include "UserLogin.h"
@@ -51,9 +54,9 @@ TEST(RegisterUserTest, ExecuteHashesPasswordBeforeStoring) {
     EXPECT_CALL(repo, create(_)).WillOnce(Return(expected));
 
     RegisterUser useCase(repo, hasher);
-    User result = useCase.execute("alice@example.com", "secret", UserInformation{});
+    UserProfileDto result = useCase.execute(RegisterUserCommand{"alice@example.com", "secret", UserInformation{}});
 
-    EXPECT_EQ(result.getId().getId(), "uuid-1");
+    EXPECT_EQ(result.getId(), "uuid-1");
 }
 
 TEST(RegisterUserTest, ExecuteReturnsCreatedUser) {
@@ -66,10 +69,9 @@ TEST(RegisterUserTest, ExecuteReturnsCreatedUser) {
     EXPECT_CALL(repo, create(_)).WillOnce(Return(expected));
 
     RegisterUser useCase(repo, hasher);
-    User result = useCase.execute("bob@example.com", "pass123", info);
+    UserProfileDto result = useCase.execute(RegisterUserCommand{"bob@example.com", "pass123", info});
 
-    EXPECT_EQ(result.getId().getId(), "uuid-2");
-    EXPECT_EQ(result.getUserLogin().getEmail(), "bob@example.com");
+    EXPECT_EQ(result.getId(), "uuid-2");
 }
 
 // ── LoginUser ─────────────────────────────────────────────────────────────────
@@ -85,11 +87,10 @@ TEST(LoginUserTest, ExecuteReturnsUserOnValidCredentials) {
     EXPECT_CALL(repo, findById(UserId{"uuid-1"})).WillOnce(Return(std::optional<User>{expected}));
 
     LoginUser useCase(repo, hasher);
-    auto result = useCase.execute("alice@example.com", "secret");
+    auto result = useCase.execute(LoginUserCommand{"alice@example.com", "secret"});
 
     ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result->getId().getId(), "uuid-1");
-    EXPECT_EQ(result->getUserLogin().getEmail(), "alice@example.com");
+    EXPECT_EQ(result->getId(), "uuid-1");
 }
 
 TEST(LoginUserTest, ExecuteReturnsNulloptWhenEmailNotFound) {
@@ -100,7 +101,7 @@ TEST(LoginUserTest, ExecuteReturnsNulloptWhenEmailNotFound) {
         .WillOnce(Return(std::nullopt));
 
     LoginUser useCase(repo, hasher);
-    EXPECT_FALSE(useCase.execute("unknown@example.com", "secret").has_value());
+    EXPECT_FALSE(useCase.execute(LoginUserCommand{"unknown@example.com", "secret"}).has_value());
 }
 
 TEST(LoginUserTest, ExecuteReturnsNulloptOnWrongPassword) {
@@ -112,7 +113,7 @@ TEST(LoginUserTest, ExecuteReturnsNulloptOnWrongPassword) {
     EXPECT_CALL(hasher, verify("wrong", "hashed")).WillOnce(Return(false));
 
     LoginUser useCase(repo, hasher);
-    EXPECT_FALSE(useCase.execute("alice@example.com", "wrong").has_value());
+    EXPECT_FALSE(useCase.execute(LoginUserCommand{"alice@example.com", "wrong"}).has_value());
 }
 
 TEST(LoginUserTest, ExecuteReturnsNulloptWhenUserNotFoundAfterCredentialLookup) {
@@ -125,5 +126,5 @@ TEST(LoginUserTest, ExecuteReturnsNulloptWhenUserNotFoundAfterCredentialLookup) 
     EXPECT_CALL(repo, findById(UserId{"uuid-1"})).WillOnce(Return(std::nullopt));
 
     LoginUser useCase(repo, hasher);
-    EXPECT_FALSE(useCase.execute("alice@example.com", "secret").has_value());
+    EXPECT_FALSE(useCase.execute(LoginUserCommand{"alice@example.com", "secret"}).has_value());
 }
