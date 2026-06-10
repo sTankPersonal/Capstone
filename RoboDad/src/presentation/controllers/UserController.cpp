@@ -4,10 +4,12 @@
 #include "application/users/commands/UpdateUserPasswordCommand.h"
 #include "application/users/commands/UpdateUserProfileCommand.h"
 #include "application/users/commands/DeleteUserCommand.h"
+#include "application/users/queries/GetFinancialInsightsQuery.h"
+#include "application/users/dtos/FinancialInsightsDto.h"
 #include "domain/valueObjects/UserInformation.h"
 
-UserController::UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser)
-    : getUserProfile_(getUserProfile), updateUserProfile_(updateUserProfile), updateUserPassword_(updateUserPassword), deleteUser_(deleteUser) {}
+UserController::UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser, const GetFinancialInsights& getFinancialInsights)
+    : getUserProfile_(getUserProfile), updateUserProfile_(updateUserProfile), updateUserPassword_(updateUserPassword), deleteUser_(deleteUser), getFinancialInsights_(getFinancialInsights) {}
 
 void UserController::registerRoutes(RoboDadApp &app){
     CROW_ROUTE(app, "/user/dashboard")
@@ -57,8 +59,7 @@ void UserController::registerRoutes(RoboDadApp &app){
             return postDeleteUserSettings(req, UserId(app.get_context<AuthMiddleware>(req).userId), app);
         });
 }
-
-crow::response UserController::getUserDashboardPage(const crow::request& req, UserId user_id){
+crow::response UserController::getUserDashboardPage(const crow::request& req, UserId user_id) {
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
     if (!userOpt) {
         std::cerr << "User with ID " << user_id.getId() << " not found." << std::endl;
@@ -68,8 +69,96 @@ crow::response UserController::getUserDashboardPage(const crow::request& req, Us
     crow::mustache::context ctx;
     ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
 
+    auto insightsOpt = getFinancialInsights_.execute(GetFinancialInsightsQuery(user_id));
+    if (insightsOpt) {
+        crow::json::wvalue insightsJson;
+
+        // Income totals
+        insightsJson["totalIncome"] = insightsOpt->totalIncome;
+
+        // Income by category → list of {category, amount, count}
+        {
+            crow::json::wvalue::list incomeList;
+            for (const auto& item : insightsOpt->incomeByCategoryList) {
+                crow::json::wvalue entry;
+                entry["category"] = item.category;
+                entry["amount"] = item.amount;
+                entry["count"] = item.count;
+                incomeList.push_back(std::move(entry));
+            }
+            insightsJson["incomeByCategoryList"] = std::move(incomeList);
+        }
+
+        // Build income arrays for Chart.js
+        {
+            crow::json::wvalue::list labels;
+            crow::json::wvalue::list values;
+
+            for (const auto& item : insightsOpt->incomeByCategoryList) {
+                labels.push_back(item.category);
+                values.push_back(item.amount);
+            }
+
+            insightsJson["incomeLabels"] = std::move(labels);
+            insightsJson["incomeValues"] = std::move(values);
+        }
+
+        // Unusual income → list of strings
+        {
+            crow::json::wvalue::list unusualIncomeList;
+            for (const auto& desc : insightsOpt->unusualIncome) {
+                unusualIncomeList.push_back(desc);
+            }
+            insightsJson["unusualIncome"] = std::move(unusualIncomeList);
+        }
+
+        // Expense totals
+        insightsJson["totalExpenses"] = insightsOpt->totalExpenses;
+
+        // Expenses by category → list of {category, amount, count}
+        {
+            crow::json::wvalue::list expenseList;
+            for (const auto& item : insightsOpt->expenseByCategoryList) {
+                crow::json::wvalue entry;
+                entry["category"] = item.category;
+                entry["amount"] = item.amount;
+                entry["count"] = item.count;
+                expenseList.push_back(std::move(entry));
+            }
+            insightsJson["expenseByCategoryList"] = std::move(expenseList);
+        }
+
+        // Build expense arrays for Chart.js
+        {
+            crow::json::wvalue::list labels;
+            crow::json::wvalue::list values;
+
+            for (const auto& item : insightsOpt->expenseByCategoryList) {
+                labels.push_back(item.category);
+                values.push_back(item.amount);
+            }
+
+            insightsJson["expenseLabels"] = std::move(labels);
+            insightsJson["expenseValues"] = std::move(values);
+        }
+
+        // Unusual expenses → list of strings
+        {
+            crow::json::wvalue::list unusualExpenseList;
+            for (const auto& desc : insightsOpt->unusualExpenses) {
+                unusualExpenseList.push_back(desc);
+            }
+            insightsJson["unusualExpenses"] = std::move(unusualExpenseList);
+        }
+
+        ctx["insights"] = std::move(insightsJson);
+    }
+
     return crow::response(crow::mustache::load("user_dashboard.html").render(ctx));
 }
+
+
+
 
 crow::response UserController::getUserSettingsPage(const crow::request& req, UserId user_id){
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
