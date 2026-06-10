@@ -3,10 +3,11 @@
 #include "application/users/queries/GetUserProfileQuery.h"
 #include "application/users/commands/UpdateUserPasswordCommand.h"
 #include "application/users/commands/UpdateUserProfileCommand.h"
+#include "application/users/commands/DeleteUserCommand.h"
 #include "domain/valueObjects/UserInformation.h"
 
-UserController::UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword)
-    : getUserProfile_(getUserProfile), updateUserProfile_(updateUserProfile), updateUserPassword_(updateUserPassword) {}
+UserController::UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser)
+    : getUserProfile_(getUserProfile), updateUserProfile_(updateUserProfile), updateUserPassword_(updateUserPassword), deleteUser_(deleteUser) {}
 
 void UserController::registerRoutes(RoboDadApp &app){
     CROW_ROUTE(app, "/user/dashboard")
@@ -53,7 +54,7 @@ void UserController::registerRoutes(RoboDadApp &app){
         });
     CROW_ROUTE(app, "/user/settings/delete")
         .methods(crow::HTTPMethod::POST)([this, &app](const crow::request& req){
-            return postDeleteUserSettings(req, UserId(app.get_context<AuthMiddleware>(req).userId));
+            return postDeleteUserSettings(req, UserId(app.get_context<AuthMiddleware>(req).userId), app);
         });
 }
 
@@ -208,6 +209,16 @@ crow::response UserController::postEditUserSettingsInformation(const crow::reque
     }
 }
 
-crow::response UserController::postDeleteUserSettings(const crow::request& req, UserId user_id){
-    return crow::response(200, "User deletion functionality not implemented yet");
+crow::response UserController::postDeleteUserSettings(const crow::request& req, UserId user_id, RoboDadApp& app){
+    bool success = deleteUser_.execute(DeleteUserCommand(user_id));
+    if (!success) {
+        return crow::response(404, "User not found");
+    }
+
+    auto& ctx = app.get_context<crow::CookieParser>(req);
+    ctx.set_cookie("userId", "").path("/").max_age(0);
+
+    crow::response res(302);
+    res.add_header("Location", "/");
+    return res;
 }

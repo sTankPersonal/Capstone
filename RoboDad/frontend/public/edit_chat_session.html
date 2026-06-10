@@ -35,9 +35,7 @@
             <div class="session-form-card">
                 <h2>Edit Chat Session</h2>
 
-                <div id="alert" class="alert" style="display:none;"></div>
-
-                <form id="edit-session-form">
+                <form id="edit-session-form" method="POST" action="">
                     <div class="form-group">
                         <label for="description">Description</label>
                         <input type="text" id="description" name="description"
@@ -60,32 +58,6 @@
     </div>
 
     <script>
-        document.getElementById('edit-session-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            var form = e.target;
-            var params = new URLSearchParams({ description: form.description.value });
-            var info = form.additional_info.value.trim();
-            if (info) params.append('additional_info', info);
-            fetch(window.location.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString()
-            }).then(function (res) {
-                if (res.ok) {
-                    window.location.href = '/user/chats/{{chat_session.id}}';
-                } else {
-                    return res.text().then(function (msg) { showAlert(msg || 'Failed to update. Please try again.', false); });
-                }
-            }).catch(function () { showAlert('An error occurred. Please try again.', false); });
-        });
-
-        function showAlert(msg, success) {
-            var el = document.getElementById('alert');
-            el.textContent = msg;
-            el.className = 'alert ' + (success ? 'alert-success' : 'alert-error');
-            el.style.display = 'block';
-        }
-
         var path = window.location.pathname.replace('/edit', '/messages');
         document.querySelectorAll('.chat-list-item').forEach(function (a) {
             if (a.getAttribute('href') === path) a.classList.add('active');

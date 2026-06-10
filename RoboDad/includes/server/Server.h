@@ -32,6 +32,7 @@
 #include "application/users/services/GetUserProfile.h"
 #include "application/users/services/UpdateUserProfile.h"
 #include "application/users/services/UpdateUserPassword.h"
+#include "application/users/services/DeleteUser.h"
 
 #include "application/chatSessions/services/CreateChatSession.h"
 #include "application/chatSessions/services/DeleteChatSession.h"
@@ -101,6 +102,7 @@ class Server {
     GetUserProfile     getUserProfile_;
     UpdateUserProfile  updateUserProfile_;
     UpdateUserPassword updateUserPassword_;
+    DeleteUser         deleteUser_;
 
     CreateChatSession  createChatSession_;
     DeleteChatSession  deleteChatSession_;

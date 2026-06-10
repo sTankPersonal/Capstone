@@ -121,7 +121,7 @@ crow::response AuthController::postAuthRegister(const crow::request& req, RoboDa
             .path("/")
             .max_age(60 * 60 * 24 * 7);
         crow::response res(302);
-        res.add_header("Location", "/user/dashboard");
+        res.add_header("Location", "/user/settings/userInformation/edit");
         return res;
     } catch (const std::exception&) {
         return crow::response(400, "User registration failed");

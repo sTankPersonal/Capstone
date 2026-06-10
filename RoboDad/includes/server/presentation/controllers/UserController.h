@@ -5,6 +5,7 @@
 #include "application/users/services/GetUserProfile.h"
 #include "application/users/services/UpdateUserProfile.h"
 #include "application/users/services/UpdateUserPassword.h"
+#include "application/users/services/DeleteUser.h"
 
 #include "presentation/AppType.h"
 
@@ -37,8 +38,9 @@ class UserController : public IController<RoboDadApp> {
     GetUserProfile getUserProfile_;
     UpdateUserProfile updateUserProfile_;
     UpdateUserPassword updateUserPassword_;
+    DeleteUser deleteUser_;
 public:
-    UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword);
+    UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser);
     void registerRoutes(RoboDadApp& app) override;
 
     crow::response getUserDashboardPage(const crow::request& req, UserId user_id);
@@ -52,5 +54,5 @@ public:
 
     crow::response postEditUserSettingsLogin(const crow::request& req, UserId user_id);
     crow::response postEditUserSettingsInformation(const crow::request& req, UserId user_id);
-    crow::response postDeleteUserSettings(const crow::request& req, UserId user_id);
+    crow::response postDeleteUserSettings(const crow::request& req, UserId user_id, RoboDadApp& app);
 };

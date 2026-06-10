@@ -430,7 +430,8 @@
     margin-left: auto;
 }
 
-.msg.bot {
+.msg.bot,
+.msg.assistant {
     background: #eeeeee;
     align-self: flex-start;
 }
