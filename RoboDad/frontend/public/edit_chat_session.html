@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Edit an existing chat session in RoboDad." />
     <title>RoboDad - Edit Chat</title>
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/chat_sessions.css">
@@ -20,7 +22,7 @@
                 <h3>Your Chats</h3>
                 <a href="/user/chats/new" class="sidebar-new-btn">+ New</a>
             </div>
-            <nav class="chat-list">
+            <nav class="chat-list" aria-label="Chat sessions">
                 {{#chat_sessions}}
                 <a class="chat-list-item" href="/user/chats/{{id}}/messages">{{description}}</a>
                 {{/chat_sessions}}
@@ -39,11 +41,13 @@
                     <div class="form-group">
                         <label for="description">Description</label>
                         <input type="text" id="description" name="description"
+                               minlength="1" maxlength="255"
                                value="{{chat_session.description}}" required />
                     </div>
                     <div class="form-group">
-                        <label for="additional_info">Additional Info <span style="font-weight:normal;color:#888;">(optional)</span></label>
+                        <label for="additional_info">Additional Info <span class="label-optional">(optional)</span></label>
                         <textarea id="additional_info" name="additional_info"
+                                  maxlength="2000"
                                   placeholder="Any extra context for the AI...">{{chat_session.additionalInfo}}</textarea>
                     </div>
 
@@ -57,12 +61,7 @@
 
     </div>
 
-    <script>
-        var path = window.location.pathname.replace('/edit', '/messages');
-        document.querySelectorAll('.chat-list-item').forEach(function (a) {
-            if (a.getAttribute('href') === path) a.classList.add('active');
-        });
-    </script>
+    <script src="/js/edit_chat_session.js"></script>
 
 </body>
 </html>

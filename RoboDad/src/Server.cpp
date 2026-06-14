@@ -65,6 +65,7 @@ Server::Server()
 {}
 
 void Server::run() {
+    crow::logger::setHandler(&crowLogger_);
     crow::mustache::set_global_base("public");
 
     app_.get_middleware<AuthMiddleware>().init(jwt_);

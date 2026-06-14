@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Chat with your AI financial advisor in RoboDad." />
     <title>RoboDad - Chat</title>
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/chat_sessions.css">
@@ -20,7 +22,7 @@
                 <h3>Your Chats</h3>
                 <a href="/user/chats/new" class="sidebar-new-btn">+ New</a>
             </div>
-            <nav class="chat-list">
+            <nav class="chat-list" aria-label="Chat sessions">
                 {{#chat_sessions}}
                 <a class="chat-list-item" href="/user/chats/{{id}}/messages">{{description}}</a>
                 {{/chat_sessions}}
@@ -32,8 +34,9 @@
 
         <!-- Main Content -->
         <main class="chats-main"
-              data-userid="{{user.id}}"
-              data-sessionid="{{chat_session_id}}">
+              data-user-id="{{user.id}}"
+              data-session-id="{{chat_session_id}}"
+              aria-label="Chat window">
 
             <div class="chat-window">
                 <div class="chat-window-header">
@@ -48,7 +51,7 @@
                 </div>
 
                 <div id="inputBar">
-                    <input id="messageInput" type="text" placeholder="Type a message..." autocomplete="off" />
+                    <input id="messageInput" type="text" placeholder="Type a message..." autocomplete="off" autofocus />
                     <button id="sendBtn">Send</button>
                 </div>
             </div>
@@ -57,65 +60,7 @@
 
     </div>
 
-    <script>
-        var main = document.querySelector('.chats-main');
-        var userId = main.dataset.userid;
-        var sessionId = main.dataset.sessionid;
-        var chat = document.getElementById('chat');
-        var input = document.getElementById('messageInput');
-
-        // Classify server-rendered messages
-        document.querySelectorAll('#chat .msg').forEach(function (msg) {
-            msg.classList.add(msg.dataset.sender === 'user' ? 'user' : 'assistant');
-        });
-
-
-
-        // Scroll to bottom on load
-        chat.scrollTop = chat.scrollHeight;
-
-        function addMessage(text, role) {
-            var div = document.createElement('div');
-            div.className = 'msg ' + role;
-            div.textContent = text;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        function sendMessage() {
-            var text = input.value.trim();
-            if (!text) return;
-
-            addMessage(text, 'user');
-            input.value = '';
-
-            var params = new URLSearchParams({ message: text });
-            fetch('/user/chats/' + sessionId + '/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString()
-            }).then(function (res) {
-                if (res.status === 401) { window.location.href = '/login'; return null; }
-                if (!res.ok) { addMessage('Error sending message. Please try again.', 'assistant'); return null; }
-                return res.json();
-            }).then(function (data) {
-                if (data) addMessage(data.reply, 'assistant');
-            }).catch(function () {
-                addMessage('Error sending message. Please try again.', 'assistant');
-            });
-        }
-
-        document.getElementById('sendBtn').addEventListener('click', sendMessage);
-        input.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // Highlight active sidebar item
-        var activePath = '/user/chats/' + sessionId + '/messages';
-        document.querySelectorAll('.chat-list-item').forEach(function (a) {
-            if (a.getAttribute('href') === activePath) a.classList.add('active');
-        });
-    </script>
+    <script src="/js/chat.js"></script>
 
 </body>
 </html>
