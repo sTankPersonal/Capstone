@@ -7,5 +7,6 @@ void AdminMiddleware::init(IJwtService& jwt) {
 }
 
 void AdminMiddleware::redirectToHome(crow::response& res) {
-    res.redirect("/");
+    res.redirect("/auth/login");
+    res.end();
 }

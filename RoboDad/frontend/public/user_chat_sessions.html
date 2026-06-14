@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="View and manage your AI chat sessions in RoboDad." />
     <title>RoboDad - Chats</title>
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/chat_sessions.css">
@@ -20,7 +22,7 @@
                 <h3>Your Chats</h3>
                 <a href="/user/chats/new" class="sidebar-new-btn">+ New</a>
             </div>
-            <nav class="chat-list">
+            <nav class="chat-list" aria-label="Chat sessions">
                 {{#chat_sessions}}
                 <a class="chat-list-item" href="/user/chats/{{id}}/messages">{{description}}</a>
                 {{/chat_sessions}}
@@ -40,10 +42,10 @@
             <table class="session-table">
                 <thead>
                     <tr>
-                        <th>Description</th>
-                        <th>Persona</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Persona</th>
+                        <th scope="col">Created</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -74,12 +76,7 @@
 
     </div>
 
-    <script>
-        var path = window.location.pathname;
-        document.querySelectorAll('.chat-list-item').forEach(function (a) {
-            if (a.getAttribute('href') === path) a.classList.add('active');
-        });
-    </script>
+    <script src="/js/chat_session_active.js"></script>
 
 </body>
 </html>

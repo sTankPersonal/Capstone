@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Track and manage your expenses and spending in RoboDad." />
     <title>RoboDad - Expenses</title>
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/transactions.css">
@@ -32,10 +34,10 @@
         <table class="transaction-table">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th>Actions</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -57,17 +59,7 @@
         </table>
     </div>
 
-    <script>
-        (function () {
-            var total = 0, count = 0;
-            document.querySelectorAll('.amount-cell').forEach(function (cell) {
-                var val = parseFloat(cell.textContent.replace('$', ''));
-                if (!isNaN(val)) { total += val; count++; }
-            });
-            document.getElementById('total-value').textContent = '$' + total.toFixed(2);
-            document.getElementById('count-value').textContent = count;
-        })();
-    </script>
+    <script src="/js/amount_totals.js"></script>
 
 </body>
 </html>

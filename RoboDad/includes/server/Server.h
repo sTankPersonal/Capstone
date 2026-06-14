@@ -25,6 +25,7 @@
 #include "infrastructure/security/PasswordHasher.h"
 
 #include "presentation/AppType.h"
+#include "presentation/middleware/LoggingMiddleware.h"
 
 #include "application/users/services/LoginUser.h"
 #include "application/users/services/RegisterUser.h"
@@ -142,6 +143,7 @@ class Server {
     UserTransactionsController userTransactionsController_;
     ReferenceController        referenceController_;
 
+    FilteredCrowLogger crowLogger_;
     RoboDadApp app_;
 
 public:

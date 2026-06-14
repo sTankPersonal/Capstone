@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Confirm deletion of an earning entry in RoboDad." />
     <title>RoboDad - Delete Earning</title>
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/transactions.css">
@@ -23,8 +25,8 @@
                 <p><strong>Date:</strong> {{transaction.transactionDate}}</p>
             </div>
 
-            <div class="form-actions" style="justify-content:center;">
-                <form method="POST" action="" style="display:inline;">
+            <div class="form-actions form-actions-center">
+                <form method="POST" action="">
                     <button type="submit" class="btn btn-danger">Yes, Delete</button>
                 </form>
                 <a href="/user/transactions/{{transaction.id}}" class="btn btn-secondary">Cancel</a>

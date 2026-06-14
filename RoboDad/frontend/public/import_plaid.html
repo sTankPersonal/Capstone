@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Import bank transactions into RoboDad using your Plaid access token." />
     <title>RoboDad - Import from Plaid</title>
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/transactions.css">
@@ -15,16 +17,16 @@
     <div class="transactions-container">
         <div class="transaction-form-card">
             <h2>Import from Plaid</h2>
-            <p style="color:#666; font-size:0.9rem; margin-bottom:1.5rem;">
+            <p class="hint-text">
                 Sync transactions directly from your bank using your Plaid access token.
             </p>
 
-            <div id="alert" class="alert" style="display:none;"></div>
-
-            <form id="plaid-form">
+            <form method="POST" action="">
                 <div class="form-group">
                     <label for="access_token">Plaid Access Token</label>
-                    <input type="text" id="access_token" name="access_token" placeholder="access-sandbox-..." required />
+                    <input type="text" id="access_token" name="access_token"
+                           minlength="20" maxlength="255" placeholder="access-sandbox-..."
+                           autocomplete="off" required />
                 </div>
                 <div class="form-group">
                     <label for="start_date">Start Date</label>
@@ -43,44 +45,7 @@
         </div>
     </div>
 
-    <script>
-        (function () {
-            var today = new Date();
-            var firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-            document.getElementById('end_date').valueAsDate = today;
-            document.getElementById('start_date').valueAsDate = firstOfMonth;
-        })();
-
-        document.getElementById('plaid-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            var form = e.target;
-            var params = new URLSearchParams({
-                access_token: form.access_token.value,
-                start_date: form.start_date.value,
-                end_date: form.end_date.value
-            });
-            fetch(window.location.href, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: params.toString(),
-                redirect: 'follow'
-            }).then(function (res) {
-                if (res.ok) {
-                    showAlert('Transactions imported successfully!', true);
-                    setTimeout(function () { window.location.href = '/user/transactions'; }, 1500);
-                } else {
-                    return res.text().then(function (msg) { showAlert(msg || 'Import failed. Please check your token and try again.', false); });
-                }
-            }).catch(function () { showAlert('An error occurred. Please try again.', false); });
-        });
-
-        function showAlert(msg, success) {
-            var el = document.getElementById('alert');
-            el.textContent = msg;
-            el.className = 'alert ' + (success ? 'alert-success' : 'alert-error');
-            el.style.display = 'block';
-        }
-    </script>
+    <script src="/js/import_plaid.js"></script>
 
 </body>
 </html>

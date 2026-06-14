@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Update your personal information and regional preferences in RoboDad." />
     <title>RoboDad - Edit Personal Information</title>
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/transactions.css">
@@ -20,15 +22,21 @@
             <form method="POST" action="">
                 <div class="form-group">
                     <label for="first_name">First Name</label>
-                    <input type="text" id="first_name" name="first_name" value="{{user.firstName}}" />
+                    <input type="text" id="first_name" name="first_name"
+                           minlength="1" maxlength="100" autocomplete="given-name"
+                           value="{{user.firstName}}" required />
                 </div>
                 <div class="form-group">
                     <label for="last_name">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" value="{{user.lastName}}" />
+                    <input type="text" id="last_name" name="last_name"
+                           minlength="1" maxlength="100" autocomplete="family-name"
+                           value="{{user.lastName}}" required />
                 </div>
                 <div class="form-group">
                     <label for="date_of_birth">Date of Birth</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" value="{{user.dateOfBirth}}" />
+                    <input type="date" id="date_of_birth" name="date_of_birth"
+                           min="1900-01-01" autocomplete="bday"
+                           value="{{user.dateOfBirth}}" />
                 </div>
                 <div class="form-group">
                     <label for="country">Country</label>
