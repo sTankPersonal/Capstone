@@ -70,3 +70,32 @@
     font-size: 1.4rem;
     color: #1e1e2f;
 }
+
+.password-requirements {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin: 0.5rem 0 0;
+    padding: 0;
+}
+
+.password-requirements li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #c0392b;
+    transition: opacity 0.2s ease;
+}
+
+.password-requirements li::before {
+    content: "\2715";
+    font-size: 0.75rem;
+    color: #c0392b;
+}
+
+/* Requirements disappear from the list once they have been met. */
+.password-requirements li.met {
+    display: none;
+}

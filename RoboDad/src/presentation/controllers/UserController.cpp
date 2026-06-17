@@ -244,6 +244,9 @@ crow::response UserController::postEditUserSettingsLogin(const crow::request& re
     if (newPassword != confirmPassword) {
         return crow::response(400, "Passwords do not match");
     }
+    if (newPassword == currentPassword) {
+        return crow::response(400, "New password must be different from your current password");
+    }
 
     bool success = updateUserPassword_.execute(UpdateUserPasswordCommand(user_id, currentPassword, newPassword));
     if (!success) {
