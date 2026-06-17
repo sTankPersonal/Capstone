@@ -14,7 +14,9 @@ struct AuthMiddleware {
 
     template<typename AllContext>
     void before_handle(crow::request& req, crow::response& res, context& ctx, AllContext& all_ctx) {
-        if (ctx.isPublic || req.url.starts_with("/auth/")) {
+        if (ctx.isPublic || req.url.starts_with("/auth/") || req.url.starts_with("/css/") 
+            || req.url.starts_with("/js/") || req.url.starts_with("/components/"))
+        {
             ctx.isPublic = true;
             return;
         }

@@ -2,6 +2,7 @@
 #include "ChatMessageId.h"
 #include "ChatMessageContent.h"
 #include "MessageSenderId.h"
+#include "GetFinancialInsights.h"
 #include "UuidGenerator.h"
 #include <chrono>
 
@@ -29,12 +30,15 @@ std::string SendChatMessage::execute(const SendChatMessageCommand& request) {
 
     auto history = messageRepo_.findByChatSessionId(request.sessionId, defaultHistoryLimit_);
 
-    auto transactions = transactionRepo_.findByUserId(session->getUserId());
+    // Build insights locally (no interface required)
+    GetFinancialInsights insightsService(transactionRepo_);
+    auto insightsOpt = insightsService.execute(GetFinancialInsightsQuery(session->getUserId()));
 
     const std::string enriched = promptBuilder_
         .withUserMessage(request.userMessage)
-        .withTransactionContext(transactions)
+        .withInsights(insightsOpt.value_or(FinancialInsightsDto{}))
         .build();
+
 
     const auto today = std::chrono::year_month_day{
         std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())

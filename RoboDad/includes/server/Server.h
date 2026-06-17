@@ -120,6 +120,7 @@ class Server {
     ListTransactionsByCategory listTransactionsByCategory_;
     UpdateTransaction          updateTransactions_;
     ImportPlaidTransactions    importPlaidTransactions_;
+    GetFinancialInsights       getFinancialInsights_;
 
     GetCountry             getCountry_;
     ListCountries          listCountries_;
