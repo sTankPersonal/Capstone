@@ -19,7 +19,9 @@
         <div class="transaction-form-card">
             <h2>Edit Personal Information</h2>
 
-            <form method="POST" action="">
+            <div id="form-error" class="alert alert-error" role="alert" style="display:none;"></div>
+
+            <form method="POST" action="" id="information-form">
                 <div class="form-group">
                     <label for="first_name">First Name</label>
                     <input type="text" id="first_name" name="first_name"
@@ -37,6 +39,7 @@
                     <input type="date" id="date_of_birth" name="date_of_birth"
                            min="1900-01-01" autocomplete="bday"
                            value="{{user.dateOfBirth}}" />
+                    <small class="hint-text">You must be at least 18 years old.</small>
                 </div>
                 <div class="form-group">
                     <label for="country">Country</label>
@@ -78,6 +81,45 @@
             await populateDropdown('currency',          '/references/currencies',          'currencies',         '{{user.currencyId}}');
             await populateDropdown('language',          '/references/languages',           'languages',          '{{user.languageId}}');
             await populateDropdown('employment_status', '/references/employment-statuses', 'employmentStatuses', '{{user.employmentStatusId}}');
+        })();
+    </script>
+    <script>
+        (function () {
+            // Date of birth must be at least 18 years in the past. All dates remain
+            // selectable; we surface a red error message when the entry is under 18.
+            function pad(n) { return String(n).padStart(2, '0'); }
+
+            var dobInput = document.getElementById('date_of_birth');
+            var now = new Date();
+            var latest = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate());
+            var maxDob = latest.getFullYear() + '-' + pad(latest.getMonth() + 1) + '-' + pad(latest.getDate());
+
+            var form = document.getElementById('information-form');
+            var errorBox = document.getElementById('form-error');
+
+            function isUnderage() {
+                return dobInput.value && dobInput.value > maxDob;
+            }
+
+            function showError() {
+                errorBox.textContent = 'You must be 18 or over to use RoboDad.';
+                errorBox.style.display = 'block';
+            }
+
+            dobInput.addEventListener('input', function () {
+                if (isUnderage()) {
+                    showError();
+                } else {
+                    errorBox.style.display = 'none';
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                if (isUnderage()) {
+                    e.preventDefault();
+                    showError();
+                }
+            });
         })();
     </script>
 

@@ -29,7 +29,9 @@
             <h2>Create your account</h2>
             <p class="subtitle">It only takes a minute</p>
 
-            <form method="POST" action="/auth/register" class="form-grid">
+            <div id="form-error" class="form-error" role="alert" hidden></div>
+
+            <form id="register-form" method="POST" action="/auth/register" class="form-grid">
 
                 <div class="form-row">
                     <div class="form-group">
@@ -68,6 +70,15 @@
                     </div>
                 </div>
 
+                <ul id="password-requirements" class="password-requirements" aria-live="polite">
+                    <li data-rule="length">At least 8 characters</li>
+                    <li data-rule="uppercase">One uppercase letter</li>
+                    <li data-rule="lowercase">One lowercase letter</li>
+                    <li data-rule="number">One number</li>
+                    <li data-rule="special">One special character</li>
+                    <li data-rule="match">Passwords match</li>
+                </ul>
+
                 <button type="submit" class="btn-signup">Create Account</button>
             </form>
 
@@ -88,5 +99,6 @@
         </div>
     </div>
 
+    <script src="/js/register.js"></script>
 </body>
 </html>
