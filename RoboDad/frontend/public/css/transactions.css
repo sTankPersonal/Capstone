@@ -328,3 +328,298 @@
         justify-content: flex-end;
     }
 }
+
+/* ===================================================================== */
+/* Two-zone list layout (transactions / expenses / earnings)             */
+/* ===================================================================== */
+.transactions-list-page {
+    max-width: 1280px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+.txn-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* ---- Left rail ---- */
+.txn-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: sticky;
+    top: 1rem;
+}
+
+.txn-rail .summary-card {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.summary-card .value.value--income {
+    color: #5dd49a;
+}
+
+.summary-card .value.value--expense {
+    color: #ff8a8a;
+}
+
+.txn-filter {
+    background: white;
+    border-radius: 10px;
+    padding: 0.85rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.txn-filter-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+    margin-bottom: 0.2rem;
+}
+
+.txn-search-input {
+    width: 100%;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    margin-bottom: 0.4rem;
+    transition: border-color 0.2s ease;
+}
+
+.txn-search-input:focus {
+    outline: none;
+    border-color: #7ab4ff;
+}
+
+.txn-filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 0.5rem 0.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #444;
+    font-family: inherit;
+    transition: background 0.15s ease;
+}
+
+.txn-filter-btn:hover {
+    background: #f3f4f8;
+}
+
+.txn-filter-btn.active {
+    background: #eef2ff;
+    color: #3730a3;
+    font-weight: bold;
+}
+
+.dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.dot--income {
+    background: #2fa968;
+}
+
+.dot--expense {
+    background: #e05c5c;
+}
+
+/* ---- Main table ---- */
+.txn-main {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.txn-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.txn-table thead th {
+    text-align: left;
+    padding: 0.9rem 1.2rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+    border-bottom: 1px solid #eee;
+}
+
+.txn-table th.th-amount {
+    text-align: right;
+}
+
+.txn-table th.th-actions {
+    width: 56px;
+}
+
+.txn-row td {
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid #f2f2f2;
+    vertical-align: middle;
+}
+
+.txn-row:last-child td {
+    border-bottom: none;
+}
+
+.txn-row:hover {
+    background: #f9f9ff;
+}
+
+.txn-desc {
+    font-size: 0.98rem;
+    color: #1e1e2f;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.txn-date {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 2px;
+}
+
+.txn-badge {
+    font-size: 0.72rem;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-weight: bold;
+    letter-spacing: 0.2px;
+}
+
+.txn-badge--income {
+    background: #e3f6ec;
+    color: #1a7a4a;
+}
+
+.txn-badge--expense {
+    background: #fdeaea;
+    color: #a02020;
+}
+
+.txn-cell-amount {
+    text-align: right;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: #1e1e2f;
+}
+
+.txn-amount--income {
+    color: #1a7a4a;
+}
+
+.txn-amount--expense {
+    color: #c0392b;
+}
+
+.txn-cell-actions {
+    text-align: right;
+    position: relative;
+}
+
+/* ---- Row kebab menu ---- */
+.txn-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.txn-menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: #999;
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+}
+
+.txn-menu-btn:hover {
+    background: #eee;
+    color: #333;
+}
+
+.txn-menu-list {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    z-index: 20;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    min-width: 120px;
+    overflow: hidden;
+}
+
+.txn-menu-list.open {
+    display: block;
+}
+
+.txn-menu-list a {
+    display: block;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.9rem;
+    color: #333;
+    text-decoration: none;
+}
+
+.txn-menu-list a:hover {
+    background: #f5f5ff;
+}
+
+.txn-menu-list a.danger {
+    color: #e05c5c;
+}
+
+.txn-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #999;
+}
+
+@media (max-width: 800px) {
+    .txn-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .txn-rail {
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .txn-rail .summary-card {
+        flex: 1;
+        min-width: 130px;
+    }
+
+    .txn-filter {
+        flex-basis: 100%;
+    }
+}
