@@ -166,15 +166,19 @@ crow::response AuthController::getAuthGoogleCallback(const crow::request& req, R
         const GoogleUserInfo profile  = googleOAuth_.fetchUserInfo(accessToken);
 
         OAuthLoginCommand cmd{ profile.email, profile.firstName, profile.lastName };
-        UserProfileDto user = loginOrRegisterOAuthUser_.execute(cmd);
+        bool isNewUser = false;
+        UserProfileDto user = loginOrRegisterOAuthUser_.execute(cmd, isNewUser);
 
         auto& ctx = app.get_context<crow::CookieParser>(req);
         ctx.set_cookie("userId", jwt_.generate(user.getId()))
             .path("/")
             .max_age(60 * 60 * 24 * 7);
 
+        // First-time OAuth users are prompted to complete the rest of their
+        // profile, mirroring the traditional registration flow.
         crow::response res(302);
-        res.set_header("Location", "/user/dashboard");
+        res.set_header("Location", isNewUser ? "/user/settings/userInformation/edit"
+                                             : "/user/dashboard");
         return res;
     } catch (const std::exception&) {
         crow::response res(302);

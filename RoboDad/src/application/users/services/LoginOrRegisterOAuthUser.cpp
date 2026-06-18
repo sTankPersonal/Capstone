@@ -9,6 +9,13 @@ LoginOrRegisterOAuthUser::LoginOrRegisterOAuthUser(IUserRepository& repo, IPassw
     : repo_(repo), hasher_(hasher) {}
 
 UserProfileDto LoginOrRegisterOAuthUser::execute(const OAuthLoginCommand& cmd) {
+    bool isNewUser = false;
+    return execute(cmd, isNewUser);
+}
+
+UserProfileDto LoginOrRegisterOAuthUser::execute(const OAuthLoginCommand& cmd, bool& isNewUser) {
+    isNewUser = false;
+
     // If a user with this email already exists, return their profile.
     // Google has already authenticated them so no password check is needed.
     auto creds = repo_.lookupCredentials(cmd.email);
@@ -16,6 +23,8 @@ UserProfileDto LoginOrRegisterOAuthUser::execute(const OAuthLoginCommand& cmd) {
         auto user = repo_.findById(creds->first);
         if (user) return UserProfileDto(*user);
     }
+
+    isNewUser = true;
 
     // New OAuth user — store a random unusable password hash so the
     // traditional login path cannot be used with a blank password.
