@@ -11,4 +11,8 @@ class LoginOrRegisterOAuthUser : public IUseCase<OAuthLoginCommand, UserProfileD
 public:
     LoginOrRegisterOAuthUser(IUserRepository& repo, IPasswordHasher& hasher);
     UserProfileDto execute(const OAuthLoginCommand& cmd) override;
+
+    // Overload that reports whether a brand-new account was created, so callers
+    // can redirect first-time OAuth users to finish filling out their profile.
+    UserProfileDto execute(const OAuthLoginCommand& cmd, bool& isNewUser);
 };
