@@ -14,39 +14,79 @@
     <div id="navbar" data-username="{{user.firstName}}"></div>
     <script src="/components/navbar/navbar.js"></script>
 
-    <div class="transactions-container">
+    <div class="transactions-list-page">
         <div class="transactions-header">
             <h1>All Transactions</h1>
             <a href="/user/transactions/import/plaid" class="btn btn-primary">Import from Plaid</a>
         </div>
 
-        <table class="transaction-table">
-            <thead>
-                <tr>
-                    <th scope="col">Date</th>
-                    <th scope="col">Description</th>
-                    <th scope="col">Amount</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{#transactions}}
-                <tr>
-                    <td data-label="Date">{{transactionDate}}</td>
-                    <td data-label="Description">{{description}}</td>
-                    <td data-label="Amount" class="amount-cell">${{amount}}</td>
-                    <td data-label="Actions">
-                        <div class="actions-cell">
-                            <a href="/user/transactions/{{id}}" class="btn btn-secondary">View</a>
-                            <a href="/user/transactions/{{id}}/edit" class="btn btn-primary">Edit</a>
-                            <a href="/user/transactions/{{id}}/delete" class="btn btn-danger">Delete</a>
-                        </div>
-                    </td>
-                </tr>
-                {{/transactions}}
-            </tbody>
-        </table>
+        <div class="txn-layout">
+
+            <aside class="txn-rail">
+                <div class="summary-card">
+                    <div class="label">Net Balance</div>
+                    <div class="value" id="net-value">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Income</div>
+                    <div class="value value--income" id="income-value">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Expenses</div>
+                    <div class="value value--expense" id="expense-value">$0.00</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">Entries</div>
+                    <div class="value" id="count-value">0</div>
+                </div>
+
+                <div class="txn-filter">
+                    <div class="txn-filter-title">Filter</div>
+                    <input type="text" id="txn-search-input" class="txn-search-input" placeholder="Search...">
+                    <button class="txn-filter-btn active" data-filter="all">All</button>
+                    <button class="txn-filter-btn" data-filter="earnings"><span class="dot dot--income"></span> Income</button>
+                    <button class="txn-filter-btn" data-filter="expenses"><span class="dot dot--expense"></span> Expenses</button>
+                </div>
+            </aside>
+
+            <div class="txn-main">
+                <table class="txn-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Transaction</th>
+                            <th scope="col" class="th-amount">Amount</th>
+                            <th scope="col" class="th-actions"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#transactions}}
+                        <tr class="txn-row" data-category="{{categoryId}}" data-description="{{description}}">
+                            <td class="txn-cell-main">
+                                <div class="txn-desc">{{description}} <span class="txn-badge"></span></div>
+                                <div class="txn-date">{{transactionDate}}</div>
+                            </td>
+                            <td class="txn-cell-amount" data-amount="{{amount}}">${{amount}}</td>
+                            <td class="txn-cell-actions">
+                                <div class="txn-menu">
+                                    <button class="txn-menu-btn" aria-label="Actions" aria-haspopup="true">&#8943;</button>
+                                    <div class="txn-menu-list">
+                                        <a href="/user/transactions/{{id}}">View</a>
+                                        <a href="/user/transactions/{{id}}/edit">Edit</a>
+                                        <a href="/user/transactions/{{id}}/delete" class="danger">Delete</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/transactions}}
+                    </tbody>
+                </table>
+                <div class="txn-empty" id="txn-empty" style="display:none;">No transactions match your filters.</div>
+            </div>
+
+        </div>
     </div>
+
+    <script src="/js/transactions_view.js"></script>
 
 </body>
 </html>

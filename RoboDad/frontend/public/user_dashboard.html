@@ -19,83 +19,127 @@
     <script src="/components/navbar/navbar.js"></script>
 
     {{#insights}}
-    <section class="insights">
+    <div class="dashboard-layout">
 
-        <h2>Financial Summary (Last 30 Days)</h2>
+        <!-- ===== SIDEBAR (left 20%) ===== -->
+        <aside class="dash-sidebar">
+            <nav>
+                <button class="dash-link active" data-target="overview">Overview</button>
+                <button class="dash-link" data-target="incomeBreakdown">Income Breakdown</button>
+                <button class="dash-link" data-target="expenseBreakdown">Expense Breakdown</button>
+                <button class="dash-link" data-target="expenseCategories">Expense Categories</button>
+                <button class="dash-link" data-target="incomeCategories">Income Categories</button>
+                <button class="dash-link" data-target="incomeVsExpenses">Income vs Expenses</button>
+                <button class="dash-link" data-target="expenseFrequency">Expense Frequency</button>
+                <button class="dash-link" data-target="incomeFrequency">Income Frequency</button>
+                <button class="dash-link" data-target="incomeDetails">Income Details</button>
+                <button class="dash-link" data-target="expenseDetails">Expense Details</button>
+            </nav>
+        </aside>
 
-        <!-- KPI ROW -->
-        <div class="chart-grid">
-            <div class="insight-card">
-                <h3>Total Income</h3>
-                <p>${{totalIncome}}</p>
+        <!-- ===== MAIN CONTENT (right 80%) ===== -->
+        <section class="dash-main">
+
+            <!-- OVERVIEW (default) -->
+            <div class="dash-page active" id="page-overview">
+                <h2>Financial Summary (Last 30 Days)</h2>
+
+                <div class="kpi-row">
+                    <div class="insight-card">
+                        <h3>Total Income</h3>
+                        <p>${{totalIncome}}</p>
+                    </div>
+
+                    <div class="insight-card">
+                        <h3>Total Expenses</h3>
+                        <p>${{totalExpenses}}</p>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Income vs Expenses</h3>
+                    <div class="chart-wrap"><canvas id="overviewComparisonChart"></canvas></div>
+                </div>
             </div>
 
-            <div class="insight-card">
-                <h3>Total Expenses</h3>
-                <p>${{totalExpenses}}</p>
-            </div>
-        </div>
-
-        <hr>
-
-        <!-- CHARTS -->
-        <div class="chart-grid">
-
-            <div>
-                <h3>Income Breakdown</h3>
-                <canvas id="incomeChart"></canvas>
+            <!-- INCOME BREAKDOWN -->
+            <div class="dash-page" id="page-incomeBreakdown">
+                <h2>Income Breakdown</h2>
+                <div class="chart-card">
+                    <div class="chart-wrap"><canvas id="incomeChart"></canvas></div>
+                </div>
             </div>
 
-            <div>
-                <h3>Expense Breakdown</h3>
-                <canvas id="expenseChart"></canvas>
+            <!-- EXPENSE BREAKDOWN -->
+            <div class="dash-page" id="page-expenseBreakdown">
+                <h2>Expense Breakdown</h2>
+                <div class="chart-card">
+                    <div class="chart-wrap"><canvas id="expenseChart"></canvas></div>
+                </div>
             </div>
 
-            <div>
-                <h3>Expense Categories</h3>
-                <canvas id="expenseBarChart"></canvas>
+            <!-- EXPENSE CATEGORIES -->
+            <div class="dash-page" id="page-expenseCategories">
+                <h2>Expense Categories</h2>
+                <div class="chart-card">
+                    <div class="chart-wrap"><canvas id="expenseBarChart"></canvas></div>
+                </div>
             </div>
 
-            <div>
-                <h3>Income Categories</h3>
-                <canvas id="incomeBarChart"></canvas>
+            <!-- INCOME CATEGORIES -->
+            <div class="dash-page" id="page-incomeCategories">
+                <h2>Income Categories</h2>
+                <div class="chart-card">
+                    <div class="chart-wrap"><canvas id="incomeBarChart"></canvas></div>
+                </div>
             </div>
 
-            <div>
-                <h3>Income vs Expenses</h3>
-                <canvas id="incomeExpenseComparisonChart"></canvas>
+            <!-- INCOME VS EXPENSES -->
+            <div class="dash-page" id="page-incomeVsExpenses">
+                <h2>Income vs Expenses</h2>
+                <div class="chart-card">
+                    <div class="chart-wrap"><canvas id="incomeExpenseComparisonChart"></canvas></div>
+                </div>
             </div>
 
-            <div>
-                <h3>Expense Frequency</h3>
-                <canvas id="expenseFrequencyChart"></canvas>
+            <!-- EXPENSE FREQUENCY -->
+            <div class="dash-page" id="page-expenseFrequency">
+                <h2>Expense Frequency</h2>
+                <div class="chart-card">
+                    <div class="chart-wrap"><canvas id="expenseFrequencyChart"></canvas></div>
+                </div>
             </div>
 
-            <div>
-                <h3>Income Frequency</h3>
-                <canvas id="incomeFrequencyChart"></canvas>
+            <!-- INCOME FREQUENCY -->
+            <div class="dash-page" id="page-incomeFrequency">
+                <h2>Income Frequency</h2>
+                <div class="chart-card">
+                    <div class="chart-wrap"><canvas id="incomeFrequencyChart"></canvas></div>
+                </div>
             </div>
 
-        </div>
+            <!-- INCOME DETAILS -->
+            <div class="dash-page" id="page-incomeDetails">
+                <h2>Income Details</h2>
+                <ul>
+                    {{#incomeByCategoryList}}
+                    <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
+                    {{/incomeByCategoryList}}
+                </ul>
+            </div>
 
-        <hr>
+            <!-- EXPENSE DETAILS -->
+            <div class="dash-page" id="page-expenseDetails">
+                <h2>Expense Details</h2>
+                <ul>
+                    {{#expenseByCategoryList}}
+                    <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
+                    {{/expenseByCategoryList}}
+                </ul>
+            </div>
 
-        <!-- LISTS -->
-        <h3>Income Details</h3>
-        <ul>
-            {{#incomeByCategoryList}}
-            <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
-            {{/incomeByCategoryList}}
-        </ul>
-
-        <h3>Expense Details</h3>
-        <ul>
-            {{#expenseByCategoryList}}
-            <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
-            {{/expenseByCategoryList}}
-        </ul>
-
-    </section>
+        </section>
+    </div>
 
     <script>
     const incomeLabels = [
@@ -125,47 +169,100 @@
     const totalIncome = {{totalIncome}};
     const totalExpenses = {{totalExpenses}};
 
-    new Chart(document.getElementById('incomeChart'), {
-        type: 'doughnut',
-        data: { labels: incomeLabels, datasets: [{ data: incomeValues }] }
+    // Charts are created lazily the first time their page becomes visible,
+    // because Chart.js renders at zero size inside a display:none container.
+    // Each chart MUST get its own fresh options object: Chart.js mutates the
+    // options it is given (it writes resolved scale config back), so sharing one
+    // object across instances leaks one chart's scales into another and breaks
+    // the horizontal (indexAxis: 'y') charts.
+    const baseOptions = () => ({ responsive: true, maintainAspectRatio: false });
+
+    const chartFactories = {
+        overviewComparisonChart: () => new Chart(document.getElementById('overviewComparisonChart'), {
+            type: 'bar',
+            data: { labels: ['Income', 'Expenses'], datasets: [{ label: 'Total Amount', data: [totalIncome, totalExpenses] }] },
+            options: baseOptions()
+        }),
+        incomeChart: () => new Chart(document.getElementById('incomeChart'), {
+            type: 'doughnut',
+            data: { labels: incomeLabels, datasets: [{ data: incomeValues }] },
+            options: baseOptions()
+        }),
+        expenseChart: () => new Chart(document.getElementById('expenseChart'), {
+            type: 'doughnut',
+            data: { labels: expenseLabels, datasets: [{ data: expenseValues }] },
+            options: baseOptions()
+        }),
+        expenseBarChart: () => new Chart(document.getElementById('expenseBarChart'), {
+            type: 'bar',
+            data: { labels: expenseLabels, datasets: [{ data: expenseValues, label: 'Expenses' }] },
+            options: { ...baseOptions(), indexAxis: 'y' }
+        }),
+        incomeBarChart: () => new Chart(document.getElementById('incomeBarChart'), {
+            type: 'bar',
+            data: { labels: incomeLabels, datasets: [{ data: incomeValues, label: 'Income' }] },
+            options: { ...baseOptions(), indexAxis: 'y' }
+        }),
+        incomeExpenseComparisonChart: () => new Chart(document.getElementById('incomeExpenseComparisonChart'), {
+            type: 'bar',
+            data: { labels: ['Income', 'Expenses'], datasets: [{ label: 'Total Amount', data: [totalIncome, totalExpenses] }] },
+            options: baseOptions()
+        }),
+        expenseFrequencyChart: () => new Chart(document.getElementById('expenseFrequencyChart'), {
+            type: 'bar',
+            data: { labels: expenseLabels, datasets: [{ label: 'Number of Transactions', data: expenseCounts }] },
+            options: baseOptions()
+        }),
+        incomeFrequencyChart: () => new Chart(document.getElementById('incomeFrequencyChart'), {
+            type: 'bar',
+            data: { labels: incomeLabels, datasets: [{ label: 'Number of Transactions', data: incomeCounts }] },
+            options: baseOptions()
+        })
+    };
+
+    const createdCharts = {};
+
+    // Which chart canvas ids belong to each page.
+    const pageCharts = {
+        overview: ['overviewComparisonChart'],
+        incomeBreakdown: ['incomeChart'],
+        expenseBreakdown: ['expenseChart'],
+        expenseCategories: ['expenseBarChart'],
+        incomeCategories: ['incomeBarChart'],
+        incomeVsExpenses: ['incomeExpenseComparisonChart'],
+        expenseFrequency: ['expenseFrequencyChart'],
+        incomeFrequency: ['incomeFrequencyChart']
+    };
+
+    function buildChartsFor(target) {
+        const ids = pageCharts[target];
+        if (!ids) return;
+        ids.forEach(id => {
+            if (!createdCharts[id] && chartFactories[id]) {
+                createdCharts[id] = chartFactories[id]();
+            }
+        });
+    }
+
+    function showPage(target) {
+        document.querySelectorAll('.dash-page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.dash-link').forEach(l => l.classList.remove('active'));
+
+        const page = document.getElementById('page-' + target);
+        if (page) page.classList.add('active');
+
+        const link = document.querySelector('.dash-link[data-target="' + target + '"]');
+        if (link) link.classList.add('active');
+
+        buildChartsFor(target);
+    }
+
+    document.querySelectorAll('.dash-link').forEach(link => {
+        link.addEventListener('click', () => showPage(link.dataset.target));
     });
 
-    new Chart(document.getElementById('expenseChart'), {
-        type: 'doughnut',
-        data: { labels: expenseLabels, datasets: [{ data: expenseValues }] }
-    });
-
-    new Chart(document.getElementById('expenseBarChart'), {
-        type: 'bar',
-        data: { labels: expenseLabels, datasets: [{ data: expenseValues, label: 'Expenses' }] },
-        options: { indexAxis: 'y' }
-    });
-
-    new Chart(document.getElementById('incomeBarChart'), {
-        type: 'bar',
-        data: { labels: incomeLabels, datasets: [{ data: incomeValues, label: 'Income' }] },
-        options: { indexAxis: 'y' }
-    });
-
-    new Chart(document.getElementById('incomeExpenseComparisonChart'), {
-        type: 'bar',
-        data: { labels: ['Income', 'Expenses'], datasets: [{ label: 'Total Amount', data: [totalIncome, totalExpenses] }]}
-    });
-
-    const scatterData = [];
-    {{#expenseByCategoryList}}
-    scatterData.push({ x: {{count}}, y: {{amount}} });
-    {{/expenseByCategoryList}}
-
-    new Chart(document.getElementById('expenseFrequencyChart'), {
-        type: 'bar',
-        data: { labels: expenseLabels, datasets: [{ label: 'Number of Transactions', data: expenseCounts }]}
-    });
-
-    new Chart(document.getElementById('incomeFrequencyChart'), {
-        type: 'bar',
-        data: { labels: incomeLabels, datasets: [{ label: 'Number of Transactions', data: incomeCounts }]}
-    });
+    // Build the default (overview) chart on load.
+    buildChartsFor('overview');
     </script>
 
     {{/insights}}
