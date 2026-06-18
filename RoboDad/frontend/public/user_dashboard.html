@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Your RoboDad financial dashboard with spending insights and summaries." />
+    <meta name="description"
+          content="Your RoboDad financial dashboard with spending insights and summaries." />
+
     <title>RoboDad - Dashboard</title>
+
     <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -18,63 +23,155 @@
 
         <h2>Financial Summary (Last 30 Days)</h2>
 
-        <!-- Income -->
-        <div class="insight-card">
-            <h3>Total Income</h3>
-            <p><strong>${{totalIncome}}</strong></p>
+        <!-- KPI ROW -->
+        <div class="chart-grid">
+            <div class="insight-card">
+                <h3>Total Income</h3>
+                <p>${{totalIncome}}</p>
+            </div>
+
+            <div class="insight-card">
+                <h3>Total Expenses</h3>
+                <p>${{totalExpenses}}</p>
+            </div>
         </div>
-
-        <h3>Income by Category</h3>
-        <ul>
-            {{#incomeByCategoryList}}
-            <li>{{category}}: ${{amount}} across {{count}} transactions</li>
-            {{/incomeByCategoryList}}
-        </ul>
-
-        <h3>Unusual Income</h3>
-        {{#unusualIncome}}
-        <ul>
-            {{#unusualIncome}}
-            <li>{{.}}</li>
-            {{/unusualIncome}}
-        </ul>
-        {{/unusualIncome}}
-        {{^unusualIncome}}
-        <p>No unusual income detected.</p>
-        {{/unusualIncome}}
 
         <hr>
 
-        <!-- Expenses -->
-        <div class="insight-card">
-            <h3>Total Expenses</h3>
-            <p><strong>${{totalExpenses}}</strong></p>
+        <!-- CHARTS -->
+        <div class="chart-grid">
+
+            <div>
+                <h3>Income Breakdown</h3>
+                <canvas id="incomeChart"></canvas>
+            </div>
+
+            <div>
+                <h3>Expense Breakdown</h3>
+                <canvas id="expenseChart"></canvas>
+            </div>
+
+            <div>
+                <h3>Expense Categories</h3>
+                <canvas id="expenseBarChart"></canvas>
+            </div>
+
+            <div>
+                <h3>Income Categories</h3>
+                <canvas id="incomeBarChart"></canvas>
+            </div>
+
+            <div>
+                <h3>Income vs Expenses</h3>
+                <canvas id="incomeExpenseComparisonChart"></canvas>
+            </div>
+
+            <div>
+                <h3>Expense Frequency</h3>
+                <canvas id="expenseFrequencyChart"></canvas>
+            </div>
+
+            <div>
+                <h3>Income Frequency</h3>
+                <canvas id="incomeFrequencyChart"></canvas>
+            </div>
+
         </div>
 
-        <h3>Expenses by Category</h3>
+        <hr>
+
+        <!-- LISTS -->
+        <h3>Income Details</h3>
+        <ul>
+            {{#incomeByCategoryList}}
+            <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
+            {{/incomeByCategoryList}}
+        </ul>
+
+        <h3>Expense Details</h3>
         <ul>
             {{#expenseByCategoryList}}
-            <li>{{category}}: ${{amount}} across {{count}} transactions</li>
+            <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
             {{/expenseByCategoryList}}
         </ul>
 
-        <h3>Unusual Expenses</h3>
-        {{#unusualExpenses}}
-        <ul>
-            {{#unusualExpenses}}
-            <li>{{.}}</li>
-            {{/unusualExpenses}}
-        </ul>
-        {{/unusualExpenses}}
-        {{^unusualExpenses}}
-        <p>No unusual expenses detected.</p>
-        {{/unusualExpenses}}
-
     </section>
+
+    <script>
+    const incomeLabels = [
+        {{#incomeByCategoryList}}"{{category}}",{{/incomeByCategoryList}}
+    ];
+
+    const incomeValues = [
+        {{#incomeByCategoryList}}{{amount}},{{/incomeByCategoryList}}
+    ];
+
+    const incomeCounts = [
+        {{#incomeByCategoryList}}{{count}},{{/incomeByCategoryList}}
+    ];
+
+    const expenseLabels = [
+        {{#expenseByCategoryList}}"{{category}}",{{/expenseByCategoryList}}
+    ];
+
+    const expenseValues = [
+        {{#expenseByCategoryList}}{{amount}},{{/expenseByCategoryList}}
+    ];
+
+    const expenseCounts = [
+        {{#expenseByCategoryList}}{{count}},{{/expenseByCategoryList}}
+    ];
+
+    const totalIncome = {{totalIncome}};
+    const totalExpenses = {{totalExpenses}};
+
+    new Chart(document.getElementById('incomeChart'), {
+        type: 'doughnut',
+        data: { labels: incomeLabels, datasets: [{ data: incomeValues }] }
+    });
+
+    new Chart(document.getElementById('expenseChart'), {
+        type: 'doughnut',
+        data: { labels: expenseLabels, datasets: [{ data: expenseValues }] }
+    });
+
+    new Chart(document.getElementById('expenseBarChart'), {
+        type: 'bar',
+        data: { labels: expenseLabels, datasets: [{ data: expenseValues, label: 'Expenses' }] },
+        options: { indexAxis: 'y' }
+    });
+
+    new Chart(document.getElementById('incomeBarChart'), {
+        type: 'bar',
+        data: { labels: incomeLabels, datasets: [{ data: incomeValues, label: 'Income' }] },
+        options: { indexAxis: 'y' }
+    });
+
+    new Chart(document.getElementById('incomeExpenseComparisonChart'), {
+        type: 'bar',
+        data: { labels: ['Income', 'Expenses'], datasets: [{ label: 'Total Amount', data: [totalIncome, totalExpenses] }]}
+    });
+
+    const scatterData = [];
+    {{#expenseByCategoryList}}
+    scatterData.push({ x: {{count}}, y: {{amount}} });
+    {{/expenseByCategoryList}}
+
+    new Chart(document.getElementById('expenseFrequencyChart'), {
+        type: 'bar',
+        data: { labels: expenseLabels, datasets: [{ label: 'Number of Transactions', data: expenseCounts }]}
+    });
+
+    new Chart(document.getElementById('incomeFrequencyChart'), {
+        type: 'bar',
+        data: { labels: incomeLabels, datasets: [{ label: 'Number of Transactions', data: incomeCounts }]}
+    });
+    </script>
+
     {{/insights}}
 
     {{^insights}}
-    <p>No financial insights available yet.</p>
+    <p style="text-align:center;">No financial insights available yet.</p>
     {{/insights}}
 
 </body>
