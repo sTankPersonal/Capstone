@@ -187,10 +187,21 @@ CREATE TABLE transactions (
     currency_id             TEXT REFERENCES currencies(currency_id),
     description             TEXT,
     transaction_date        DATE NOT NULL DEFAULT CURRENT_DATE,
-    created_at              DATE NOT NULL DEFAULT CURRENT_DATE
+    created_at              DATE NOT NULL DEFAULT CURRENT_DATE,
+    plaid_transaction_id    TEXT UNIQUE
+);
+
+-- ── Plaid Items ───────────────────────────────────────────────────────────────
+CREATE TABLE plaid_items (
+    plaid_item_id TEXT PRIMARY KEY,
+    user_id       TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    access_token  TEXT NOT NULL,
+    sync_cursor   TEXT NOT NULL DEFAULT '',
+    created_at    DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 -- ── Indexes ───────────────────────────────────────────────────────────────────
 CREATE INDEX idx_chat_sessions_user_id    ON chat_sessions(user_id);
 CREATE INDEX idx_chat_messages_session_id ON chat_messages(chat_session_id);
 CREATE INDEX idx_transactions_user_id     ON transactions(user_id);
+CREATE INDEX idx_plaid_items_user_id      ON plaid_items(user_id);

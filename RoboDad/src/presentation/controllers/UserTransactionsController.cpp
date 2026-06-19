@@ -7,6 +7,8 @@
 #include "application/users/commands/DeleteTransactionCommand.h"
 #include "application/users/commands/ImportPlaidTransactionsCommand.h"
 #include "application/users/commands/UpdateTransactionCommand.h"
+#include "application/users/commands/CreatePlaidLinkTokenCommand.h"
+#include "application/users/commands/LinkPlaidAccountCommand.h"
 #include "application/users/queries/GetTransactionQuery.h"
 #include "application/users/queries/ListTransactionsQuery.h"
 #include "application/users/queries/ListTransactionsByCategoryQuery.h"
@@ -14,8 +16,27 @@
 #include <chrono>
 #include <sstream>
 
-UserTransactionsController::UserTransactionsController(const CreateTransaction& createTransactions, const DeleteTransaction& deleteTransactions, const GetTransaction& getTransactions, const GetUserProfile& getUserProfile, const ListTransactions& listTransactions, const ListTransactionsByCategory& listTransactionsByCategory, const UpdateTransaction& updateTransactions, const ImportPlaidTransactions& importPlaidTransactions)
-    : createTransactions_(createTransactions), deleteTransactions_(deleteTransactions), getTransactions_(getTransactions), getUserProfile_(getUserProfile), listTransactions_(listTransactions), listTransactionsByCategory_(listTransactionsByCategory), updateTransactions_(updateTransactions), importPlaidTransactions_(importPlaidTransactions) {}
+UserTransactionsController::UserTransactionsController(
+    const CreateTransaction& createTransactions,
+    const DeleteTransaction& deleteTransactions,
+    const GetTransaction& getTransactions,
+    const GetUserProfile& getUserProfile,
+    const ListTransactions& listTransactions,
+    const ListTransactionsByCategory& listTransactionsByCategory,
+    const UpdateTransaction& updateTransactions,
+    const ImportPlaidTransactions& importPlaidTransactions,
+    const CreatePlaidLinkToken& createPlaidLinkToken,
+    const LinkPlaidAccount& linkPlaidAccount)
+    : createTransactions_(createTransactions)
+    , deleteTransactions_(deleteTransactions)
+    , getTransactions_(getTransactions)
+    , getUserProfile_(getUserProfile)
+    , listTransactions_(listTransactions)
+    , listTransactionsByCategory_(listTransactionsByCategory)
+    , updateTransactions_(updateTransactions)
+    , importPlaidTransactions_(importPlaidTransactions)
+    , createPlaidLinkToken_(createPlaidLinkToken)
+    , linkPlaidAccount_(linkPlaidAccount) {}
 
 void UserTransactionsController::registerRoutes(RoboDadApp& app) {
     CROW_ROUTE(app, "/user/transactions")
@@ -62,9 +83,15 @@ void UserTransactionsController::registerRoutes(RoboDadApp& app) {
         .methods(crow::HTTPMethod::GET)([this, &app](const crow::request& req) {
             return getPlaidImportPage(req, UserId(app.get_context<AuthMiddleware>(req).userId));
         });
-    CROW_ROUTE(app, "/user/transactions/import/plaid")
+
+    CROW_ROUTE(app, "/user/plaid/link-token")
+        .methods(crow::HTTPMethod::GET)([this, &app](const crow::request& req) {
+            return getPlaidLinkToken(req, UserId(app.get_context<AuthMiddleware>(req).userId));
+        });
+
+    CROW_ROUTE(app, "/user/plaid/exchange")
         .methods(crow::HTTPMethod::POST)([this, &app](const crow::request& req) {
-            return postPlaidImport(req, UserId(app.get_context<AuthMiddleware>(req).userId));
+            return postPlaidExchange(req, UserId(app.get_context<AuthMiddleware>(req).userId));
         });
 }
 
@@ -231,17 +258,34 @@ crow::response UserTransactionsController::getPlaidImportPage(const crow::reques
     return crow::response(crow::mustache::load("import_plaid.html").render(ctx));
 }
 
-crow::response UserTransactionsController::postPlaidImport(const crow::request& req, UserId user_id) {
-    crow::query_string params("?" + req.body);
-    std::string accessToken = params.get("access_token") ? params.get("access_token") : "";
-    std::string startDate   = params.get("start_date")   ? params.get("start_date")   : "";
-    std::string endDate     = params.get("end_date")     ? params.get("end_date")     : "";
+crow::response UserTransactionsController::getPlaidLinkToken(const crow::request& req, UserId user_id) {
+    try {
+        const std::string linkToken = createPlaidLinkToken_.execute(CreatePlaidLinkTokenCommand(user_id));
+        crow::json::wvalue result;
+        result["link_token"] = linkToken;
+        return crow::response{result};
+    } catch (const std::exception& e) {
+        crow::json::wvalue err;
+        err["error"] = e.what();
+        return crow::response(500, err.dump());
+    }
+}
 
-    if (accessToken.empty() || startDate.empty() || endDate.empty()) {
+crow::response UserTransactionsController::postPlaidExchange(const crow::request& req, UserId user_id) {
+    crow::query_string params("?" + req.body);
+    std::string publicToken = params.get("public_token") ? params.get("public_token") : "";
+
+    if (publicToken.empty()) {
         return crow::response(400, "Missing required fields");
     }
 
-    ImportPlaidTransactionsCommand importCommand(user_id, accessToken, startDate, endDate);
-    importPlaidTransactions_.execute(importCommand);
-    return crow::response(200, "Transactions imported successfully");
+    try {
+        linkPlaidAccount_.execute(LinkPlaidAccountCommand(user_id, publicToken));
+    } catch (const std::exception& e) {
+        return crow::response(500, e.what());
+    }
+
+    crow::response res(302);
+    res.add_header("Location", "/user/transactions");
+    return res;
 }

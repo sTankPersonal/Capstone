@@ -50,6 +50,7 @@ public:
     MOCK_METHOD(bool,                       update,       (const Transaction&), (override));
     MOCK_METHOD(bool,                       remove,       (TransactionId),      (override));
     MOCK_METHOD(std::vector<Transaction>,   findByUserId, (const UserId&),      (override));
+    MOCK_METHOD(std::optional<Transaction>, findByPlaidTransactionId, (const std::string&), (override));
 };
 
 // ── CreateTransaction ─────────────────────────────────────────────────────────

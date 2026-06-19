@@ -1,14 +1,16 @@
 #pragma once
 #include "UserId.h"
+#include "PlaidItemId.h"
 #include <string>
 
 struct ImportPlaidTransactionsCommand {
     UserId userId;
+    PlaidItemId plaidItemId;
     std::string accessToken;
-    std::string startDate;
-    std::string endDate;
-    int count;
+    std::string cursor;
 
-    explicit ImportPlaidTransactionsCommand(UserId userId, std::string accessToken, std::string startDate, std::string endDate, int count = 100)
-        : userId(std::move(userId)), accessToken(std::move(accessToken)), startDate(std::move(startDate)), endDate(std::move(endDate)), count(count) {}
+    explicit ImportPlaidTransactionsCommand(UserId userId, PlaidItemId plaidItemId,
+                                            std::string accessToken, std::string cursor = "")
+        : userId(std::move(userId)), plaidItemId(std::move(plaidItemId))
+        , accessToken(std::move(accessToken)), cursor(std::move(cursor)) {}
 };

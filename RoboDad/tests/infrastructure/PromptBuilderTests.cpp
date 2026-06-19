@@ -1,27 +1,5 @@
 #include <gtest/gtest.h>
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
-#include "Transactions.h"
-#include "TransactionId.h"
-#include "UserId.h"
-#include "TransactionCategoryId.h"
-#include "CurrencyId.h"
-#include "TransactionAmount.h"
-#include "TransactionDescription.h"
-#include <chrono>
-
-static std::chrono::year_month_day makeDate(int y, int m, int d) {
-    return {std::chrono::year{y}, std::chrono::month{static_cast<unsigned>(m)}, std::chrono::day{static_cast<unsigned>(d)}};
-}
-
-static Transaction makeTransaction(const std::string& id, double amount, const std::string& desc) {
-    auto date = makeDate(2024, 1, 1);
-    return Transaction(
-        TransactionId{id}, UserId{"user-1"}, TransactionCategoryId{"cat-1"},
-        TransactionAmount(std::optional<double>{amount}, CurrencyId{"USD"}),
-        TransactionDescription(std::optional<std::string>{desc}),
-        date, date
-    );
-}
 
 // ── withUserMessage ───────────────────────────────────────────────────────────
 
@@ -39,35 +17,50 @@ TEST(PromptBuilderTest, EmptyUserMessageIsPreserved) {
     EXPECT_TRUE(result.empty());
 }
 
-// ── withTransactionContext ────────────────────────────────────────────────────
+// ── withInsights ──────────────────────────────────────────────────────────────
 
-TEST(PromptBuilderTest, WithTransactionContextAppendsAmountAndDescription) {
-    Transaction tx = makeTransaction("tx-1", 45.0, "Groceries");
+TEST(PromptBuilderTest, WithInsightsAppendsSummaryContent) {
+    FinancialInsightsDto insights;
+    insights.totalIncome = 1000.0;
+    insights.totalExpenses = 250.0;
+    insights.expenseByCategoryList.push_back(CategoryItem{"Food", 250.0, 3});
+    insights.unusualExpenses.push_back("Large grocery bill");
+
     std::string result = PromptBuilder()
         .withUserMessage("What did I spend?")
-        .withTransactionContext({tx})
+        .withInsights(insights)
         .build();
-    EXPECT_NE(result.find("45"),        std::string::npos);
-    EXPECT_NE(result.find("Groceries"), std::string::npos);
+
+    EXPECT_NE(result.find("What did I spend?"), std::string::npos);
+    EXPECT_NE(result.find("Total Expenses: $250"), std::string::npos);
+    EXPECT_NE(result.find("Food: $250"), std::string::npos);
+    EXPECT_NE(result.find("Large grocery bill"), std::string::npos);
 }
 
-TEST(PromptBuilderTest, WithTransactionContextMultipleTransactionsAllAppear) {
-    Transaction a = makeTransaction("tx-a", 1000.0, "Rent");
-    Transaction b = makeTransaction("tx-b",   25.5, "Coffee");
+TEST(PromptBuilderTest, WithInsightsIncludesIncomeAndExpenseSections) {
+    FinancialInsightsDto insights;
+    insights.totalIncome = 3500.0;
+    insights.totalExpenses = 1800.0;
+
     std::string result = PromptBuilder()
         .withUserMessage("Summarize my spending.")
-        .withTransactionContext({a, b})
+        .withInsights(insights)
         .build();
-    EXPECT_NE(result.find("Rent"),   std::string::npos);
-    EXPECT_NE(result.find("Coffee"), std::string::npos);
+
+    EXPECT_NE(result.find("Income"), std::string::npos);
+    EXPECT_NE(result.find("Expenses"), std::string::npos);
 }
 
-TEST(PromptBuilderTest, WithEmptyTransactionContextDoesNotAlterMessage) {
+TEST(PromptBuilderTest, WithEmptyInsightsStillAddsSummaryHeaders) {
+    FinancialInsightsDto insights;
+
     std::string result = PromptBuilder()
         .withUserMessage("Hello")
-        .withTransactionContext({})
+        .withInsights(insights)
         .build();
-    EXPECT_EQ(result, "Hello");
+
+    EXPECT_NE(result.find("Hello"), std::string::npos);
+    EXPECT_NE(result.find("Financial Summary"), std::string::npos);
 }
 
 // ── build ─────────────────────────────────────────────────────────────────────
@@ -90,10 +83,12 @@ TEST(PromptBuilderTest, BuilderIsReusableAfterBuild) {
     EXPECT_EQ(second, "Second");
 }
 
-TEST(PromptBuilderTest, SecondBuildDoesNotCarryOverPreviousTransactions) {
-    Transaction tx = makeTransaction("tx-1", 99.0, "Subscription");
+TEST(PromptBuilderTest, SecondBuildDoesNotCarryOverPreviousInsights) {
+    FinancialInsightsDto insights;
+    insights.unusualExpenses.push_back("Subscription");
+
     PromptBuilder builder;
-    builder.withUserMessage("First").withTransactionContext({tx}).build();
+    builder.withUserMessage("First").withInsights(insights).build();
 
     std::string second = builder
         .withUserMessage("Clean slate")

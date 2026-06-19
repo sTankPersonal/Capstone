@@ -7,6 +7,8 @@
 #include "TransactionAmount.h"
 #include "TransactionDescription.h"
 #include <chrono>
+#include <optional>
+#include <string>
 
 class Transaction : public IEntity<TransactionId, std::chrono::year_month_day>
 {
@@ -17,6 +19,7 @@ class Transaction : public IEntity<TransactionId, std::chrono::year_month_day>
     TransactionDescription description_;
     std::chrono::year_month_day transactionDate_;
     std::chrono::year_month_day createdAt_;
+    std::optional<std::string> plaidTransactionId_;
 
 public:
     explicit Transaction(
@@ -26,7 +29,8 @@ public:
         const TransactionAmount& amount,
         const TransactionDescription& description,
         const std::chrono::year_month_day& transactionDate,
-        const std::chrono::year_month_day& createdAt
+        const std::chrono::year_month_day& createdAt,
+        std::optional<std::string> plaidTransactionId = std::nullopt
     );
 
     const TransactionId& getId() const noexcept override;
@@ -36,6 +40,7 @@ public:
     const TransactionDescription& getDescription() const noexcept;
     const std::chrono::year_month_day& getTransactionDate() const noexcept;
     const std::chrono::year_month_day& getCreatedAt() const noexcept override;
+    const std::optional<std::string>& getPlaidTransactionId() const noexcept;
 
 protected:
     void setCategoryId(const TransactionCategoryId& categoryId);
