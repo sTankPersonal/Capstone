@@ -12,6 +12,7 @@
 #include "application/users/services/ListTransactionsByCategory.h"
 #include "application/users/services/UpdateTransaction.h"
 #include "application/users/services/ImportPlaidTransactions.h"
+#include "application/users/services/ImportCsvTransactions.h"
 
 #include "presentation/AppType.h"
 
@@ -37,6 +38,15 @@
     GET: /user/transactions/import/plaid - Loads the Plaid transaction import page
         - PlaidAccessToken
     POST: /user/transactions/import/plaid - Submits the Plaid transaction import form
+
+    POST: /user/transactions/category/<category_id>/import/csv - Imports transactions from
+        an uploaded CSV/TSV bank export. The raw file contents are sent as the request
+        body; debit rows are imported for the "expenses" category and credit rows for
+        "earnings". The response is JSON: { "imported": <count> }.
+
+    POST: /user/transactions/category/<category_id>/delete - Bulk-deletes the transactions
+        whose ids are passed as a comma-separated "ids" form field. Only transactions owned
+        by the requesting user are removed. The response is JSON: { "deleted": <count> }.
 */
 
 class UserTransactionsController : public IController<RoboDadApp> {
@@ -48,8 +58,9 @@ class UserTransactionsController : public IController<RoboDadApp> {
     ListTransactionsByCategory listTransactionsByCategory_;
     UpdateTransaction updateTransactions_;
     ImportPlaidTransactions importPlaidTransactions_;
+    ImportCsvTransactions importCsvTransactions_;
 public:
-    UserTransactionsController(const CreateTransaction& createTransactions, const DeleteTransaction& deleteTransactions, const GetTransaction& getTransactions, const GetUserProfile& getUserProfile, const ListTransactions& listTransactions, const ListTransactionsByCategory& listTransactionsByCategory, const UpdateTransaction& updateTransactions, const ImportPlaidTransactions& importPlaidTransactions);
+    UserTransactionsController(const CreateTransaction& createTransactions, const DeleteTransaction& deleteTransactions, const GetTransaction& getTransactions, const GetUserProfile& getUserProfile, const ListTransactions& listTransactions, const ListTransactionsByCategory& listTransactionsByCategory, const UpdateTransaction& updateTransactions, const ImportPlaidTransactions& importPlaidTransactions, const ImportCsvTransactions& importCsvTransactions);
     void registerRoutes(RoboDadApp& app) override;
 
     crow::response getTransactions(const crow::request& req, UserId user_id);
@@ -66,4 +77,7 @@ public:
 
     crow::response getPlaidImportPage(const crow::request& req, UserId user_id);
     crow::response postPlaidImport(const crow::request& req, UserId user_id);
+
+    crow::response postCsvImport(const crow::request& req, UserId user_id, TransactionCategoryId category_id);
+    crow::response postBulkDelete(const crow::request& req, UserId user_id, TransactionCategoryId category_id);
 };

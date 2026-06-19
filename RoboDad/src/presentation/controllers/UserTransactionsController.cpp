@@ -6,6 +6,7 @@
 #include "application/users/commands/CreateTransactionCommand.h"
 #include "application/users/commands/DeleteTransactionCommand.h"
 #include "application/users/commands/ImportPlaidTransactionsCommand.h"
+#include "application/users/commands/ImportCsvTransactionsCommand.h"
 #include "application/users/commands/UpdateTransactionCommand.h"
 #include "application/users/queries/GetTransactionQuery.h"
 #include "application/users/queries/ListTransactionsQuery.h"
@@ -14,8 +15,8 @@
 #include <chrono>
 #include <sstream>
 
-UserTransactionsController::UserTransactionsController(const CreateTransaction& createTransactions, const DeleteTransaction& deleteTransactions, const GetTransaction& getTransactions, const GetUserProfile& getUserProfile, const ListTransactions& listTransactions, const ListTransactionsByCategory& listTransactionsByCategory, const UpdateTransaction& updateTransactions, const ImportPlaidTransactions& importPlaidTransactions)
-    : createTransactions_(createTransactions), deleteTransactions_(deleteTransactions), getTransactions_(getTransactions), getUserProfile_(getUserProfile), listTransactions_(listTransactions), listTransactionsByCategory_(listTransactionsByCategory), updateTransactions_(updateTransactions), importPlaidTransactions_(importPlaidTransactions) {}
+UserTransactionsController::UserTransactionsController(const CreateTransaction& createTransactions, const DeleteTransaction& deleteTransactions, const GetTransaction& getTransactions, const GetUserProfile& getUserProfile, const ListTransactions& listTransactions, const ListTransactionsByCategory& listTransactionsByCategory, const UpdateTransaction& updateTransactions, const ImportPlaidTransactions& importPlaidTransactions, const ImportCsvTransactions& importCsvTransactions)
+    : createTransactions_(createTransactions), deleteTransactions_(deleteTransactions), getTransactions_(getTransactions), getUserProfile_(getUserProfile), listTransactions_(listTransactions), listTransactionsByCategory_(listTransactionsByCategory), updateTransactions_(updateTransactions), importPlaidTransactions_(importPlaidTransactions), importCsvTransactions_(importCsvTransactions) {}
 
 void UserTransactionsController::registerRoutes(RoboDadApp& app) {
     CROW_ROUTE(app, "/user/transactions")
@@ -65,6 +66,16 @@ void UserTransactionsController::registerRoutes(RoboDadApp& app) {
     CROW_ROUTE(app, "/user/transactions/import/plaid")
         .methods(crow::HTTPMethod::POST)([this, &app](const crow::request& req) {
             return postPlaidImport(req, UserId(app.get_context<AuthMiddleware>(req).userId));
+        });
+
+    CROW_ROUTE(app, "/user/transactions/category/<string>/import/csv")
+        .methods(crow::HTTPMethod::POST)([this, &app](const crow::request& req, const std::string& category_id) {
+            return postCsvImport(req, UserId(app.get_context<AuthMiddleware>(req).userId), TransactionCategoryId(category_id));
+        });
+
+    CROW_ROUTE(app, "/user/transactions/category/<string>/delete")
+        .methods(crow::HTTPMethod::POST)([this, &app](const crow::request& req, const std::string& category_id) {
+            return postBulkDelete(req, UserId(app.get_context<AuthMiddleware>(req).userId), TransactionCategoryId(category_id));
         });
 }
 
@@ -244,4 +255,44 @@ crow::response UserTransactionsController::postPlaidImport(const crow::request& 
     ImportPlaidTransactionsCommand importCommand(user_id, accessToken, startDate, endDate);
     importPlaidTransactions_.execute(importCommand);
     return crow::response(200, "Transactions imported successfully");
+}
+
+crow::response UserTransactionsController::postCsvImport(const crow::request& req, UserId user_id, TransactionCategoryId category_id) {
+    if (req.body.empty()) {
+        return crow::response(400, "Empty file");
+    }
+
+    CsvImportFlow flow = (category_id.getId() == "earnings") ? CsvImportFlow::MoneyIn : CsvImportFlow::MoneyOut;
+    ImportCsvTransactionsCommand importCommand(user_id, category_id, req.body, flow);
+    std::vector<Transaction> imported = importCsvTransactions_.execute(importCommand);
+
+    crow::json::wvalue result;
+    result["imported"] = static_cast<int>(imported.size());
+    return crow::response(200, std::move(result));
+}
+
+crow::response UserTransactionsController::postBulkDelete(const crow::request& req, UserId user_id, TransactionCategoryId category_id) {
+    crow::query_string params("?" + req.body);
+    std::string idsStr = params.get("ids") ? params.get("ids") : "";
+    if (idsStr.empty()) {
+        return crow::response(400, "No transactions selected");
+    }
+
+    int deleted = 0;
+    std::stringstream ss(idsStr);
+    std::string id;
+    while (std::getline(ss, id, ',')) {
+        if (id.empty()) continue;
+        TransactionId transactionId(id);
+        std::optional<TransactionDto> transactionOpt = getTransactions_.execute(GetTransactionQuery(transactionId));
+        if (transactionOpt && transactionOpt->getUserId() == user_id.getId()) {
+            if (deleteTransactions_.execute(DeleteTransactionCommand(transactionId))) {
+                ++deleted;
+            }
+        }
+    }
+
+    crow::json::wvalue result;
+    result["deleted"] = deleted;
+    return crow::response(200, std::move(result));
 }

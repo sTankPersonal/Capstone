@@ -49,6 +49,7 @@
 #include "application/users/services/ListTransactions.h"
 #include "application/users/services/ListTransactionsByCategory.h"
 #include "application/users/services/UpdateTransaction.h"
+#include "application/users/services/ImportCsvTransactions.h"
 
 #include "application/references/countries/services/GetCountry.h"
 #include "application/references/countries/services/ListCountries.h"
@@ -120,6 +121,7 @@ class Server {
     ListTransactionsByCategory listTransactionsByCategory_;
     UpdateTransaction          updateTransactions_;
     ImportPlaidTransactions    importPlaidTransactions_;
+    ImportCsvTransactions      importCsvTransactions_;
     GetFinancialInsights       getFinancialInsights_;
 
     GetCountry             getCountry_;
