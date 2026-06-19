@@ -17,6 +17,26 @@
     color: #1e1e2f;
 }
 
+.transactions-header-actions {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.import-csv-status {
+    margin-bottom: 1rem;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    background: #eef0ff;
+    color: #2e2e45;
+    font-size: 0.95rem;
+}
+
+.import-csv-status--error {
+    background: #fdecec;
+    color: #b33;
+}
+
 .btn {
     display: inline-block;
     padding: 0.5rem 1.2rem;
@@ -448,6 +468,88 @@
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ---- Selection / bulk-delete bar ---- */
+.txn-selection-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.2rem;
+    border-bottom: 1px solid #eee;
+}
+
+.txn-selectall {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #555;
+    cursor: pointer;
+    user-select: none;
+}
+
+.txn-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: none;
+    border: 1px solid transparent;
+    color: #e05c5c;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.txn-delete-btn:hover:not(:disabled) {
+    background: #fdeaea;
+}
+
+.txn-delete-btn:disabled {
+    color: #c9c9d2;
+    cursor: default;
+}
+
+.txn-delete-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.th-select,
+.txn-cell-select {
+    width: 40px;
+    text-align: center;
+}
+
+/* ---- Bulk-delete confirmation modal ---- */
+.txn-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 35, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.txn-modal-overlay[hidden] {
+    display: none;
+}
+
+.txn-modal-overlay .delete-card {
+    margin: 0;
+    width: 100%;
+    max-width: 420px;
+}
+
+.txn-cell-select input,
+.txn-selectall input {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
 }
 
 .txn-table {
