@@ -94,6 +94,9 @@ target_include_directories(server_headers INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/transactionCategories/queries
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/transactionCategories/services
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/transactionCategories/dtos
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/pfcCategories/queries
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/pfcCategories/services
+    ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/pfcCategories/dtos
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/countries/queries
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/countries/services
     ${CMAKE_CURRENT_SOURCE_DIR}/includes/server/application/references/countries/dtos

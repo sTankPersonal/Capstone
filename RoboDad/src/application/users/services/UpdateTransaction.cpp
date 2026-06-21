@@ -14,7 +14,9 @@ bool UpdateTransaction::execute(const UpdateTransactionCommand& request) {
         TransactionAmount(request.amount, request.currencyId),
         TransactionDescription(request.description),
         request.date,
-        tx->getCreatedAt()
+        tx->getCreatedAt(),
+        tx->getPlaidTransactionId(),
+        request.pfcDetailedCategoryId
     );
     return repo_.update(updated);
 }

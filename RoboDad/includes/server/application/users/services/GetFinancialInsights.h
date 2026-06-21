@@ -3,14 +3,16 @@
 #include "GetFinancialInsightsQuery.h"
 #include "FinancialInsightsDto.h"
 #include "ITransactionRepository.h"
+#include "IPfcDetailedCategoryRepository.h"
 #include <optional>
 
 class GetFinancialInsights
     : public IUseCase<GetFinancialInsightsQuery, std::optional<FinancialInsightsDto>>
 {
-    ITransactionRepository& repo_;
+    ITransactionRepository&         repo_;
+    IPfcDetailedCategoryRepository& pfcDetailedRepo_;
 
 public:
-    explicit GetFinancialInsights(ITransactionRepository& repo);
+    GetFinancialInsights(ITransactionRepository& repo, IPfcDetailedCategoryRepository& pfcDetailedRepo);
     std::optional<FinancialInsightsDto> execute(const GetFinancialInsightsQuery& request) override;
 };

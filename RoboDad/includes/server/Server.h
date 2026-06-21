@@ -17,6 +17,8 @@
 #include "infrastructure/persistence/postgres/PostgresLanguageRepository.h"
 #include "infrastructure/persistence/postgres/PostgresMessageSenderRepository.h"
 #include "infrastructure/persistence/postgres/PostgresPlaidItemRepository.h"
+#include "infrastructure/persistence/postgres/PostgresPfcPrimaryCategoryRepository.h"
+#include "infrastructure/persistence/postgres/PostgresPfcDetailedCategoryRepository.h"
 
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
@@ -52,6 +54,11 @@
 #include "application/users/services/UpdateTransaction.h"
 #include "application/users/services/CreatePlaidLinkToken.h"
 #include "application/users/services/LinkPlaidAccount.h"
+
+#include "application/references/pfcCategories/services/GetPfcPrimaryCategory.h"
+#include "application/references/pfcCategories/services/ListPfcPrimaryCategories.h"
+#include "application/references/pfcCategories/services/GetPfcDetailedCategory.h"
+#include "application/references/pfcCategories/services/ListPfcDetailedCategories.h"
 
 #include "application/references/countries/services/GetCountry.h"
 #include "application/references/countries/services/ListCountries.h"
@@ -91,6 +98,8 @@ class Server {
     PostgresLanguageRepository            languageRepo_;
     PostgresMessageSenderRepository       messageSenderRepo_;
     PostgresPlaidItemRepository           plaidItemRepo_;
+    PostgresPfcPrimaryCategoryRepository  pfcPrimaryRepo_;
+    PostgresPfcDetailedCategoryRepository pfcDetailedRepo_;
 
     OpenAIClient        openai_;
     PromptBuilder       promptBuilder_;
@@ -127,6 +136,11 @@ class Server {
     CreatePlaidLinkToken       createPlaidLinkToken_;
     LinkPlaidAccount           linkPlaidAccount_;
     GetFinancialInsights       getFinancialInsights_;
+
+    GetPfcPrimaryCategory      getPfcPrimaryCategory_;
+    ListPfcPrimaryCategories   listPfcPrimaryCategories_;
+    GetPfcDetailedCategory     getPfcDetailedCategory_;
+    ListPfcDetailedCategories  listPfcDetailedCategories_;
 
     GetCountry             getCountry_;
     ListCountries          listCountries_;

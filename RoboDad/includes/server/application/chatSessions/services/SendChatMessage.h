@@ -5,6 +5,7 @@
 #include "IChatMessageRepository.h"
 #include "ILlmPersonaRepository.h"
 #include "ITransactionRepository.h"
+#include "IPfcDetailedCategoryRepository.h"
 #include "ILlmClient.h"
 #include "IPromptBuilder.h"
 #include <string>
@@ -14,6 +15,7 @@ class SendChatMessage : public IUseCase<SendChatMessageCommand, std::string> {
     IChatMessageRepository& messageRepo_;
     ILlmPersonaRepository&  personaRepo_;
     ITransactionRepository& transactionRepo_;
+    IPfcDetailedCategoryRepository& pfcDetailedRepo_;
     ILlmClient&             llmClient_;
     IPromptBuilder&         promptBuilder_;
     int defaultHistoryLimit_;
@@ -22,6 +24,7 @@ public:
                     IChatMessageRepository& messageRepo,
                     ILlmPersonaRepository&  personaRepo,
                     ITransactionRepository& transactionRepo,
+                    IPfcDetailedCategoryRepository& pfcDetailedRepo,
                     ILlmClient&             llmClient,
                     IPromptBuilder&         promptBuilder,
                     int historyLimit = 5);

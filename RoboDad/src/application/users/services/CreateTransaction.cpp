@@ -18,7 +18,9 @@ TransactionDto CreateTransaction::execute(const CreateTransactionCommand& reques
         TransactionAmount(request.amount, request.currencyId),
         TransactionDescription(request.description),
         request.date,
-        today
+        today,
+        std::nullopt,
+        request.pfcDetailedCategoryId
     );
     return TransactionDto(repo_.create(tx));
 }

@@ -10,6 +10,7 @@ SendChatMessage::SendChatMessage(IChatSessionRepository& sessionRepo,
     IChatMessageRepository& messageRepo,
                                  ILlmPersonaRepository&  personaRepo,
     ITransactionRepository& transactionRepo,
+    IPfcDetailedCategoryRepository& pfcDetailedRepo,
                                  ILlmClient&             llmClient,
                                  IPromptBuilder&         promptBuilder,
     int historyLimit)
@@ -17,6 +18,7 @@ SendChatMessage::SendChatMessage(IChatSessionRepository& sessionRepo,
     , messageRepo_(messageRepo)
     , personaRepo_(personaRepo)
     , transactionRepo_(transactionRepo)
+    , pfcDetailedRepo_(pfcDetailedRepo)
     , llmClient_(llmClient)
     , promptBuilder_(promptBuilder)
     , defaultHistoryLimit_(historyLimit) {}
@@ -31,10 +33,11 @@ std::string SendChatMessage::execute(const SendChatMessageCommand& request) {
     auto history = messageRepo_.findByChatSessionId(request.sessionId, defaultHistoryLimit_);
 
     //Controls timespan the AI is given for context, set to 30 days, cannot be changed by user, this is hard coded.
-    //It can be changed to a different constant later if needed. 
+    //It can be changed to a different constant later if needed.
     constexpr int CHAT_FINANCIAL_INSIGHTS_TIMESPAN = 30;
 
-    GetFinancialInsights insightsService(transactionRepo_);
+    // Build insights locally (no interface required)
+    GetFinancialInsights insightsService(transactionRepo_, pfcDetailedRepo_);
     auto insightsOpt = insightsService.execute(GetFinancialInsightsQuery(session->getUserId(), CHAT_FINANCIAL_INSIGHTS_TIMESPAN));
 
     const std::string enriched = promptBuilder_

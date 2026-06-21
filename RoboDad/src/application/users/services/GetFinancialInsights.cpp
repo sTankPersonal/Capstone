@@ -2,24 +2,20 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
-#include <cctype>
 #include <chrono>
 #include <unordered_map>
 
 // ---------- Helpers ----------
-static std::string normalizeCategory(const std::string& s) {
-    if (s.empty()) return "Uncategorized";
+static std::string categoryNameFor(
+    IPfcDetailedCategoryRepository& pfcDetailedRepo,
+    const std::optional<PfcDetailedCategoryId>& pfcDetailedCategoryId)
+{
+    if (!pfcDetailedCategoryId) return "Uncategorized";
 
-    std::string out;
-    out.reserve(s.size());
+    if (auto category = pfcDetailedRepo.findById(*pfcDetailedCategoryId); category)
+        return category->getValue();
 
-    for (char c : s) {
-        if (!std::isspace(static_cast<unsigned char>(c)))
-            out.push_back(std::tolower(static_cast<unsigned char>(c)));
-    }
-
-    out[0] = std::toupper(out[0]);
-    return out;
+    return pfcDetailedCategoryId->getId();
 }
 
 static double computeMedian(std::vector<double> v) {
@@ -47,8 +43,8 @@ static std::chrono::sys_days toSysDays(const std::chrono::year_month_day& ymd) {
 }
 
 // ---------- Main logic ----------
-GetFinancialInsights::GetFinancialInsights(ITransactionRepository& repo)
-    : repo_(repo) {
+GetFinancialInsights::GetFinancialInsights(ITransactionRepository& repo, IPfcDetailedCategoryRepository& pfcDetailedRepo)
+    : repo_(repo), pfcDetailedRepo_(pfcDetailedRepo) {
 }
 
 std::optional<FinancialInsightsDto>
@@ -96,19 +92,18 @@ GetFinancialInsights::execute(const GetFinancialInsightsQuery& request)
     for (const auto& t : txs) {
         double amt = t.getAmount().getAmount().value_or(0.0);
         std::string type = t.getCategoryId().getId();
-        std::string rawDesc = t.getDescription().getDescription().value_or("Unknown");
-        std::string normDesc = normalizeCategory(rawDesc);
+        std::string category = categoryNameFor(pfcDetailedRepo_, t.getPfcDetailedCategoryId());
 
         if (type == "earnings") {
             dto.totalIncome += amt;
-            incomeTotals[normDesc] += amt;
-            incomeCounts[normDesc] += 1;
+            incomeTotals[category] += amt;
+            incomeCounts[category] += 1;
             incomeAmounts.push_back(amt);
         }
         else if (type == "expenses") {
             dto.totalExpenses += amt;
-            expenseTotals[normDesc] += amt;
-            expenseCounts[normDesc] += 1;
+            expenseTotals[category] += amt;
+            expenseCounts[category] += 1;
             expenseAmounts.push_back(amt);
         }
     }

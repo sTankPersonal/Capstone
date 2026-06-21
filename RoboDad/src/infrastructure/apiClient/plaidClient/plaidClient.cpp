@@ -151,6 +151,16 @@ std::vector<PlaidTransactionData> PlaidClient::parseTransactionArray(const std::
             data.category = t["category"][0].s();
         }
 
+        // personal_finance_category (PFCv2) — object with primary and detailed fields.
+        if (t.has("personal_finance_category")
+                && t["personal_finance_category"].t() == crow::json::type::Object) {
+            const auto& pfc = t["personal_finance_category"];
+            if (pfc.has("primary") && pfc["primary"].t() != crow::json::type::Null)
+                data.pfcPrimary = std::string(pfc["primary"].s());
+            if (pfc.has("detailed") && pfc["detailed"].t() != crow::json::type::Null)
+                data.pfcDetailed = std::string(pfc["detailed"].s());
+        }
+
         // iso_currency_code may be null for some accounts.
         if (t.has("iso_currency_code") && t["iso_currency_code"].t() != crow::json::type::Null) {
             data.currencyCode = t["iso_currency_code"].s();

@@ -1,11 +1,19 @@
 #include "application/users/dtos/TransactionDto.h"
 #include <chrono>
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 static std::string formatDate(const std::chrono::year_month_day& d) {
     return std::to_string(int(d.year())) + "-"
          + std::to_string(unsigned(d.month())) + "-"
          + std::to_string(unsigned(d.day()));
+}
+
+static std::string formatAmount(double amount) {
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2) << amount;
+    return oss.str();
 }
 
 TransactionDto::TransactionDto(const Transaction& transaction)
@@ -21,6 +29,9 @@ TransactionDto::TransactionDto(const Transaction& transaction)
 
     const auto& desc = transaction.getDescription();
     if (desc.getDescription()) description_ = *desc.getDescription();
+
+    if (transaction.getPfcDetailedCategoryId())
+        pfcDetailedCategoryId_ = transaction.getPfcDetailedCategoryId()->getId();
 }
 
 std::string TransactionDto::getUserId() const { return userId_; }
@@ -31,7 +42,8 @@ TransactionDto::operator crow::json::wvalue() const {
     result["id"]              = id_;
     result["userId"]          = userId_;
     result["categoryId"]      = categoryId_;
-    if (amount_)      result["amount"]     = *amount_;
+    if (pfcDetailedCategoryId_) result["pfcDetailedCategoryId"] = *pfcDetailedCategoryId_;
+    if (amount_)      result["amount"]     = formatAmount(*amount_);
     if (currencyId_)  result["currencyId"] = *currencyId_;
     if (description_) result["description"] = *description_;
     result["transactionDate"] = transactionDate_;

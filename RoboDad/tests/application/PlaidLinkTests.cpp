@@ -5,6 +5,10 @@
 #include "IPlaidItemRepository.h"
 #include "ITransactionRepository.h"
 #include "ICurrencyRepository.h"
+#include "IPfcDetailedCategoryRepository.h"
+#include "PfcDetailedCategory.h"
+#include "PfcDetailedCategoryId.h"
+#include "PfcPrimaryCategoryId.h"
 
 #include "CreatePlaidLinkToken.h"
 #include "CreatePlaidLinkTokenCommand.h"
@@ -88,6 +92,17 @@ public:
     MOCK_METHOD(std::optional<Currency>, findByValue, (const std::string&), (override));
 };
 
+class MockPfcDetailedCategoryRepository : public IPfcDetailedCategoryRepository {
+public:
+    MOCK_METHOD(PfcDetailedCategory,                create,         (const PfcDetailedCategory&),        (override));
+    MOCK_METHOD(std::optional<PfcDetailedCategory>, findById,       (PfcDetailedCategoryId),              (override));
+    MOCK_METHOD(std::vector<PfcDetailedCategory>,   findAll,        (),                                   (override));
+    MOCK_METHOD(bool,                               update,         (const PfcDetailedCategory&),         (override));
+    MOCK_METHOD(bool,                               remove,         (PfcDetailedCategoryId),              (override));
+    MOCK_METHOD(std::vector<PfcDetailedCategory>,   findByPrimaryId,(const PfcPrimaryCategoryId&),        (override));
+    MOCK_METHOD(std::optional<PfcDetailedCategory>, findByValue,    (const std::string&),                 (override));
+};
+
 } // namespace
 
 // ── CreatePlaidLinkToken ──────────────────────────────────────────────────────
@@ -119,6 +134,7 @@ TEST(LinkPlaidAccountTest, ExchangesPublicTokenAndStoresItem) {
     MockPlaidItemRepository plaidItemRepo;
     MockTransactionRepository txRepo;
     MockCurrencyRepository    curRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     EXPECT_CALL(plaid, exchangePublicToken("public-tok-123"))
         .WillOnce(Return("access-sandbox-abc"));
@@ -129,7 +145,7 @@ TEST(LinkPlaidAccountTest, ExchangesPublicTokenAndStoresItem) {
     EXPECT_CALL(plaid, fetchTransactions("access-sandbox-abc", ""))
         .WillOnce(Return(PlaidSyncResult{}));
 
-    ImportPlaidTransactions importUseCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions importUseCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     LinkPlaidAccount useCase(plaid, plaidItemRepo, importUseCase);
 
     auto result = useCase.execute(
@@ -143,6 +159,7 @@ TEST(LinkPlaidAccountTest, ImportsTransactionsAfterExchange) {
     MockPlaidItemRepository   plaidItemRepo;
     MockTransactionRepository txRepo;
     MockCurrencyRepository    curRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     EXPECT_CALL(plaid, exchangePublicToken("public-tok-456"))
         .WillOnce(Return("access-sandbox-def"));
@@ -169,7 +186,7 @@ TEST(LinkPlaidAccountTest, ImportsTransactionsAfterExchange) {
     EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-1")).WillOnce(Return(std::nullopt));
     EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-2")).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions importUseCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions importUseCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     LinkPlaidAccount useCase(plaid, plaidItemRepo, importUseCase);
 
     auto result = useCase.execute(
@@ -183,6 +200,7 @@ TEST(LinkPlaidAccountTest, StoredAccessTokenMatchesExchangedToken) {
     MockPlaidItemRepository   plaidItemRepo;
     MockTransactionRepository txRepo;
     MockCurrencyRepository    curRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     EXPECT_CALL(plaid, exchangePublicToken("public-tok-789"))
         .WillOnce(Return("access-sandbox-ghi"));
@@ -197,7 +215,7 @@ TEST(LinkPlaidAccountTest, StoredAccessTokenMatchesExchangedToken) {
     EXPECT_CALL(plaid, fetchTransactions("access-sandbox-ghi", _))
         .WillOnce(Return(PlaidSyncResult{}));
 
-    ImportPlaidTransactions importUseCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions importUseCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     LinkPlaidAccount useCase(plaid, plaidItemRepo, importUseCase);
 
     useCase.execute(
@@ -211,6 +229,7 @@ TEST(LinkPlaidAccountTest, ImportsWithInitialEmptyCursor) {
     MockPlaidItemRepository   plaidItemRepo;
     MockTransactionRepository txRepo;
     MockCurrencyRepository    curRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     EXPECT_CALL(plaid, exchangePublicToken(_)).WillOnce(Return("access-sandbox-xyz"));
     EXPECT_CALL(plaidItemRepo, create(_)).WillOnce([](const PlaidItem& item) { return item; });
@@ -218,7 +237,7 @@ TEST(LinkPlaidAccountTest, ImportsWithInitialEmptyCursor) {
     EXPECT_CALL(plaid, fetchTransactions(_, ""))
         .WillOnce(Return(PlaidSyncResult{}));
 
-    ImportPlaidTransactions importUseCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions importUseCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     LinkPlaidAccount useCase(plaid, plaidItemRepo, importUseCase);
 
     useCase.execute(

@@ -1,7 +1,9 @@
 #pragma once
+#include "IDto.h"
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include "crow.h"
 
 struct CategoryItem {
     std::string category;
@@ -9,7 +11,7 @@ struct CategoryItem {
     int count;
 };
 
-class FinancialInsightsDto {
+class FinancialInsightsDto : public IDto {
 public:
     int timeSpan = 30;
     double totalIncome = 0.0;
@@ -18,4 +20,6 @@ public:
     std::vector<std::string> unusualExpenses;
     std::vector<CategoryItem> incomeByCategoryList;
     std::vector<CategoryItem> expenseByCategoryList;
+
+    explicit operator crow::json::wvalue() const override;
 };
