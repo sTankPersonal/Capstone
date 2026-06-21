@@ -13,6 +13,12 @@
 #include "application/users/queries/ListTransactionsQuery.h"
 #include "application/users/queries/ListTransactionsByCategoryQuery.h"
 
+#include "application/references/pfcCategories/dtos/PfcPrimaryCategoryDto.h"
+#include "application/references/pfcCategories/dtos/PfcDetailedCategoryDto.h"
+#include "application/references/pfcCategories/queries/ListPfcPrimaryCategoriesQuery.h"
+#include "application/references/pfcCategories/queries/ListPfcDetailedCategoriesQuery.h"
+#include "PfcDetailedCategoryId.h"
+
 #include <chrono>
 #include <sstream>
 
@@ -26,7 +32,9 @@ UserTransactionsController::UserTransactionsController(
     const UpdateTransaction& updateTransactions,
     const ImportPlaidTransactions& importPlaidTransactions,
     const CreatePlaidLinkToken& createPlaidLinkToken,
-    const LinkPlaidAccount& linkPlaidAccount)
+    const LinkPlaidAccount& linkPlaidAccount,
+    const ListPfcPrimaryCategories& listPfcPrimaryCategories,
+    const ListPfcDetailedCategories& listPfcDetailedCategories)
     : createTransactions_(createTransactions)
     , deleteTransactions_(deleteTransactions)
     , getTransactions_(getTransactions)
@@ -36,7 +44,9 @@ UserTransactionsController::UserTransactionsController(
     , updateTransactions_(updateTransactions)
     , importPlaidTransactions_(importPlaidTransactions)
     , createPlaidLinkToken_(createPlaidLinkToken)
-    , linkPlaidAccount_(linkPlaidAccount) {}
+    , linkPlaidAccount_(linkPlaidAccount)
+    , listPfcPrimaryCategories_(listPfcPrimaryCategories)
+    , listPfcDetailedCategories_(listPfcDetailedCategories) {}
 
 void UserTransactionsController::registerRoutes(RoboDadApp& app) {
     CROW_ROUTE(app, "/user/transactions")
@@ -142,9 +152,12 @@ crow::response UserTransactionsController::getNewTransactionPage(const crow::req
     const std::string& catId = category_id.getId();
     if (catId != "earnings" && catId != "expenses") return crow::response(404, "Unknown category");
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
+    auto primaries = listPfcPrimaryCategories_.execute(ListPfcPrimaryCategoriesQuery{});
+    auto detaileds = listPfcDetailedCategories_.execute(ListPfcDetailedCategoriesQuery{});
     crow::mustache::context ctx;
     ctx["category_id"] = catId;
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
+    addPfcCategoriesToContext(ctx, primaries, detaileds);
     std::string tmpl = (catId == "earnings") ? "new_earning.html" : "new_expense.html";
     return crow::response(crow::mustache::load(tmpl).render(ctx));
 }
@@ -155,9 +168,12 @@ crow::response UserTransactionsController::getEditTransactionPage(const crow::re
     if (!transactionOpt || transactionOpt->getUserId() != user_id.getId()) {
         return crow::response(404, "Transaction not found");
     }
+    auto primaries = listPfcPrimaryCategories_.execute(ListPfcPrimaryCategoriesQuery{});
+    auto detaileds = listPfcDetailedCategories_.execute(ListPfcDetailedCategoriesQuery{});
     crow::mustache::context ctx;
     ctx["transaction"] = static_cast<crow::json::wvalue>(*transactionOpt);
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
+    addPfcCategoriesToContext(ctx, primaries, detaileds);
 
     const std::string& catId = transactionOpt->getCategoryId();
     std::string tmpl = "edit_expense.html";
@@ -181,6 +197,22 @@ crow::response UserTransactionsController::getDeleteTransactionPage(const crow::
     return crow::response(crow::mustache::load(tmpl).render(ctx));
 }
 
+static void addPfcCategoriesToContext(
+    crow::mustache::context& ctx,
+    const std::vector<PfcPrimaryCategoryDto>& primaries,
+    const std::vector<PfcDetailedCategoryDto>& detaileds)
+{
+    crow::json::wvalue::list primaryList;
+    for (const auto& p : primaries)
+        primaryList.push_back(static_cast<crow::json::wvalue>(p));
+    ctx["pfcPrimaryCategories"] = std::move(primaryList);
+
+    crow::json::wvalue::list detailedList;
+    for (const auto& d : detaileds)
+        detailedList.push_back(static_cast<crow::json::wvalue>(d));
+    ctx["pfcDetailedCategories"] = std::move(detailedList);
+}
+
 static std::chrono::year_month_day parseDate(const std::string& s) {
     std::istringstream ss(s);
     std::chrono::year_month_day ymd;
@@ -190,14 +222,18 @@ static std::chrono::year_month_day parseDate(const std::string& s) {
 
 crow::response UserTransactionsController::postNewTransaction(const crow::request& req, UserId user_id, TransactionCategoryId category_id) {
     crow::query_string params("?" + req.body);
-    std::string amountStr   = params.get("amount")      ? params.get("amount")      : "";
-    std::string currencyId  = params.get("currency_id") ? params.get("currency_id") : "";
-    std::string description = params.get("description") ? params.get("description") : "";
-    std::string date        = params.get("date")        ? params.get("date")        : "";
+    std::string amountStr      = params.get("amount")                   ? params.get("amount")                   : "";
+    std::string currencyId     = params.get("currency_id")              ? params.get("currency_id")              : "";
+    std::string description    = params.get("description")              ? params.get("description")              : "";
+    std::string date           = params.get("date")                     ? params.get("date")                     : "";
+    std::string pfcDetailedStr = params.get("pfc_detailed_category_id") ? params.get("pfc_detailed_category_id") : "";
 
     if (amountStr.empty() || description.empty() || date.empty()) {
         return crow::response(400, "Missing required fields");
     }
+
+    std::optional<PfcDetailedCategoryId> pfcDetailed = pfcDetailedStr.empty()
+        ? std::nullopt : std::make_optional(PfcDetailedCategoryId{pfcDetailedStr});
 
     CreateTransactionCommand createRequest(
         user_id,
@@ -205,7 +241,8 @@ crow::response UserTransactionsController::postNewTransaction(const crow::reques
         std::stod(amountStr),
         currencyId.empty() ? std::nullopt : std::optional<CurrencyId>{CurrencyId(currencyId)},
         description,
-        parseDate(date)
+        parseDate(date),
+        pfcDetailed
     );
     createTransactions_.execute(createRequest);
     crow::response res(302);
@@ -215,15 +252,19 @@ crow::response UserTransactionsController::postNewTransaction(const crow::reques
 
 crow::response UserTransactionsController::postEditTransaction(const crow::request& req, UserId user_id, TransactionId transaction_id) {
     crow::query_string params("?" + req.body);
-    std::string categoryId  = params.get("category_id") ? params.get("category_id") : "";
-    std::string amountStr   = params.get("amount")      ? params.get("amount")      : "";
-    std::string currencyId  = params.get("currency_id") ? params.get("currency_id") : "";
-    std::string description = params.get("description") ? params.get("description") : "";
-    std::string date        = params.get("date")        ? params.get("date")        : "";
+    std::string categoryId     = params.get("category_id")              ? params.get("category_id")              : "";
+    std::string amountStr      = params.get("amount")                   ? params.get("amount")                   : "";
+    std::string currencyId     = params.get("currency_id")              ? params.get("currency_id")              : "";
+    std::string description    = params.get("description")              ? params.get("description")              : "";
+    std::string date           = params.get("date")                     ? params.get("date")                     : "";
+    std::string pfcDetailedStr = params.get("pfc_detailed_category_id") ? params.get("pfc_detailed_category_id") : "";
 
     if (categoryId.empty() || amountStr.empty() || description.empty() || date.empty()) {
         return crow::response(400, "Missing required fields");
     }
+
+    std::optional<PfcDetailedCategoryId> pfcDetailed = pfcDetailedStr.empty()
+        ? std::nullopt : std::make_optional(PfcDetailedCategoryId{pfcDetailedStr});
 
     UpdateTransactionCommand updateRequest(
         transaction_id,
@@ -231,7 +272,8 @@ crow::response UserTransactionsController::postEditTransaction(const crow::reque
         std::stod(amountStr),
         currencyId.empty() ? std::nullopt : std::optional<CurrencyId>{CurrencyId(currencyId)},
         description,
-        parseDate(date)
+        parseDate(date),
+        pfcDetailed
     );
     updateTransactions_.execute(updateRequest);
     crow::response res(302);

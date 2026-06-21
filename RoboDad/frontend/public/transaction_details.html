@@ -30,6 +30,12 @@
                 <span class="field-label">Amount</span>
                 <span class="field-value">${{transaction.amount}}</span>
             </div>
+            {{#transaction.pfcDetailedCategoryId}}
+            <div class="detail-row">
+                <span class="field-label">PFC Category</span>
+                <span class="field-value">{{transaction.pfcDetailedCategoryId}}</span>
+            </div>
+            {{/transaction.pfcDetailedCategoryId}}
             <div class="detail-row">
                 <span class="field-label">Created</span>
                 <span class="field-value">{{transaction.createdAt}}</span>

@@ -21,6 +21,9 @@ TransactionDto::TransactionDto(const Transaction& transaction)
 
     const auto& desc = transaction.getDescription();
     if (desc.getDescription()) description_ = *desc.getDescription();
+
+    if (transaction.getPfcDetailedCategoryId())
+        pfcDetailedCategoryId_ = transaction.getPfcDetailedCategoryId()->getId();
 }
 
 std::string TransactionDto::getUserId() const { return userId_; }
@@ -31,6 +34,7 @@ TransactionDto::operator crow::json::wvalue() const {
     result["id"]              = id_;
     result["userId"]          = userId_;
     result["categoryId"]      = categoryId_;
+    if (pfcDetailedCategoryId_) result["pfcDetailedCategoryId"] = *pfcDetailedCategoryId_;
     if (amount_)      result["amount"]     = *amount_;
     if (currencyId_)  result["currencyId"] = *currencyId_;
     if (description_) result["description"] = *description_;

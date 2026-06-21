@@ -9,6 +9,7 @@ class TransactionDto : public IDto {
     std::string id_;
     std::string userId_;
     std::string categoryId_;
+    std::optional<std::string> pfcDetailedCategoryId_;
     std::optional<double> amount_;
     std::optional<std::string> currencyId_;
     std::optional<std::string> description_;
@@ -21,4 +22,5 @@ public:
 
     std::string getUserId() const;
     std::string getCategoryId() const;
+    const std::optional<std::string>& getPfcDetailedCategoryId() const { return pfcDetailedCategoryId_; }
 };

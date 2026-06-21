@@ -14,6 +14,8 @@
 #include "application/users/services/ImportPlaidTransactions.h"
 #include "application/users/services/CreatePlaidLinkToken.h"
 #include "application/users/services/LinkPlaidAccount.h"
+#include "application/references/pfcCategories/services/ListPfcPrimaryCategories.h"
+#include "application/references/pfcCategories/services/ListPfcDetailedCategories.h"
 
 #include "presentation/AppType.h"
 
@@ -28,6 +30,8 @@ class UserTransactionsController : public IController<RoboDadApp> {
     ImportPlaidTransactions    importPlaidTransactions_;
     CreatePlaidLinkToken       createPlaidLinkToken_;
     LinkPlaidAccount           linkPlaidAccount_;
+    ListPfcPrimaryCategories   listPfcPrimaryCategories_;
+    ListPfcDetailedCategories  listPfcDetailedCategories_;
 public:
     UserTransactionsController(const CreateTransaction& createTransactions,
                                const DeleteTransaction& deleteTransactions,
@@ -38,7 +42,9 @@ public:
                                const UpdateTransaction& updateTransactions,
                                const ImportPlaidTransactions& importPlaidTransactions,
                                const CreatePlaidLinkToken& createPlaidLinkToken,
-                               const LinkPlaidAccount& linkPlaidAccount);
+                               const LinkPlaidAccount& linkPlaidAccount,
+                               const ListPfcPrimaryCategories& listPfcPrimaryCategories,
+                               const ListPfcDetailedCategories& listPfcDetailedCategories);
 
     void registerRoutes(RoboDadApp& app) override;
 
