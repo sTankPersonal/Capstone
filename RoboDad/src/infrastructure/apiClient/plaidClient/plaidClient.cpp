@@ -138,8 +138,10 @@ std::vector<PlaidTransactionData> PlaidClient::parseTransactionArray(const std::
         PlaidTransactionData data;
         data.plaidTransactionId = t.has("transaction_id") ? std::string(t["transaction_id"].s()) : "";
         data.amount      = t["amount"].d();
-        data.description = t.has("name") && t["name"].t() != crow::json::type::Null
-                               ? std::string(t["name"].s()) : "";
+        if (t.has("merchant_name") && t["merchant_name"].t() != crow::json::type::Null)
+            data.description = std::string(t["merchant_name"].s());
+        else if (t.has("name") && t["name"].t() != crow::json::type::Null)
+            data.description = std::string(t["name"].s());
         data.date        = t.has("date") && t["date"].t() != crow::json::type::Null
                                ? std::string(t["date"].s()) : "";
 
