@@ -27,7 +27,8 @@ TEST(JwtServiceTest, VerifyRoundTripsMultipleUserIds) {
 TEST(JwtServiceTest, VerifyReturnsFalseForTamperedSignature) {
     JwtService svc("supersecret");
     std::string token = svc.generate("user-1");
-    token.back() = (token.back() == 'A') ? 'B' : 'A';
+    auto& c = token[token.size() - 2];
+    c = (c == 'A') ? 'B' : 'A';
     EXPECT_FALSE(svc.verify(token).has_value());
 }
 

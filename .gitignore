@@ -7,3 +7,7 @@ out
 
 # Environment Secrets
 secrets.env
+
+#Build Artifacts (github)
+build/
+build_test/

@@ -26,6 +26,7 @@ add_executable(application_tests
     application/AuthUseCaseTests.cpp
     application/TransactionUseCaseTests.cpp
     application/ImportPlaidTransactionTests.cpp
+    application/PlaidLinkTests.cpp
 )
 target_link_libraries(application_tests PRIVATE
     GTest::gmock_main

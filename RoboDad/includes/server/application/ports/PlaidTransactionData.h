@@ -3,6 +3,7 @@
 #include <string>
 
 struct PlaidTransactionData {
+    std::string plaidTransactionId;
     double      amount;
     std::string description;
     std::string date;

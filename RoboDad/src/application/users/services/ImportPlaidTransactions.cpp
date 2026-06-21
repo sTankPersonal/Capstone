@@ -9,14 +9,14 @@
 #include <sstream>
 
 ImportPlaidTransactions::ImportPlaidTransactions(
-    ITransactionRepository&         transactionRepo,
-    ITransactionCategoryRepository& categoryRepo,
-    ICurrencyRepository&            currencyRepo,
-    IPlaidClient&                   plaidClient)
+    ITransactionRepository& transactionRepo,
+    ICurrencyRepository&    currencyRepo,
+    IPlaidClient&           plaidClient,
+    IPlaidItemRepository&   plaidItemRepo)
     : transactionRepo_(transactionRepo)
-    , categoryRepo_(categoryRepo)
     , currencyRepo_(currencyRepo)
-    , plaidClient_(plaidClient) {}
+    , plaidClient_(plaidClient)
+    , plaidItemRepo_(plaidItemRepo) {}
 
 static std::chrono::year_month_day parseDate(const std::string& iso) {
     // Expects "YYYY-MM-DD"
@@ -29,38 +29,74 @@ static std::chrono::year_month_day parseDate(const std::string& iso) {
     };
 }
 
+static std::optional<CurrencyId> resolveCurrency(ICurrencyRepository& repo, const std::string& code) {
+    if (auto cur = repo.findByValue(code); cur)
+        return cur->getId();
+    return std::nullopt;
+}
+
 std::vector<Transaction> ImportPlaidTransactions::execute(const ImportPlaidTransactionsCommand& request) {
-    const std::string accessToken = plaidClient_.createSandboxAccessToken();
-    const auto raw = plaidClient_.fetchTransactions(accessToken, request.startDate, request.endDate, request.count);
+    const auto syncResult = plaidClient_.fetchTransactions(request.accessToken, request.cursor);
 
     const auto today = std::chrono::year_month_day{
         std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now())
     };
 
     std::vector<Transaction> created;
-    created.reserve(raw.size());
 
-    for (const auto& r : raw) {
-        std::string catId = "other";
-        if (auto cat = categoryRepo_.findByValue(r.category); cat) {
-            catId = cat->getId().getId();
-        }
+    // ── added ────────────────────────────────────────────────────────────────
+    for (const auto& r : syncResult.added) {
+        // Skip if already imported (handles reconnect with reset cursor).
+        if (!r.plaidTransactionId.empty() &&
+            transactionRepo_.findByPlaidTransactionId(r.plaidTransactionId))
+            continue;
 
-        std::optional<CurrencyId> currencyId;
-        if (auto cur = currencyRepo_.findByValue(r.currencyCode); cur) {
-            currencyId = cur->getId();
-        }
-
+        std::string catId = (r.amount >= 0.0) ? "expenses" : "earnings";
         Transaction tx(
             TransactionId(UuidGenerator::generate()),
             request.userId,
             TransactionCategoryId(catId),
-            TransactionAmount(r.amount, currencyId),
+            TransactionAmount(std::abs(r.amount), resolveCurrency(currencyRepo_, r.currencyCode)),
             TransactionDescription(r.description),
             parseDate(r.date),
-            today
+            today,
+            r.plaidTransactionId.empty() ? std::nullopt : std::make_optional(r.plaidTransactionId)
         );
         created.push_back(transactionRepo_.create(tx));
+    }
+
+    // ── modified ─────────────────────────────────────────────────────────────
+    for (const auto& r : syncResult.modified) {
+        if (r.plaidTransactionId.empty()) continue;
+        auto existing = transactionRepo_.findByPlaidTransactionId(r.plaidTransactionId);
+        if (!existing) continue;
+
+        std::string catId = (r.amount >= 0.0) ? "expenses" : "earnings";
+        Transaction updated(
+            existing->getId(),
+            existing->getUserId(),
+            TransactionCategoryId(catId),
+            TransactionAmount(std::abs(r.amount), resolveCurrency(currencyRepo_, r.currencyCode)),
+            TransactionDescription(r.description),
+            parseDate(r.date),
+            existing->getCreatedAt(),
+            r.plaidTransactionId
+        );
+        transactionRepo_.update(updated);
+    }
+
+    // ── removed ──────────────────────────────────────────────────────────────
+    for (const auto& plaidTxId : syncResult.removed) {
+        auto existing = transactionRepo_.findByPlaidTransactionId(plaidTxId);
+        if (existing)
+            transactionRepo_.remove(existing->getId());
+    }
+
+    // ── persist cursor ───────────────────────────────────────────────────────
+    auto item = plaidItemRepo_.findById(request.plaidItemId);
+    if (!syncResult.nextCursor.empty() && item) {
+        item->setSyncCursor(syncResult.nextCursor);
+        plaidItemRepo_.update(*item);
     }
 
     return created;
