@@ -11,6 +11,8 @@ static Transaction rowToTransaction(const pqxx::row& row) {
         ? std::nullopt : std::make_optional(CurrencyId{row["currency_id"].as<std::string>()});
     std::optional<std::string> desc = row["description"].is_null()
         ? std::nullopt : std::make_optional(row["description"].as<std::string>());
+    std::optional<std::string> plaidTxId = row["plaid_transaction_id"].is_null()
+        ? std::nullopt : std::make_optional(row["plaid_transaction_id"].as<std::string>());
 
     return Transaction{
         TransactionId{row["transaction_id"].as<std::string>()},
@@ -19,13 +21,14 @@ static Transaction rowToTransaction(const pqxx::row& row) {
         TransactionAmount{amount, currencyId},
         TransactionDescription{desc},
         dateFromStr(row["transaction_date"].as<std::string>()),
-        dateFromStr(row["created_at"].as<std::string>())
+        dateFromStr(row["created_at"].as<std::string>()),
+        plaidTxId
     };
 }
 
 static const char* kSelectCols =
     "SELECT transaction_id, user_id, transaction_category_id, amount, currency_id, "
-    "description, transaction_date, created_at FROM transactions";
+    "description, transaction_date, created_at, plaid_transaction_id FROM transactions";
 
 Transaction PostgresTransactionRepository::create(const Transaction& transaction) {
     pqxx::work txn{db_.getConnection()};
@@ -35,8 +38,8 @@ Transaction PostgresTransactionRepository::create(const Transaction& transaction
 
     txn.exec_params(
         "INSERT INTO transactions(transaction_id, user_id, transaction_category_id, "
-        "amount, currency_id, description, transaction_date, created_at) "
-        "VALUES($1,$2,$3,$4,$5,$6,$7,$8)",
+        "amount, currency_id, description, transaction_date, created_at, plaid_transaction_id) "
+        "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",
         transaction.getId().getId(),
         transaction.getUserId().getId(),
         transaction.getCategoryId().getId(),
@@ -44,7 +47,8 @@ Transaction PostgresTransactionRepository::create(const Transaction& transaction
         currStr,
         transaction.getDescription().getDescription(),
         dateToStr(transaction.getTransactionDate()),
-        dateToStr(transaction.getCreatedAt())
+        dateToStr(transaction.getCreatedAt()),
+        transaction.getPlaidTransactionId()
     );
     txn.commit();
     return transaction;
@@ -105,4 +109,14 @@ std::vector<Transaction> PostgresTransactionRepository::findByUserId(const UserI
     std::vector<Transaction> results;
     for (const auto& row : r) results.push_back(rowToTransaction(row));
     return results;
+}
+
+std::optional<Transaction> PostgresTransactionRepository::findByPlaidTransactionId(const std::string& plaidTransactionId) {
+    pqxx::work txn{db_.getConnection()};
+    auto r = txn.exec_params(
+        std::string(kSelectCols) + " WHERE plaid_transaction_id=$1",
+        plaidTransactionId);
+    txn.commit();
+    if (r.empty()) return std::nullopt;
+    return rowToTransaction(r[0]);
 }

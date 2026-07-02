@@ -16,6 +16,7 @@
 #include "infrastructure/persistence/postgres/PostgresEmploymentStatusRepository.h"
 #include "infrastructure/persistence/postgres/PostgresLanguageRepository.h"
 #include "infrastructure/persistence/postgres/PostgresMessageSenderRepository.h"
+#include "infrastructure/persistence/postgres/PostgresPlaidItemRepository.h"
 
 #include "infrastructure/apiClient/openAiClient/OpenAIClient.h"
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
@@ -49,6 +50,8 @@
 #include "application/users/services/ListTransactions.h"
 #include "application/users/services/ListTransactionsByCategory.h"
 #include "application/users/services/UpdateTransaction.h"
+#include "application/users/services/CreatePlaidLinkToken.h"
+#include "application/users/services/LinkPlaidAccount.h"
 
 #include "application/references/countries/services/GetCountry.h"
 #include "application/references/countries/services/ListCountries.h"
@@ -87,6 +90,7 @@ class Server {
     PostgresEmploymentStatusRepository    employmentStatusRepo_;
     PostgresLanguageRepository            languageRepo_;
     PostgresMessageSenderRepository       messageSenderRepo_;
+    PostgresPlaidItemRepository           plaidItemRepo_;
 
     OpenAIClient        openai_;
     PromptBuilder       promptBuilder_;
@@ -120,6 +124,8 @@ class Server {
     ListTransactionsByCategory listTransactionsByCategory_;
     UpdateTransaction          updateTransactions_;
     ImportPlaidTransactions    importPlaidTransactions_;
+    CreatePlaidLinkToken       createPlaidLinkToken_;
+    LinkPlaidAccount           linkPlaidAccount_;
     GetFinancialInsights       getFinancialInsights_;
 
     GetCountry             getCountry_;

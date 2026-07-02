@@ -26,26 +26,28 @@ TEST_F(PlaidClientTest, CreateSandboxAccessTokenReturnsNonEmptyToken) {
 TEST_F(PlaidClientTest, FetchTransactionsReturnsNonEmptyList) {
     PlaidClient client(clientId_, secret_);
     const std::string token = client.createSandboxAccessToken();
-    auto txns = client.fetchTransactions(token, "2024-01-01", "2024-03-31", 10);
-    EXPECT_FALSE(txns.empty());
+    auto syncResult = client.fetchTransactions(token);
+    EXPECT_FALSE(syncResult.added.empty());
 }
 
 TEST_F(PlaidClientTest, FetchTransactionsHaveValidFields) {
     PlaidClient client(clientId_, secret_);
     const std::string token = client.createSandboxAccessToken();
-    auto txns = client.fetchTransactions(token, "2024-01-01", "2024-03-31", 5);
-    ASSERT_FALSE(txns.empty());
-    for (const auto& tx : txns) {
+    auto syncResult = client.fetchTransactions(token);
+    ASSERT_FALSE(syncResult.added.empty());
+    for (const auto& tx : syncResult.added) {
         EXPECT_FALSE(tx.date.empty());
         EXPECT_FALSE(tx.description.empty());
         EXPECT_FALSE(tx.currencyCode.empty());
     }
 }
 
-TEST_F(PlaidClientTest, FetchTransactionsRespectsCountLimit) {
+TEST_F(PlaidClientTest, FetchTransactionsAcceptsCursorParameter) {
     PlaidClient client(clientId_, secret_);
     const std::string token = client.createSandboxAccessToken();
-    const int limit = 3;
-    auto txns = client.fetchTransactions(token, "2024-01-01", "2024-12-31", limit);
-    EXPECT_LE(static_cast<int>(txns.size()), limit);
+    auto firstSync = client.fetchTransactions(token);
+    EXPECT_NO_THROW({
+        auto secondSync = client.fetchTransactions(token, firstSync.nextCursor);
+        (void)secondSync;
+    });
 }

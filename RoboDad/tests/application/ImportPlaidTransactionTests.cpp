@@ -1,20 +1,22 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "ITransactionRepository.h"
-#include "ITransactionCategoryRepository.h"
 #include "ICurrencyRepository.h"
 #include "IPlaidClient.h"
+#include "IPlaidItemRepository.h"
 #include "ImportPlaidTransactions.h"
 #include "ImportPlaidTransactionsCommand.h"
 #include "Transactions.h"
 #include "TransactionId.h"
 #include "UserId.h"
+#include "PlaidItemId.h"
 #include "TransactionCategoryId.h"
 #include "CurrencyId.h"
 #include "TransactionAmount.h"
 #include "TransactionDescription.h"
-#include "TransactionCategory.h"
 #include "Currency.h"
+#include "PlaidItem.h"
+#include "PlaidSyncResult.h"
 #include "PlaidTransactionData.h"
 #include <chrono>
 
@@ -27,10 +29,11 @@ static std::chrono::year_month_day makeDate(int y, int m, int d) {
     return {std::chrono::year{y}, std::chrono::month{static_cast<unsigned>(m)}, std::chrono::day{static_cast<unsigned>(d)}};
 }
 
-static Transaction makeTx(const std::string& id, const std::string& userId) {
+static Transaction makeTx(const std::string& id, const std::string& userId,
+                           const std::string& catId = "expenses") {
     auto d = makeDate(2024, 1, 1);
     return Transaction(
-        TransactionId{id}, UserId{userId}, TransactionCategoryId{"other"},
+        TransactionId{id}, UserId{userId}, TransactionCategoryId{catId},
         TransactionAmount(std::optional<double>{10.0}, std::optional<CurrencyId>{}),
         TransactionDescription(std::optional<std::string>{"Test"}),
         d, d
@@ -39,22 +42,13 @@ static Transaction makeTx(const std::string& id, const std::string& userId) {
 
 class MockTransactionRepository : public ITransactionRepository {
 public:
-    MOCK_METHOD(Transaction,                create,       (const Transaction&), (override));
-    MOCK_METHOD(std::optional<Transaction>, findById,     (TransactionId),      (override));
-    MOCK_METHOD(std::vector<Transaction>,   findAll,      (),                   (override));
-    MOCK_METHOD(bool,                       update,       (const Transaction&), (override));
-    MOCK_METHOD(bool,                       remove,       (TransactionId),      (override));
-    MOCK_METHOD(std::vector<Transaction>,   findByUserId, (const UserId&),      (override));
-};
-
-class MockTransactionCategoryRepository : public ITransactionCategoryRepository {
-public:
-    MOCK_METHOD(TransactionCategory,                create,      (const TransactionCategory&), (override));
-    MOCK_METHOD(std::optional<TransactionCategory>, findById,    (TransactionCategoryId),      (override));
-    MOCK_METHOD(std::vector<TransactionCategory>,   findAll,     (),                           (override));
-    MOCK_METHOD(bool,                               update,      (const TransactionCategory&), (override));
-    MOCK_METHOD(bool,                               remove,      (TransactionCategoryId),      (override));
-    MOCK_METHOD(std::optional<TransactionCategory>, findByValue, (const std::string&),         (override));
+    MOCK_METHOD(Transaction,                create,                    (const Transaction&),       (override));
+    MOCK_METHOD(std::optional<Transaction>, findById,                  (TransactionId),             (override));
+    MOCK_METHOD(std::vector<Transaction>,   findAll,                   (),                          (override));
+    MOCK_METHOD(bool,                       update,                    (const Transaction&),        (override));
+    MOCK_METHOD(bool,                       remove,                    (TransactionId),             (override));
+    MOCK_METHOD(std::vector<Transaction>,   findByUserId,              (const UserId&),             (override));
+    MOCK_METHOD(std::optional<Transaction>, findByPlaidTransactionId,  (const std::string&),        (override));
 };
 
 class MockCurrencyRepository : public ICurrencyRepository {
@@ -69,35 +63,50 @@ public:
 
 class MockPlaidClient : public IPlaidClient {
 public:
-    MOCK_METHOD(std::string, createSandboxAccessToken,
-                (const std::string&), (override));
-    MOCK_METHOD(std::vector<PlaidTransactionData>, fetchTransactions,
-                (const std::string&, const std::string&, const std::string&, int), (override));
+    MOCK_METHOD(std::string,     createLinkToken,         (const std::string&),               (override));
+    MOCK_METHOD(std::string,     exchangePublicToken,      (const std::string&),               (override));
+    MOCK_METHOD(std::string,     createSandboxAccessToken, (const std::string&),               (override));
+    MOCK_METHOD(PlaidSyncResult, fetchTransactions,        (const std::string&, const std::string&), (override));
 };
+
+class MockPlaidItemRepository : public IPlaidItemRepository {
+public:
+    MOCK_METHOD(PlaidItem,                create,        (const PlaidItem&),  (override));
+    MOCK_METHOD(std::optional<PlaidItem>, findById,      (PlaidItemId),       (override));
+    MOCK_METHOD(std::vector<PlaidItem>,   findAll,       (),                  (override));
+    MOCK_METHOD(bool,                     update,        (const PlaidItem&),  (override));
+    MOCK_METHOD(bool,                     remove,        (PlaidItemId),       (override));
+    MOCK_METHOD(std::optional<PlaidItem>, findByUserId,  (const UserId&),     (override));
+};
+
+static ImportPlaidTransactionsCommand makeCmd(const std::string& token = "tok-sandbox") {
+    return ImportPlaidTransactionsCommand{
+        UserId{"user-1"}, PlaidItemId{"item-1"}, token
+    };
+}
 
 } // namespace
 
 // ── ImportPlaidTransactions ───────────────────────────────────────────────────
 
-TEST(ImportPlaidTransactionsTest, ExecuteCreatesOneTransactionPerPlaidRecord) {
-    MockTransactionRepository         txRepo;
-    MockTransactionCategoryRepository catRepo;
-    MockCurrencyRepository            curRepo;
-    MockPlaidClient                   plaid;
+TEST(ImportPlaidTransactionsTest, ExecuteCreatesOneTransactionPerAddedRecord) {
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
 
-    PlaidTransactionData r1{45.0, "Groceries", "2024-03-01", "Food",   "USD"};
-    PlaidTransactionData r2{12.5, "Bus pass",  "2024-03-02", "Travel", "USD"};
+    PlaidTransactionData r1{"ptx-1", 45.0, "Groceries", "2024-03-01", "Food",   "USD"};
+    PlaidTransactionData r2{"ptx-2", 12.5, "Bus pass",  "2024-03-02", "Travel", "USD"};
 
-    EXPECT_CALL(plaid, createSandboxAccessToken(_)).WillOnce(Return("tok-sandbox"));
-    EXPECT_CALL(plaid, fetchTransactions("tok-sandbox", "2024-03-01", "2024-03-31", 100))
-        .WillOnce(Return(std::vector<PlaidTransactionData>{r1, r2}));
+    PlaidSyncResult syncResult;
+    syncResult.added = {r1, r2};
+    syncResult.nextCursor = "cursor-abc";
 
-    EXPECT_CALL(catRepo, findByValue("Food"))
-        .WillOnce(Return(std::optional<TransactionCategory>{
-            TransactionCategory(TransactionCategoryId{"cat-food"}, "Food", makeDate(2024,1,1))}));
-    EXPECT_CALL(catRepo, findByValue("Travel"))
-        .WillOnce(Return(std::optional<TransactionCategory>{
-            TransactionCategory(TransactionCategoryId{"cat-travel"}, "Travel", makeDate(2024,1,1))}));
+    EXPECT_CALL(plaid, fetchTransactions("tok-sandbox", ""))
+        .WillOnce(Return(syncResult));
+
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-1")).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-2")).WillOnce(Return(std::nullopt));
 
     EXPECT_CALL(curRepo, findByValue("USD"))
         .Times(2)
@@ -108,72 +117,168 @@ TEST(ImportPlaidTransactionsTest, ExecuteCreatesOneTransactionPerPlaidRecord) {
         .WillOnce(Return(makeTx("tx-1", "user-1")))
         .WillOnce(Return(makeTx("tx-2", "user-1")));
 
-    ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-03-01", "2024-03-31", 100});
+    auto item = PlaidItem{PlaidItemId{"item-1"}, UserId{"user-1"}, "tok-sandbox", makeDate(2024,1,1)};
+    EXPECT_CALL(plaidItemRepo, findById(PlaidItemId{"item-1"})).WillOnce(Return(item));
+    EXPECT_CALL(plaidItemRepo, update(_)).WillOnce(Return(true));
+
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    auto result = useCase.execute(makeCmd());
 
     ASSERT_EQ(result.size(), 2u);
 }
 
-TEST(ImportPlaidTransactionsTest, ExecuteFallsBackToOtherCategoryWhenCategoryNotFound) {
-    MockTransactionRepository         txRepo;
-    MockTransactionCategoryRepository catRepo;
-    MockCurrencyRepository            curRepo;
-    MockPlaidClient                   plaid;
+TEST(ImportPlaidTransactionsTest, PositiveAmountMapsToExpenses) {
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
 
-    PlaidTransactionData r{99.0, "Mystery", "2024-04-01", "UnknownCategory", "USD"};
+    PlaidTransactionData r{"ptx-3", 50.0, "Coffee", "2024-04-01", "Food", "USD"};
+    PlaidSyncResult syncResult;
+    syncResult.added = {r};
 
-    EXPECT_CALL(plaid, createSandboxAccessToken(_)).WillOnce(Return("tok-sandbox"));
-    EXPECT_CALL(plaid, fetchTransactions(_, _, _, _))
-        .WillOnce(Return(std::vector<PlaidTransactionData>{r}));
-    EXPECT_CALL(catRepo, findByValue("UnknownCategory")).WillOnce(Return(std::nullopt));
-    EXPECT_CALL(curRepo, findByValue(_))
-        .WillOnce(Return(std::optional<Currency>{
-            Currency(CurrencyId{"USD"}, "USD", makeDate(2024,1,1))}));
+    EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(syncResult));
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-3")).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(curRepo, findByValue(_)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    EXPECT_CALL(txRepo, create(_)).WillOnce(Return(makeTx("tx-1", "user-1")));
+    std::string capturedCatId;
+    EXPECT_CALL(txRepo, create(_))
+        .WillOnce([&capturedCatId](const Transaction& tx) {
+            capturedCatId = tx.getCategoryId().getId();
+            return tx;
+        });
 
-    ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-04-01", "2024-04-30", 100});
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    useCase.execute(makeCmd());
 
-    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(capturedCatId, "expenses");
+}
+
+TEST(ImportPlaidTransactionsTest, NegativeAmountMapsToEarnings) {
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
+
+    PlaidTransactionData r{"ptx-4", -1200.0, "Paycheck", "2024-04-15", "", "USD"};
+    PlaidSyncResult syncResult;
+    syncResult.added = {r};
+
+    EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(syncResult));
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-4")).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(curRepo, findByValue(_)).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
+
+    std::string capturedCatId;
+    EXPECT_CALL(txRepo, create(_))
+        .WillOnce([&capturedCatId](const Transaction& tx) {
+            capturedCatId = tx.getCategoryId().getId();
+            return tx;
+        });
+
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    useCase.execute(makeCmd());
+
+    EXPECT_EQ(capturedCatId, "earnings");
 }
 
 TEST(ImportPlaidTransactionsTest, ExecuteSetsNulloptCurrencyWhenCurrencyNotFound) {
-    MockTransactionRepository         txRepo;
-    MockTransactionCategoryRepository catRepo;
-    MockCurrencyRepository            curRepo;
-    MockPlaidClient                   plaid;
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
 
-    PlaidTransactionData r{20.0, "Coffee", "2024-04-05", "Food", "XYZ"};
+    PlaidTransactionData r{"ptx-5", 20.0, "Coffee", "2024-04-05", "Food", "XYZ"};
+    PlaidSyncResult syncResult;
+    syncResult.added = {r};
 
-    EXPECT_CALL(plaid, createSandboxAccessToken(_)).WillOnce(Return("tok-sandbox"));
-    EXPECT_CALL(plaid, fetchTransactions(_, _, _, _))
-        .WillOnce(Return(std::vector<PlaidTransactionData>{r}));
-    EXPECT_CALL(catRepo, findByValue("Food"))
-        .WillOnce(Return(std::optional<TransactionCategory>{
-            TransactionCategory(TransactionCategoryId{"cat-food"}, "Food", makeDate(2024,1,1))}));
+    EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(syncResult));
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-5")).WillOnce(Return(std::nullopt));
     EXPECT_CALL(curRepo, findByValue("XYZ")).WillOnce(Return(std::nullopt));
-
     EXPECT_CALL(txRepo, create(_)).WillOnce(Return(makeTx("tx-1", "user-1")));
+    EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-04-01", "2024-04-30", 100});
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    auto result = useCase.execute(makeCmd());
 
     ASSERT_EQ(result.size(), 1u);
 }
 
 TEST(ImportPlaidTransactionsTest, ExecuteReturnsEmptyWhenPlaidHasNoTransactions) {
-    MockTransactionRepository         txRepo;
-    MockTransactionCategoryRepository catRepo;
-    MockCurrencyRepository            curRepo;
-    MockPlaidClient                   plaid;
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
 
-    EXPECT_CALL(plaid, createSandboxAccessToken(_)).WillOnce(Return("tok-sandbox"));
-    EXPECT_CALL(plaid, fetchTransactions(_, _, _, _))
-        .WillOnce(Return(std::vector<PlaidTransactionData>{}));
+    EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(PlaidSyncResult{}));
+    EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions useCase(txRepo, catRepo, curRepo, plaid);
-    auto result = useCase.execute(ImportPlaidTransactionsCommand{UserId{"user-1"}, "", "2024-05-01", "2024-05-31", 100});
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    auto result = useCase.execute(makeCmd());
 
     EXPECT_TRUE(result.empty());
+}
+
+TEST(ImportPlaidTransactionsTest, DuplicatePlaidTransactionIsSkipped) {
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
+
+    PlaidTransactionData r{"ptx-dup", 10.0, "Coffee", "2024-04-01", "Food", "USD"};
+    PlaidSyncResult syncResult;
+    syncResult.added = {r};
+
+    EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(syncResult));
+    // Already exists — findByPlaidTransactionId returns a transaction.
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-dup"))
+        .WillOnce(Return(makeTx("tx-existing", "user-1")));
+    EXPECT_CALL(txRepo, create(_)).Times(0);
+    EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
+
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    auto result = useCase.execute(makeCmd());
+
+    EXPECT_TRUE(result.empty());
+}
+
+TEST(ImportPlaidTransactionsTest, ModifiedTransactionIsUpdated) {
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
+
+    PlaidTransactionData mod{"ptx-mod", 99.0, "Updated Desc", "2024-04-10", "Food", "USD"};
+    PlaidSyncResult syncResult;
+    syncResult.modified = {mod};
+
+    EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(syncResult));
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-mod"))
+        .WillOnce(Return(makeTx("tx-existing", "user-1")));
+    EXPECT_CALL(curRepo, findByValue("USD")).WillOnce(Return(std::nullopt));
+    EXPECT_CALL(txRepo, update(_)).WillOnce(Return(true));
+    EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
+
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    useCase.execute(makeCmd());
+}
+
+TEST(ImportPlaidTransactionsTest, RemovedTransactionIsDeleted) {
+    MockTransactionRepository txRepo;
+    MockCurrencyRepository    curRepo;
+    MockPlaidClient           plaid;
+    MockPlaidItemRepository   plaidItemRepo;
+
+    PlaidSyncResult syncResult;
+    syncResult.removed = {"ptx-gone"};
+
+    EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(syncResult));
+    EXPECT_CALL(txRepo, findByPlaidTransactionId("ptx-gone"))
+        .WillOnce(Return(makeTx("tx-existing", "user-1", "expenses")));
+    EXPECT_CALL(txRepo, remove(TransactionId{"tx-existing"})).WillOnce(Return(true));
+    EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
+
+    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    useCase.execute(makeCmd());
 }
