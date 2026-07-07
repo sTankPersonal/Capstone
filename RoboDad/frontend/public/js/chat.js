@@ -4,8 +4,23 @@ var sessionId = main.dataset.sessionId;
 var chat = document.getElementById('chat');
 var input = document.getElementById('messageInput');
 
+// Assistant replies come back as Markdown; sanitize the rendered HTML since
+// it goes into innerHTML. Falls back to plain text if the CDN scripts fail.
+function renderMarkdown(text) {
+    if (!window.marked || !window.DOMPurify) return null;
+    return DOMPurify.sanitize(marked.parse(text, { breaks: true }));
+}
+
+function setMessageContent(el, text, role) {
+    var html = role === 'assistant' ? renderMarkdown(text) : null;
+    if (html !== null) el.innerHTML = html;
+    else el.textContent = text;
+}
+
 document.querySelectorAll('#chat .msg').forEach(function (msg) {
-    msg.classList.add(msg.dataset.sender === 'user' ? 'user' : 'assistant');
+    var role = msg.dataset.sender === 'user' ? 'user' : 'assistant';
+    msg.classList.add(role);
+    setMessageContent(msg, msg.textContent, role);
 });
 
 chat.scrollTop = chat.scrollHeight;
@@ -13,7 +28,7 @@ chat.scrollTop = chat.scrollHeight;
 function addMessage(text, role) {
     var div = document.createElement('div');
     div.className = 'msg ' + role;
-    div.textContent = text;
+    setMessageContent(div, text, role);
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
 }
