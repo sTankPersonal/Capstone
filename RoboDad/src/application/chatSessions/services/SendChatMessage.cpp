@@ -30,9 +30,12 @@ std::string SendChatMessage::execute(const SendChatMessageCommand& request) {
 
     auto history = messageRepo_.findByChatSessionId(request.sessionId, defaultHistoryLimit_);
 
-    // Build insights locally (no interface required)
+    //Controls timespan the AI is given for context, set to 30 days, cannot be changed by user, this is hard coded.
+    //It can be changed to a different constant later if needed. 
+    constexpr int CHAT_FINANCIAL_INSIGHTS_TIMESPAN = 30;
+
     GetFinancialInsights insightsService(transactionRepo_);
-    auto insightsOpt = insightsService.execute(GetFinancialInsightsQuery(session->getUserId()));
+    auto insightsOpt = insightsService.execute(GetFinancialInsightsQuery(session->getUserId(), CHAT_FINANCIAL_INSIGHTS_TIMESPAN));
 
     const std::string enriched = promptBuilder_
         .withUserMessage(request.userMessage)

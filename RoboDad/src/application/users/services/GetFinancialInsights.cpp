@@ -61,14 +61,19 @@ GetFinancialInsights::execute(const GetFinancialInsightsQuery& request)
     using namespace std::chrono;
 
     sys_days today = floor<days>(system_clock::now());
-    sys_days cutoff = today - days(30);
+
+    // Use the parameter instead of constant 30
+    int timeSpan = request.timeSpan > 0 ? request.timeSpan : 30;
+    sys_days cutoff = today - days(timeSpan);
 
     std::vector<Transaction> txs;
     txs.reserve(allTxs.size());
 
     for (const auto& t : allTxs) {
         sys_days txDate = toSysDays(t.getTransactionDate());
-        if (txDate >= cutoff) {
+
+        // "Last N days" = strictly after cutoff and up to today
+        if (txDate > cutoff && txDate <= today) {
             txs.push_back(t);
         }
     }

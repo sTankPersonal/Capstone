@@ -139,3 +139,12 @@ li {
     li:last-child {
         border-bottom: none;
     }
+
+
+
+.dashboard-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}

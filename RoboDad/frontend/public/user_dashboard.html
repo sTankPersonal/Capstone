@@ -19,127 +19,137 @@
     <script src="/components/navbar/navbar.js"></script>
 
     {{#insights}}
-    <div class="dashboard-layout">
+<div class="dashboard-layout">
 
-        <!-- ===== SIDEBAR (left 20%) ===== -->
-        <aside class="dash-sidebar">
-            <nav>
-                <button class="dash-link active" data-target="overview">Overview</button>
-                <button class="dash-link" data-target="incomeBreakdown">Income Breakdown</button>
-                <button class="dash-link" data-target="expenseBreakdown">Expense Breakdown</button>
-                <button class="dash-link" data-target="expenseCategories">Expense Categories</button>
-                <button class="dash-link" data-target="incomeCategories">Income Categories</button>
-                <button class="dash-link" data-target="incomeVsExpenses">Income vs Expenses</button>
-                <button class="dash-link" data-target="expenseFrequency">Expense Frequency</button>
-                <button class="dash-link" data-target="incomeFrequency">Income Frequency</button>
-                <button class="dash-link" data-target="incomeDetails">Income Details</button>
-                <button class="dash-link" data-target="expenseDetails">Expense Details</button>
-            </nav>
-        </aside>
+    <!-- ===== SIDEBAR (left 20%) ===== -->
+    <aside class="dash-sidebar">
+        <nav>
+            <button class="dash-link active" data-target="overview">Overview</button>
+            <button class="dash-link" data-target="incomeBreakdown">Income Breakdown</button>
+            <button class="dash-link" data-target="expenseBreakdown">Expense Breakdown</button>
+            <button class="dash-link" data-target="expenseCategories">Expense Categories</button>
+            <button class="dash-link" data-target="incomeCategories">Income Categories</button>
+            <button class="dash-link" data-target="incomeVsExpenses">Income vs Expenses</button>
+            <button class="dash-link" data-target="expenseFrequency">Expense Frequency</button>
+            <button class="dash-link" data-target="incomeFrequency">Income Frequency</button>
+            <button class="dash-link" data-target="incomeDetails">Income Details</button>
+            <button class="dash-link" data-target="expenseDetails">Expense Details</button>
+        </nav>
+    </aside>
 
-        <!-- ===== MAIN CONTENT (right 80%) ===== -->
-        <section class="dash-main">
+    <!-- ===== MAIN CONTENT (right 80%) ===== -->
+    <section class="dash-main">
+        <div class="dashboard-toolbar">
+            <label for="timeSpanSelect">Time Range:</label>
+            <select id="timeSpanSelect">
+                <option value="7" {{#is7}} selected{{/is7}}>Last 7 Days</option>
+                <option value="14" {{#is14}} selected{{/is14}}>Last 14 Days</option>
+                <option value="30" {{#is30}} selected{{/is30}}>Last 30 Days</option>
+                <option value="60" {{#is60}} selected{{/is60}}>Last 60 Days</option>
+                <option value="90" {{#is90}} selected{{/is90}}>Last 90 Days</option>
+            </select>
+        </div>
 
-            <!-- OVERVIEW (default) -->
-            <div class="dash-page active" id="page-overview">
-                <h2>Financial Summary (Last 30 Days)</h2>
+        <!-- OVERVIEW (default) -->
+        <div class="dash-page active" id="page-overview">
+            <h2 id="summaryHeading">Financial Summary (Last {{timeSpan}} Days)</h2>
 
-                <div class="kpi-row">
-                    <div class="insight-card">
-                        <h3>Total Income</h3>
-                        <p>${{totalIncome}}</p>
-                    </div>
-
-                    <div class="insight-card">
-                        <h3>Total Expenses</h3>
-                        <p>${{totalExpenses}}</p>
-                    </div>
+            <div class="kpi-row">
+                <div class="insight-card">
+                    <h3>Total Income</h3>
+                    <p>${{totalIncome}}</p>
                 </div>
 
-                <div class="chart-card">
-                    <h3>Income vs Expenses</h3>
-                    <div class="chart-wrap"><canvas id="overviewComparisonChart"></canvas></div>
-                </div>
-            </div>
-
-            <!-- INCOME BREAKDOWN -->
-            <div class="dash-page" id="page-incomeBreakdown">
-                <h2>Income Breakdown</h2>
-                <div class="chart-card">
-                    <div class="chart-wrap"><canvas id="incomeChart"></canvas></div>
+                <div class="insight-card">
+                    <h3>Total Expenses</h3>
+                    <p>${{totalExpenses}}</p>
                 </div>
             </div>
 
-            <!-- EXPENSE BREAKDOWN -->
-            <div class="dash-page" id="page-expenseBreakdown">
-                <h2>Expense Breakdown</h2>
-                <div class="chart-card">
-                    <div class="chart-wrap"><canvas id="expenseChart"></canvas></div>
-                </div>
+            <div class="chart-card">
+                <h3>Income vs Expenses</h3>
+                <div class="chart-wrap"><canvas id="overviewComparisonChart"></canvas></div>
             </div>
+        </div>
 
-            <!-- EXPENSE CATEGORIES -->
-            <div class="dash-page" id="page-expenseCategories">
-                <h2>Expense Categories</h2>
-                <div class="chart-card">
-                    <div class="chart-wrap"><canvas id="expenseBarChart"></canvas></div>
-                </div>
+        <!-- INCOME BREAKDOWN -->
+        <div class="dash-page" id="page-incomeBreakdown">
+            <h2>Income Breakdown (Last {{timeSpan}} Days)</h2>
+            <div class="chart-card">
+                <div class="chart-wrap"><canvas id="incomeChart"></canvas></div>
             </div>
+        </div>
 
-            <!-- INCOME CATEGORIES -->
-            <div class="dash-page" id="page-incomeCategories">
-                <h2>Income Categories</h2>
-                <div class="chart-card">
-                    <div class="chart-wrap"><canvas id="incomeBarChart"></canvas></div>
-                </div>
+        <!-- EXPENSE BREAKDOWN -->
+        <div class="dash-page" id="page-expenseBreakdown">
+            <h2>Expense Breakdown (Last {{timeSpan}} Days)</h2>
+            <div class="chart-card">
+                <div class="chart-wrap"><canvas id="expenseChart"></canvas></div>
             </div>
+        </div>
 
-            <!-- INCOME VS EXPENSES -->
-            <div class="dash-page" id="page-incomeVsExpenses">
-                <h2>Income vs Expenses</h2>
-                <div class="chart-card">
-                    <div class="chart-wrap"><canvas id="incomeExpenseComparisonChart"></canvas></div>
-                </div>
+        <!-- EXPENSE CATEGORIES -->
+        <div class="dash-page" id="page-expenseCategories">
+            <h2>Expense Categories (Last {{timeSpan}} Days)</h2>
+            <div class="chart-card">
+                <div class="chart-wrap"><canvas id="expenseBarChart"></canvas></div>
             </div>
+        </div>
 
-            <!-- EXPENSE FREQUENCY -->
-            <div class="dash-page" id="page-expenseFrequency">
-                <h2>Expense Frequency</h2>
-                <div class="chart-card">
-                    <div class="chart-wrap"><canvas id="expenseFrequencyChart"></canvas></div>
-                </div>
+        <!-- INCOME CATEGORIES -->
+        <div class="dash-page" id="page-incomeCategories">
+            <h2>Income Categories (Last {{timeSpan}} Days)</h2>
+            <div class="chart-card">
+                <div class="chart-wrap"><canvas id="incomeBarChart"></canvas></div>
             </div>
+        </div>
 
-            <!-- INCOME FREQUENCY -->
-            <div class="dash-page" id="page-incomeFrequency">
-                <h2>Income Frequency</h2>
-                <div class="chart-card">
-                    <div class="chart-wrap"><canvas id="incomeFrequencyChart"></canvas></div>
-                </div>
+        <!-- INCOME VS EXPENSES -->
+        <div class="dash-page" id="page-incomeVsExpenses">
+            <h2>Income vs Expenses (Last {{timeSpan}} Days)</h2>
+            <div class="chart-card">
+                <div class="chart-wrap"><canvas id="incomeExpenseComparisonChart"></canvas></div>
             </div>
+        </div>
 
-            <!-- INCOME DETAILS -->
-            <div class="dash-page" id="page-incomeDetails">
-                <h2>Income Details</h2>
-                <ul>
-                    {{#incomeByCategoryList}}
-                    <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
-                    {{/incomeByCategoryList}}
-                </ul>
+        <!-- EXPENSE FREQUENCY -->
+        <div class="dash-page" id="page-expenseFrequency">
+            <h2>Expense Frequency (Last {{timeSpan}} Days)</h2>
+            <div class="chart-card">
+                <div class="chart-wrap"><canvas id="expenseFrequencyChart"></canvas></div>
             </div>
+        </div>
 
-            <!-- EXPENSE DETAILS -->
-            <div class="dash-page" id="page-expenseDetails">
-                <h2>Expense Details</h2>
-                <ul>
-                    {{#expenseByCategoryList}}
-                    <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
-                    {{/expenseByCategoryList}}
-                </ul>
+        <!-- INCOME FREQUENCY -->
+        <div class="dash-page" id="page-incomeFrequency">
+            <h2>Income Frequency (Last {{timeSpan}} Days)</h2>
+            <div class="chart-card">
+                <div class="chart-wrap"><canvas id="incomeFrequencyChart"></canvas></div>
             </div>
+        </div>
 
-        </section>
-    </div>
+        <!-- INCOME DETAILS -->
+        <div class="dash-page" id="page-incomeDetails">
+            <h2>Income Details (Last {{timeSpan}} Days)</h2>
+            <ul>
+                {{#incomeByCategoryList}}
+                <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
+                {{/incomeByCategoryList}}
+            </ul>
+        </div>
+
+        <!-- EXPENSE DETAILS -->
+        <div class="dash-page" id="page-expenseDetails">
+            <h2>Expense Details (Last {{timeSpan}} Days)</h2>
+            <ul>
+                {{#expenseByCategoryList}}
+                <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
+                {{/expenseByCategoryList}}
+            </ul>
+        </div>
+
+    </section>
+</div>
 
     <script>
     const incomeLabels = [
@@ -219,6 +229,10 @@
             options: baseOptions()
         })
     };
+
+    document.getElementById("timeSpanSelect").addEventListener("change", function () {
+        window.location.href = "/user/dashboard?timeSpan=" + this.value;
+    });
 
     const createdCharts = {};
 

@@ -11,6 +11,7 @@ struct CategoryItem {
 
 class FinancialInsightsDto {
 public:
+    int timeSpan = 30;
     double totalIncome = 0.0;
     double totalExpenses = 0.0;
     std::vector<std::string> unusualIncome;
