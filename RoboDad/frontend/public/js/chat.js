@@ -32,28 +32,49 @@ function addMessage(text, role) {
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
 }
+var isWaiting = false;
 
 function sendMessage() {
+    if (isWaiting) return; // prevent spamming
+
     var text = input.value.trim();
     if (!text) return;
+
+    isWaiting = true; // lock input
+    input.disabled = true;
+    document.getElementById('sendBtn').disabled = true;
 
     addMessage(text, 'user');
     input.value = '';
 
     var params = new URLSearchParams({ message: text });
+
     fetch('/user/chats/' + sessionId + '/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString()
-    }).then(function (res) {
-        if (res.status === 401) { window.location.href = '/login'; return null; }
-        if (!res.ok) { addMessage('Error sending message. Please try again.', 'assistant'); return null; }
-        return res.json();
-    }).then(function (data) {
-        if (data) addMessage(data.reply, 'assistant');
-    }).catch(function () {
-        addMessage('Error sending message. Please try again.', 'assistant');
-    });
+    })
+        .then(function (res) {
+            if (res.status === 401) { window.location.href = '/login'; return null; }
+            if (!res.ok) {
+                addMessage('Error sending message. Please try again.', 'assistant');
+                return null;
+            }
+            return res.json();
+        })
+        .then(function (data) {
+            if (data) addMessage(data.reply, 'assistant');
+        })
+        .catch(function () {
+            addMessage('Error sending message. Please try again.', 'assistant');
+        })
+        .finally(function () {
+            // unlock input
+            isWaiting = false;
+            input.disabled = false;
+            document.getElementById('sendBtn').disabled = false;
+            input.focus();
+        });
 }
 
 document.getElementById('sendBtn').addEventListener('click', sendMessage);
