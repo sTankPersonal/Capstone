@@ -3,18 +3,21 @@
 #include "TransactionAmount.h"
 #include "TransactionDescription.h"
 #include "TransactionCategoryId.h"
+#include "PfcDetailedCategoryId.h"
 #include "CurrencyId.h"
 #include "UuidGenerator.h"
 #include <chrono>
 #include <sstream>
 
 ImportPlaidTransactions::ImportPlaidTransactions(
-    ITransactionRepository& transactionRepo,
-    ICurrencyRepository&    currencyRepo,
-    IPlaidClient&           plaidClient,
-    IPlaidItemRepository&   plaidItemRepo)
+    ITransactionRepository&        transactionRepo,
+    ICurrencyRepository&           currencyRepo,
+    IPfcDetailedCategoryRepository& pfcDetailedRepo,
+    IPlaidClient&                  plaidClient,
+    IPlaidItemRepository&          plaidItemRepo)
     : transactionRepo_(transactionRepo)
     , currencyRepo_(currencyRepo)
+    , pfcDetailedRepo_(pfcDetailedRepo)
     , plaidClient_(plaidClient)
     , plaidItemRepo_(plaidItemRepo) {}
 
@@ -32,6 +35,15 @@ static std::chrono::year_month_day parseDate(const std::string& iso) {
 static std::optional<CurrencyId> resolveCurrency(ICurrencyRepository& repo, const std::string& code) {
     if (auto cur = repo.findByValue(code); cur)
         return cur->getId();
+    return std::nullopt;
+}
+
+static std::optional<PfcDetailedCategoryId> resolvePfcDetailed(
+    IPfcDetailedCategoryRepository& repo, const std::string& id)
+{
+    if (id.empty()) return std::nullopt;
+    if (auto cat = repo.findById(PfcDetailedCategoryId{id}); cat)
+        return cat->getId();
     return std::nullopt;
 }
 
@@ -60,7 +72,8 @@ std::vector<Transaction> ImportPlaidTransactions::execute(const ImportPlaidTrans
             TransactionDescription(r.description),
             parseDate(r.date),
             today,
-            r.plaidTransactionId.empty() ? std::nullopt : std::make_optional(r.plaidTransactionId)
+            r.plaidTransactionId.empty() ? std::nullopt : std::make_optional(r.plaidTransactionId),
+            resolvePfcDetailed(pfcDetailedRepo_, r.pfcDetailed)
         );
         created.push_back(transactionRepo_.create(tx));
     }
@@ -80,7 +93,8 @@ std::vector<Transaction> ImportPlaidTransactions::execute(const ImportPlaidTrans
             TransactionDescription(r.description),
             parseDate(r.date),
             existing->getCreatedAt(),
-            r.plaidTransactionId
+            r.plaidTransactionId,
+            resolvePfcDetailed(pfcDetailedRepo_, r.pfcDetailed)
         );
         transactionRepo_.update(updated);
     }

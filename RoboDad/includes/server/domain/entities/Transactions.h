@@ -3,6 +3,7 @@
 #include "IEntity.h"
 #include "TransactionId.h"
 #include "TransactionCategoryId.h"
+#include "PfcDetailedCategoryId.h"
 #include "UserId.h"
 #include "TransactionAmount.h"
 #include "TransactionDescription.h"
@@ -15,6 +16,7 @@ class Transaction : public IEntity<TransactionId, std::chrono::year_month_day>
     TransactionId id_;
     UserId userId_;
     TransactionCategoryId categoryId_;
+    std::optional<PfcDetailedCategoryId> pfcDetailedCategoryId_;
     TransactionAmount amount_;
     TransactionDescription description_;
     std::chrono::year_month_day transactionDate_;
@@ -30,12 +32,14 @@ public:
         const TransactionDescription& description,
         const std::chrono::year_month_day& transactionDate,
         const std::chrono::year_month_day& createdAt,
-        std::optional<std::string> plaidTransactionId = std::nullopt
+        std::optional<std::string> plaidTransactionId = std::nullopt,
+        std::optional<PfcDetailedCategoryId> pfcDetailedCategoryId = std::nullopt
     );
 
     const TransactionId& getId() const noexcept override;
     const UserId& getUserId() const noexcept;
     const TransactionCategoryId& getCategoryId() const noexcept;
+    const std::optional<PfcDetailedCategoryId>& getPfcDetailedCategoryId() const noexcept;
     const TransactionAmount& getAmount() const noexcept;
     const TransactionDescription& getDescription() const noexcept;
     const std::chrono::year_month_day& getTransactionDate() const noexcept;
@@ -44,6 +48,7 @@ public:
 
 protected:
     void setCategoryId(const TransactionCategoryId& categoryId);
+    void setPfcDetailedCategoryId(const std::optional<PfcDetailedCategoryId>& pfcDetailedCategoryId);
     void setAmount(const TransactionAmount& amount);
     void setDescription(const TransactionDescription& description);
     void setTransactionDate(const std::chrono::year_month_day& transactionDate);

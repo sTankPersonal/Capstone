@@ -13,6 +13,9 @@ static Transaction rowToTransaction(const pqxx::row& row) {
         ? std::nullopt : std::make_optional(row["description"].as<std::string>());
     std::optional<std::string> plaidTxId = row["plaid_transaction_id"].is_null()
         ? std::nullopt : std::make_optional(row["plaid_transaction_id"].as<std::string>());
+    std::optional<PfcDetailedCategoryId> pfcDetailedId = row["pfc_detailed_category_id"].is_null()
+        ? std::nullopt
+        : std::make_optional(PfcDetailedCategoryId{row["pfc_detailed_category_id"].as<std::string>()});
 
     return Transaction{
         TransactionId{row["transaction_id"].as<std::string>()},
@@ -22,24 +25,29 @@ static Transaction rowToTransaction(const pqxx::row& row) {
         TransactionDescription{desc},
         dateFromStr(row["transaction_date"].as<std::string>()),
         dateFromStr(row["created_at"].as<std::string>()),
-        plaidTxId
+        plaidTxId,
+        pfcDetailedId
     };
 }
 
 static const char* kSelectCols =
     "SELECT transaction_id, user_id, transaction_category_id, amount, currency_id, "
-    "description, transaction_date, created_at, plaid_transaction_id FROM transactions";
+    "description, transaction_date, created_at, plaid_transaction_id, pfc_detailed_category_id "
+    "FROM transactions";
 
 Transaction PostgresTransactionRepository::create(const Transaction& transaction) {
     pqxx::work txn{db_.getConnection()};
     const auto& amt = transaction.getAmount();
     std::optional<std::string> currStr = amt.getCurrencyId().has_value()
         ? std::make_optional(amt.getCurrencyId()->getId()) : std::nullopt;
+    std::optional<std::string> pfcStr = transaction.getPfcDetailedCategoryId().has_value()
+        ? std::make_optional(transaction.getPfcDetailedCategoryId()->getId()) : std::nullopt;
 
     txn.exec_params(
         "INSERT INTO transactions(transaction_id, user_id, transaction_category_id, "
-        "amount, currency_id, description, transaction_date, created_at, plaid_transaction_id) "
-        "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+        "amount, currency_id, description, transaction_date, created_at, plaid_transaction_id, "
+        "pfc_detailed_category_id) "
+        "VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
         transaction.getId().getId(),
         transaction.getUserId().getId(),
         transaction.getCategoryId().getId(),
@@ -48,7 +56,8 @@ Transaction PostgresTransactionRepository::create(const Transaction& transaction
         transaction.getDescription().getDescription(),
         dateToStr(transaction.getTransactionDate()),
         dateToStr(transaction.getCreatedAt()),
-        transaction.getPlaidTransactionId()
+        transaction.getPlaidTransactionId(),
+        pfcStr
     );
     txn.commit();
     return transaction;
@@ -77,16 +86,19 @@ bool PostgresTransactionRepository::update(const Transaction& transaction) {
     const auto& amt = transaction.getAmount();
     std::optional<std::string> currStr = amt.getCurrencyId().has_value()
         ? std::make_optional(amt.getCurrencyId()->getId()) : std::nullopt;
+    std::optional<std::string> pfcStr = transaction.getPfcDetailedCategoryId().has_value()
+        ? std::make_optional(transaction.getPfcDetailedCategoryId()->getId()) : std::nullopt;
 
     auto res = txn.exec_params(
         "UPDATE transactions SET transaction_category_id=$2, amount=$3, currency_id=$4, "
-        "description=$5, transaction_date=$6 WHERE transaction_id=$1",
+        "description=$5, transaction_date=$6, pfc_detailed_category_id=$7 WHERE transaction_id=$1",
         transaction.getId().getId(),
         transaction.getCategoryId().getId(),
         amt.getAmount(),
         currStr,
         transaction.getDescription().getDescription(),
-        dateToStr(transaction.getTransactionDate())
+        dateToStr(transaction.getTransactionDate()),
+        pfcStr
     );
     txn.commit();
     return res.affected_rows() > 0;

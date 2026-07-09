@@ -6,6 +6,8 @@
 #include "application/references/personas/dtos/PersonaDto.h"
 #include "application/references/messageSenders/dtos/MessageSenderDto.h"
 #include "application/references/transactionCategories/dtos/TransactionCategoryDto.h"
+#include "application/references/pfcCategories/dtos/PfcPrimaryCategoryDto.h"
+#include "application/references/pfcCategories/dtos/PfcDetailedCategoryDto.h"
 
 #include "application/references/countries/queries/GetCountryQuery.h"
 #include "application/references/countries/queries/ListCountriesQuery.h"
@@ -21,9 +23,13 @@
 #include "application/references/personas/queries/ListPersonasQuery.h"
 #include "application/references/transactionCategories/queries/GetTransactionCategoryQuery.h"
 #include "application/references/transactionCategories/queries/ListTransactionCategoriesQuery.h"
+#include "application/references/pfcCategories/queries/GetPfcPrimaryCategoryQuery.h"
+#include "application/references/pfcCategories/queries/ListPfcPrimaryCategoriesQuery.h"
+#include "application/references/pfcCategories/queries/GetPfcDetailedCategoryQuery.h"
+#include "application/references/pfcCategories/queries/ListPfcDetailedCategoriesQuery.h"
 
-ReferenceController::ReferenceController(const GetCountry& getCountry, const ListCountries& listCountries, const GetCurrency& getCurrency, const ListCurrencies& listCurrencies, const GetEmploymentStatus& getEmploymentStatus, const ListEmploymentStatuses& listEmploymentStatuses, const GetLanguage& getLanguage, const ListLanguages& listLanguages, const GetPersona& getLLMPersona, const ListPersonas& listLLMPersonas, const GetMessageSender& getMessageSender, const ListMessageSenders& listMessageSenders, const GetTransactionCategory& getTransactionCategory, const ListTransactionCategories& listTransactionCategories)
-    : getCountry_(getCountry), listCountries_(listCountries), getCurrency_(getCurrency), listCurrencies_(listCurrencies), getEmploymentStatus_(getEmploymentStatus), listEmploymentStatuses_(listEmploymentStatuses), getLanguage_(getLanguage), listLanguages_(listLanguages), getLLMPersona_(getLLMPersona), listLLMPersonas_(listLLMPersonas), getMessageSender_(getMessageSender), listMessageSenders_(listMessageSenders), getTransactionCategory_(getTransactionCategory), listTransactionCategories_(listTransactionCategories) {}
+ReferenceController::ReferenceController(const GetCountry& getCountry, const ListCountries& listCountries, const GetCurrency& getCurrency, const ListCurrencies& listCurrencies, const GetEmploymentStatus& getEmploymentStatus, const ListEmploymentStatuses& listEmploymentStatuses, const GetLanguage& getLanguage, const ListLanguages& listLanguages, const GetPersona& getLLMPersona, const ListPersonas& listLLMPersonas, const GetMessageSender& getMessageSender, const ListMessageSenders& listMessageSenders, const GetTransactionCategory& getTransactionCategory, const ListTransactionCategories& listTransactionCategories, const GetPfcPrimaryCategory& getPfcPrimaryCategory, const ListPfcPrimaryCategories& listPfcPrimaryCategories, const GetPfcDetailedCategory& getPfcDetailedCategory, const ListPfcDetailedCategories& listPfcDetailedCategories)
+    : getCountry_(getCountry), listCountries_(listCountries), getCurrency_(getCurrency), listCurrencies_(listCurrencies), getEmploymentStatus_(getEmploymentStatus), listEmploymentStatuses_(listEmploymentStatuses), getLanguage_(getLanguage), listLanguages_(listLanguages), getLLMPersona_(getLLMPersona), listLLMPersonas_(listLLMPersonas), getMessageSender_(getMessageSender), listMessageSenders_(listMessageSenders), getTransactionCategory_(getTransactionCategory), listTransactionCategories_(listTransactionCategories), getPfcPrimaryCategory_(getPfcPrimaryCategory), listPfcPrimaryCategories_(listPfcPrimaryCategories), getPfcDetailedCategory_(getPfcDetailedCategory), listPfcDetailedCategories_(listPfcDetailedCategories) {}
 
 void ReferenceController::registerRoutes(RoboDadApp& app) {
     CROW_ROUTE(app, "/references/countries")
@@ -81,6 +87,22 @@ void ReferenceController::registerRoutes(RoboDadApp& app) {
     CROW_ROUTE(app, "/references/transaction-categories/<string>")
         .methods(crow::HTTPMethod::GET)([this](const crow::request& req, const std::string& transactionCategoryId){
             return getTransactionCategory(req, TransactionCategoryId(transactionCategoryId));
+        });
+    CROW_ROUTE(app, "/references/pfc-primary-categories")
+        .methods(crow::HTTPMethod::GET)([this](const crow::request& req){
+            return getPfcPrimaryCategories(req);
+        });
+    CROW_ROUTE(app, "/references/pfc-primary-categories/<string>")
+        .methods(crow::HTTPMethod::GET)([this](const crow::request& req, const std::string& pfcPrimaryCategoryId){
+            return getPfcPrimaryCategory(req, PfcPrimaryCategoryId(pfcPrimaryCategoryId));
+        });
+    CROW_ROUTE(app, "/references/pfc-detailed-categories")
+        .methods(crow::HTTPMethod::GET)([this](const crow::request& req){
+            return getPfcDetailedCategories(req);
+        });
+    CROW_ROUTE(app, "/references/pfc-detailed-categories/<string>")
+        .methods(crow::HTTPMethod::GET)([this](const crow::request& req, const std::string& pfcDetailedCategoryId){
+            return getPfcDetailedCategory(req, PfcDetailedCategoryId(pfcDetailedCategoryId));
         });
 }
 
@@ -213,6 +235,44 @@ crow::response ReferenceController::getTransactionCategory(const crow::request& 
     std::optional<TransactionCategoryDto> categoryOpt = getTransactionCategory_.execute(GetTransactionCategoryQuery(category_id));
     if (!categoryOpt) {
         return crow::response(404, "Transaction category not found");
+    }
+    return crow::response(200, static_cast<crow::json::wvalue>(*categoryOpt));
+}
+
+crow::response ReferenceController::getPfcPrimaryCategories(const crow::request& req) {
+    std::vector<PfcPrimaryCategoryDto> categories = listPfcPrimaryCategories_.execute(ListPfcPrimaryCategoriesQuery());
+    crow::json::wvalue::list categoryList;
+    for (const PfcPrimaryCategoryDto& category : categories) {
+        categoryList.push_back(static_cast<crow::json::wvalue>(category));
+    }
+    crow::json::wvalue responseBody;
+    responseBody["pfcPrimaryCategories"] = std::move(categoryList);
+    return crow::response(200, responseBody);
+}
+
+crow::response ReferenceController::getPfcPrimaryCategory(const crow::request& req, PfcPrimaryCategoryId category_id) {
+    std::optional<PfcPrimaryCategoryDto> categoryOpt = getPfcPrimaryCategory_.execute(GetPfcPrimaryCategoryQuery(category_id));
+    if (!categoryOpt) {
+        return crow::response(404, "PFC primary category not found");
+    }
+    return crow::response(200, static_cast<crow::json::wvalue>(*categoryOpt));
+}
+
+crow::response ReferenceController::getPfcDetailedCategories(const crow::request& req) {
+    std::vector<PfcDetailedCategoryDto> categories = listPfcDetailedCategories_.execute(ListPfcDetailedCategoriesQuery());
+    crow::json::wvalue::list categoryList;
+    for (const PfcDetailedCategoryDto& category : categories) {
+        categoryList.push_back(static_cast<crow::json::wvalue>(category));
+    }
+    crow::json::wvalue responseBody;
+    responseBody["pfcDetailedCategories"] = std::move(categoryList);
+    return crow::response(200, responseBody);
+}
+
+crow::response ReferenceController::getPfcDetailedCategory(const crow::request& req, PfcDetailedCategoryId category_id) {
+    std::optional<PfcDetailedCategoryDto> categoryOpt = getPfcDetailedCategory_.execute(GetPfcDetailedCategoryQuery(category_id));
+    if (!categoryOpt) {
+        return crow::response(404, "PFC detailed category not found");
     }
     return crow::response(200, static_cast<crow::json::wvalue>(*categoryOpt));
 }

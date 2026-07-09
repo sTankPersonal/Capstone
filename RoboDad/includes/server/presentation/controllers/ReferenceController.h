@@ -8,6 +8,8 @@
 #include "domain/valueObjects/ids/LlmPersonaId.h"
 #include "domain/valueObjects/ids/MessageSenderId.h"
 #include "domain/valueObjects/ids/TransactionCategoryId.h"
+#include "domain/valueObjects/ids/PfcPrimaryCategoryId.h"
+#include "domain/valueObjects/ids/PfcDetailedCategoryId.h"
 
 #include "application/references/countries/services/GetCountry.h"
 #include "application/references/countries/services/ListCountries.h"
@@ -23,6 +25,10 @@
 #include "application/references/messageSenders/services/ListMessageSenders.h"
 #include "application/references/transactionCategories/services/GetTransactionCategory.h"
 #include "application/references/transactionCategories/services/ListTransactionCategories.h"
+#include "application/references/pfcCategories/services/GetPfcPrimaryCategory.h"
+#include "application/references/pfcCategories/services/ListPfcPrimaryCategories.h"
+#include "application/references/pfcCategories/services/GetPfcDetailedCategory.h"
+#include "application/references/pfcCategories/services/ListPfcDetailedCategories.h"
 
 /*
     GET: /references/countries - Loads the list of countries
@@ -44,7 +50,13 @@
     GET: /references/message-senders/<message_sender_id> - Loads the details of the specified message sender
 
     GET: /references/transaction-categories - Loads the list of transaction categories
-    GET: /references/transaction-categories/<category_id> - Loads the details of the specified transaction category.    
+    GET: /references/transaction-categories/<category_id> - Loads the details of the specified transaction category.
+
+    GET: /references/pfc-primary-categories - Loads the list of PFC primary categories
+    GET: /references/pfc-primary-categories/<category_id> - Loads the details of the specified PFC primary category
+
+    GET: /references/pfc-detailed-categories - Loads the list of PFC detailed categories
+    GET: /references/pfc-detailed-categories/<category_id> - Loads the details of the specified PFC detailed category
 */
 
 class ReferenceController : public IController<RoboDadApp> {
@@ -62,8 +74,12 @@ class ReferenceController : public IController<RoboDadApp> {
     ListMessageSenders listMessageSenders_;
     GetTransactionCategory getTransactionCategory_;
     ListTransactionCategories listTransactionCategories_;
+    GetPfcPrimaryCategory getPfcPrimaryCategory_;
+    ListPfcPrimaryCategories listPfcPrimaryCategories_;
+    GetPfcDetailedCategory getPfcDetailedCategory_;
+    ListPfcDetailedCategories listPfcDetailedCategories_;
 public:
-    ReferenceController(const GetCountry& getCountry, const ListCountries& listCountries, const GetCurrency& getCurrency, const ListCurrencies& listCurrencies, const GetEmploymentStatus& getEmploymentStatus, const ListEmploymentStatuses& listEmploymentStatuses, const GetLanguage& getLanguage, const ListLanguages& listLanguages, const GetPersona& getLLMPersona, const ListPersonas& listLLMPersonas, const GetMessageSender& getMessageSender, const ListMessageSenders& listMessageSenders, const GetTransactionCategory& getTransactionCategory, const ListTransactionCategories& listTransactionCategories);
+    ReferenceController(const GetCountry& getCountry, const ListCountries& listCountries, const GetCurrency& getCurrency, const ListCurrencies& listCurrencies, const GetEmploymentStatus& getEmploymentStatus, const ListEmploymentStatuses& listEmploymentStatuses, const GetLanguage& getLanguage, const ListLanguages& listLanguages, const GetPersona& getLLMPersona, const ListPersonas& listLLMPersonas, const GetMessageSender& getMessageSender, const ListMessageSenders& listMessageSenders, const GetTransactionCategory& getTransactionCategory, const ListTransactionCategories& listTransactionCategories, const GetPfcPrimaryCategory& getPfcPrimaryCategory, const ListPfcPrimaryCategories& listPfcPrimaryCategories, const GetPfcDetailedCategory& getPfcDetailedCategory, const ListPfcDetailedCategories& listPfcDetailedCategories);
 
     void registerRoutes(RoboDadApp& app) override;
 
@@ -87,4 +103,10 @@ public:
 
     crow::response getTransactionCategories(const crow::request& req);
     crow::response getTransactionCategory(const crow::request& req, TransactionCategoryId category_id);
+
+    crow::response getPfcPrimaryCategories(const crow::request& req);
+    crow::response getPfcPrimaryCategory(const crow::request& req, PfcPrimaryCategoryId category_id);
+
+    crow::response getPfcDetailedCategories(const crow::request& req);
+    crow::response getPfcDetailedCategory(const crow::request& req, PfcDetailedCategoryId category_id);
 };

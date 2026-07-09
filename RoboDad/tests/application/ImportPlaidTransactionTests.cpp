@@ -2,6 +2,10 @@
 #include <gtest/gtest.h>
 #include "ITransactionRepository.h"
 #include "ICurrencyRepository.h"
+#include "IPfcDetailedCategoryRepository.h"
+#include "PfcDetailedCategory.h"
+#include "PfcDetailedCategoryId.h"
+#include "PfcPrimaryCategoryId.h"
 #include "IPlaidClient.h"
 #include "IPlaidItemRepository.h"
 #include "ImportPlaidTransactions.h"
@@ -79,6 +83,17 @@ public:
     MOCK_METHOD(std::optional<PlaidItem>, findByUserId,  (const UserId&),     (override));
 };
 
+class MockPfcDetailedCategoryRepository : public IPfcDetailedCategoryRepository {
+public:
+    MOCK_METHOD(PfcDetailedCategory,                create,         (const PfcDetailedCategory&),        (override));
+    MOCK_METHOD(std::optional<PfcDetailedCategory>, findById,       (PfcDetailedCategoryId),              (override));
+    MOCK_METHOD(std::vector<PfcDetailedCategory>,   findAll,        (),                                   (override));
+    MOCK_METHOD(bool,                               update,         (const PfcDetailedCategory&),         (override));
+    MOCK_METHOD(bool,                               remove,         (PfcDetailedCategoryId),              (override));
+    MOCK_METHOD(std::vector<PfcDetailedCategory>,   findByPrimaryId,(const PfcPrimaryCategoryId&),        (override));
+    MOCK_METHOD(std::optional<PfcDetailedCategory>, findByValue,    (const std::string&),                 (override));
+};
+
 static ImportPlaidTransactionsCommand makeCmd(const std::string& token = "tok-sandbox") {
     return ImportPlaidTransactionsCommand{
         UserId{"user-1"}, PlaidItemId{"item-1"}, token
@@ -94,6 +109,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteCreatesOneTransactionPerAddedRecord) {
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     PlaidTransactionData r1{"ptx-1", 45.0, "Groceries", "2024-03-01", "Food",   "USD"};
     PlaidTransactionData r2{"ptx-2", 12.5, "Bus pass",  "2024-03-02", "Travel", "USD"};
@@ -121,7 +137,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteCreatesOneTransactionPerAddedRecord) {
     EXPECT_CALL(plaidItemRepo, findById(PlaidItemId{"item-1"})).WillOnce(Return(item));
     EXPECT_CALL(plaidItemRepo, update(_)).WillOnce(Return(true));
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     auto result = useCase.execute(makeCmd());
 
     ASSERT_EQ(result.size(), 2u);
@@ -132,6 +148,7 @@ TEST(ImportPlaidTransactionsTest, PositiveAmountMapsToExpenses) {
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     PlaidTransactionData r{"ptx-3", 50.0, "Coffee", "2024-04-01", "Food", "USD"};
     PlaidSyncResult syncResult;
@@ -149,7 +166,7 @@ TEST(ImportPlaidTransactionsTest, PositiveAmountMapsToExpenses) {
             return tx;
         });
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     useCase.execute(makeCmd());
 
     EXPECT_EQ(capturedCatId, "expenses");
@@ -160,6 +177,7 @@ TEST(ImportPlaidTransactionsTest, NegativeAmountMapsToEarnings) {
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     PlaidTransactionData r{"ptx-4", -1200.0, "Paycheck", "2024-04-15", "", "USD"};
     PlaidSyncResult syncResult;
@@ -177,7 +195,7 @@ TEST(ImportPlaidTransactionsTest, NegativeAmountMapsToEarnings) {
             return tx;
         });
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     useCase.execute(makeCmd());
 
     EXPECT_EQ(capturedCatId, "earnings");
@@ -188,6 +206,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteSetsNulloptCurrencyWhenCurrencyNotFound
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     PlaidTransactionData r{"ptx-5", 20.0, "Coffee", "2024-04-05", "Food", "XYZ"};
     PlaidSyncResult syncResult;
@@ -199,7 +218,7 @@ TEST(ImportPlaidTransactionsTest, ExecuteSetsNulloptCurrencyWhenCurrencyNotFound
     EXPECT_CALL(txRepo, create(_)).WillOnce(Return(makeTx("tx-1", "user-1")));
     EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     auto result = useCase.execute(makeCmd());
 
     ASSERT_EQ(result.size(), 1u);
@@ -210,11 +229,12 @@ TEST(ImportPlaidTransactionsTest, ExecuteReturnsEmptyWhenPlaidHasNoTransactions)
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     EXPECT_CALL(plaid, fetchTransactions(_, _)).WillOnce(Return(PlaidSyncResult{}));
     EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     auto result = useCase.execute(makeCmd());
 
     EXPECT_TRUE(result.empty());
@@ -225,6 +245,7 @@ TEST(ImportPlaidTransactionsTest, DuplicatePlaidTransactionIsSkipped) {
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     PlaidTransactionData r{"ptx-dup", 10.0, "Coffee", "2024-04-01", "Food", "USD"};
     PlaidSyncResult syncResult;
@@ -237,7 +258,7 @@ TEST(ImportPlaidTransactionsTest, DuplicatePlaidTransactionIsSkipped) {
     EXPECT_CALL(txRepo, create(_)).Times(0);
     EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     auto result = useCase.execute(makeCmd());
 
     EXPECT_TRUE(result.empty());
@@ -248,6 +269,7 @@ TEST(ImportPlaidTransactionsTest, ModifiedTransactionIsUpdated) {
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     PlaidTransactionData mod{"ptx-mod", 99.0, "Updated Desc", "2024-04-10", "Food", "USD"};
     PlaidSyncResult syncResult;
@@ -260,7 +282,7 @@ TEST(ImportPlaidTransactionsTest, ModifiedTransactionIsUpdated) {
     EXPECT_CALL(txRepo, update(_)).WillOnce(Return(true));
     EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     useCase.execute(makeCmd());
 }
 
@@ -269,6 +291,7 @@ TEST(ImportPlaidTransactionsTest, RemovedTransactionIsDeleted) {
     MockCurrencyRepository    curRepo;
     MockPlaidClient           plaid;
     MockPlaidItemRepository   plaidItemRepo;
+    MockPfcDetailedCategoryRepository pfcDetailedRepo;
 
     PlaidSyncResult syncResult;
     syncResult.removed = {"ptx-gone"};
@@ -279,6 +302,6 @@ TEST(ImportPlaidTransactionsTest, RemovedTransactionIsDeleted) {
     EXPECT_CALL(txRepo, remove(TransactionId{"tx-existing"})).WillOnce(Return(true));
     EXPECT_CALL(plaidItemRepo, findById(_)).WillOnce(Return(std::nullopt));
 
-    ImportPlaidTransactions useCase(txRepo, curRepo, plaid, plaidItemRepo);
+    ImportPlaidTransactions useCase(txRepo, curRepo, pfcDetailedRepo, plaid, plaidItemRepo);
     useCase.execute(makeCmd());
 }

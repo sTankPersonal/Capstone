@@ -9,4 +9,6 @@ struct PlaidTransactionData {
     std::string date;
     std::string category;
     std::string currencyCode;
+    std::string pfcPrimary;   // personal_finance_category.primary
+    std::string pfcDetailed;  // personal_finance_category.detailed
 };
