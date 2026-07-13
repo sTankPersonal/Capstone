@@ -14,6 +14,8 @@ CurrencyDto::CurrencyDto(const Currency& currency)
     , createdAt_(formatDate(currency.getCreatedAt()))
 {}
 
+std::string CurrencyDto::getValue() const { return value_; }
+
 CurrencyDto::operator crow::json::wvalue() const {
     crow::json::wvalue result;
     result["id"]        = id_;

@@ -7,6 +7,7 @@
 #include "application/users/services/UpdateUserPassword.h"
 #include "application/users/services/DeleteUser.h"
 #include "application/users/services/GetFinancialInsights.h"
+#include "application/users/services/GetUserSettingsView.h"
 
 
 #include "presentation/AppType.h"
@@ -42,8 +43,9 @@ class UserController : public IController<RoboDadApp> {
     UpdateUserPassword updateUserPassword_;
     DeleteUser deleteUser_;
     GetFinancialInsights getFinancialInsights_;
+    GetUserSettingsView getUserSettingsView_;
 public:
-    UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser, const GetFinancialInsights& getFinancialInsights);
+    UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser, const GetFinancialInsights& getFinancialInsights, const GetUserSettingsView& getUserSettingsView);
     void registerRoutes(RoboDadApp& app) override;
 
     crow::response getUserDashboardPage(const crow::request& req, UserId user_id);

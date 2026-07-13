@@ -7,8 +7,8 @@
 #include "application/chatSessions/services/CreateChatSession.h"
 #include "application/chatSessions/services/DeleteChatSession.h"
 #include "application/chatSessions/services/GetChatHistory.h"
-#include "application/chatSessions/services/GetChatSession.h"
-#include "application/chatSessions/services/ListChatSessions.h"
+#include "application/chatSessions/services/GetChatSessionView.h"
+#include "application/chatSessions/services/ListChatSessionsView.h"
 #include "application/chatSessions/services/SendChatMessage.h"
 #include "application/chatSessions/services/UpdateChatSession.h"
 #include "application/users/services/GetUserProfile.h"
@@ -37,13 +37,13 @@ class UserChatController : public IController<RoboDadApp> {
     CreateChatSession createChatSession_;
     UpdateChatSession updateChatSession_;
     DeleteChatSession deleteChatSession_;
-    GetChatSession getChatSession_;
-    ListChatSessions listChatSessions_;
+    GetChatSessionView getChatSessionView_;
+    ListChatSessionsView listChatSessionsView_;
     GetChatHistory getChatHistory_;
     SendChatMessage sendChatMessage_;
     GetUserProfile getUserProfile_;
 public:
-    UserChatController(const CreateChatSession& createChatSession, const UpdateChatSession& updateChatSession, const DeleteChatSession& deleteChatSession, const GetChatSession& getChatSession, const ListChatSessions& listChatSessions, const GetChatHistory& getChatHistory, const SendChatMessage& sendChatMessage, const GetUserProfile& getUserProfile);
+    UserChatController(const CreateChatSession& createChatSession, const UpdateChatSession& updateChatSession, const DeleteChatSession& deleteChatSession, const GetChatSessionView& getChatSessionView, const ListChatSessionsView& listChatSessionsView, const GetChatHistory& getChatHistory, const SendChatMessage& sendChatMessage, const GetUserProfile& getUserProfile);
     void registerRoutes(RoboDadApp& app) override;
 
     crow::response getChatSessions(const crow::request& req, UserId user_id);

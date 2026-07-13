@@ -14,6 +14,8 @@ LanguageDto::LanguageDto(const Language& language)
     , createdAt_(formatDate(language.getCreatedAt()))
 {}
 
+std::string LanguageDto::getValue() const { return value_; }
+
 LanguageDto::operator crow::json::wvalue() const {
     crow::json::wvalue result;
     result["id"]        = id_;

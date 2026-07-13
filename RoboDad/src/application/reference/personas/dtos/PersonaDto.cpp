@@ -16,6 +16,9 @@ PersonaDto::PersonaDto(const LlmPersona& persona)
     , createdAt_(formatDate(persona.getCreatedAt()))
 {}
 
+std::string PersonaDto::getId() const { return id_; }
+std::string PersonaDto::getName() const { return name_; }
+
 PersonaDto::operator crow::json::wvalue() const {
     crow::json::wvalue result;
     result["id"]           = id_;

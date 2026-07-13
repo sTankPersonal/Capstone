@@ -32,23 +32,23 @@
             </div>
             <div class="detail-row">
                 <span class="field-label">Date of Birth</span>
-                <span class="field-value">{{user.dateOfBirth}}</span>
+                <span class="field-value">{{user.dateOfBirth}}{{^user.dateOfBirth}}Not set{{/user.dateOfBirth}}</span>
             </div>
             <div class="detail-row">
                 <span class="field-label">Country</span>
-                <span class="field-value">{{user.countryId}}</span>
+                <span class="field-value">{{user.countryName}}{{^user.countryName}}Not set{{/user.countryName}}</span>
             </div>
             <div class="detail-row">
                 <span class="field-label">Currency</span>
-                <span class="field-value">{{user.currencyId}}</span>
+                <span class="field-value">{{user.currencyName}}{{^user.currencyName}}Not set{{/user.currencyName}}</span>
             </div>
             <div class="detail-row">
                 <span class="field-label">Language</span>
-                <span class="field-value">{{user.languageId}}</span>
+                <span class="field-value">{{user.languageName}}{{^user.languageName}}Not set{{/user.languageName}}</span>
             </div>
             <div class="detail-row">
                 <span class="field-label">Employment Status</span>
-                <span class="field-value">{{user.employmentStatusId}}</span>
+                <span class="field-value">{{user.employmentStatusName}}{{^user.employmentStatusName}}Not set{{/user.employmentStatusName}}</span>
             </div>
         </div>
 

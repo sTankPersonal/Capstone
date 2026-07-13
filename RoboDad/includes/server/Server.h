@@ -37,12 +37,13 @@
 #include "application/users/services/UpdateUserProfile.h"
 #include "application/users/services/UpdateUserPassword.h"
 #include "application/users/services/DeleteUser.h"
+#include "application/users/services/GetUserSettingsView.h"
 
 #include "application/chatSessions/services/CreateChatSession.h"
 #include "application/chatSessions/services/DeleteChatSession.h"
 #include "application/chatSessions/services/GetChatHistory.h"
-#include "application/chatSessions/services/GetChatSession.h"
-#include "application/chatSessions/services/ListChatSessions.h"
+#include "application/chatSessions/services/GetChatSessionView.h"
+#include "application/chatSessions/services/ListChatSessionsView.h"
 #include "application/chatSessions/services/SendChatMessage.h"
 #include "application/chatSessions/services/UpdateChatSession.h"
 
@@ -113,18 +114,19 @@ class Server {
     RegisterUser               registerUser_;
     LoginOrRegisterOAuthUser   loginOrRegisterOAuthUser_;
 
-    GetUserProfile     getUserProfile_;
-    UpdateUserProfile  updateUserProfile_;
-    UpdateUserPassword updateUserPassword_;
-    DeleteUser         deleteUser_;
+    GetUserProfile      getUserProfile_;
+    UpdateUserProfile   updateUserProfile_;
+    UpdateUserPassword  updateUserPassword_;
+    DeleteUser          deleteUser_;
+    GetUserSettingsView getUserSettingsView_;
 
-    CreateChatSession  createChatSession_;
-    DeleteChatSession  deleteChatSession_;
-    GetChatHistory     getChatHistory_;
-    GetChatSession     getChatSession_;
-    ListChatSessions   listChatSessions_;
-    SendChatMessage    sendChatMessage_;
-    UpdateChatSession  updateChatSession_;
+    CreateChatSession    createChatSession_;
+    DeleteChatSession    deleteChatSession_;
+    GetChatHistory       getChatHistory_;
+    GetChatSessionView   getChatSessionView_;
+    ListChatSessionsView listChatSessionsView_;
+    SendChatMessage      sendChatMessage_;
+    UpdateChatSession    updateChatSession_;
 
     CreateTransaction          createTransactions_;
     DeleteTransaction          deleteTransactions_;

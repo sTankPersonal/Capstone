@@ -1,5 +1,5 @@
 #include "presentation/controllers/UserChatController.h"
-#include "application/chatSessions/dtos/ChatSessionDto.h"
+#include "application/chatSessions/dtos/ChatSessionViewDto.h"
 #include "application/chatSessions/dtos/ChatMessageDto.h"
 #include "application/users/dtos/UserProfileDto.h"
 #include "application/users/queries/GetUserProfileQuery.h"
@@ -12,7 +12,7 @@
 #include "application/chatSessions/queries/GetChatSessionQuery.h"
 #include "application/chatSessions/queries/ListChatSessionsQuery.h"
 
-UserChatController::UserChatController(const CreateChatSession& createChatSession, const UpdateChatSession& updateChatSession, const DeleteChatSession& deleteChatSession, const GetChatSession& getChatSession, const ListChatSessions& listChatSessions, const GetChatHistory& getChatHistory, const SendChatMessage& sendChatMessage, const GetUserProfile& getUserProfile) : createChatSession_(createChatSession), updateChatSession_(updateChatSession), deleteChatSession_(deleteChatSession), getChatSession_(getChatSession), listChatSessions_(listChatSessions), getChatHistory_(getChatHistory), sendChatMessage_(sendChatMessage), getUserProfile_(getUserProfile) {}
+UserChatController::UserChatController(const CreateChatSession& createChatSession, const UpdateChatSession& updateChatSession, const DeleteChatSession& deleteChatSession, const GetChatSessionView& getChatSessionView, const ListChatSessionsView& listChatSessionsView, const GetChatHistory& getChatHistory, const SendChatMessage& sendChatMessage, const GetUserProfile& getUserProfile) : createChatSession_(createChatSession), updateChatSession_(updateChatSession), deleteChatSession_(deleteChatSession), getChatSessionView_(getChatSessionView), listChatSessionsView_(listChatSessionsView), getChatHistory_(getChatHistory), sendChatMessage_(sendChatMessage), getUserProfile_(getUserProfile) {}
 
 void UserChatController::registerRoutes(RoboDadApp& app) {
     CROW_ROUTE(app, "/user/chats").methods(crow::HTTPMethod::GET)([this, &app](const crow::request& req) {
@@ -57,9 +57,9 @@ void UserChatController::registerRoutes(RoboDadApp& app) {
 }
 
 crow::json::wvalue::list UserChatController::buildSessionList(UserId user_id) {
-    std::vector<ChatSessionDto> chatSessions = listChatSessions_.execute(ListChatSessionsQuery(user_id));
+    std::vector<ChatSessionViewDto> chatSessions = listChatSessionsView_.execute(ListChatSessionsQuery(user_id));
     crow::json::wvalue::list sessionList;
-    for (const ChatSessionDto& session : chatSessions) {
+    for (const ChatSessionViewDto& session : chatSessions) {
         sessionList.push_back(static_cast<crow::json::wvalue>(session));
     }
     return sessionList;
@@ -75,7 +75,7 @@ crow::response UserChatController::getChatSessions(const crow::request& req, Use
 
 crow::response UserChatController::getChatSessionDetails(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
-    std::optional<ChatSessionDto> chatSessionOpt = getChatSession_.execute(GetChatSessionQuery(chat_session_id));
+    std::optional<ChatSessionViewDto> chatSessionOpt = getChatSessionView_.execute(GetChatSessionQuery(chat_session_id));
     if (!chatSessionOpt || chatSessionOpt->getUserId() != user_id.getId()) {
         return crow::response(404, "Chat session not found");
     }
@@ -96,7 +96,7 @@ crow::response UserChatController::getNewChatSessionPage(const crow::request& re
 
 crow::response UserChatController::getEditChatSessionPage(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
-    std::optional<ChatSessionDto> chatSessionOpt = getChatSession_.execute(GetChatSessionQuery(chat_session_id));
+    std::optional<ChatSessionViewDto> chatSessionOpt = getChatSessionView_.execute(GetChatSessionQuery(chat_session_id));
     if (!chatSessionOpt || chatSessionOpt->getUserId() != user_id.getId()) {
         return crow::response(404, "Chat session not found");
     }
@@ -109,7 +109,7 @@ crow::response UserChatController::getEditChatSessionPage(const crow::request& r
 
 crow::response UserChatController::getDeleteChatSessionPage(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {
     std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
-    std::optional<ChatSessionDto> chatSessionOpt = getChatSession_.execute(GetChatSessionQuery(chat_session_id));
+    std::optional<ChatSessionViewDto> chatSessionOpt = getChatSessionView_.execute(GetChatSessionQuery(chat_session_id));
     if (!chatSessionOpt || chatSessionOpt->getUserId() != user_id.getId()) {
         return crow::response(404, "Chat session not found");
     }

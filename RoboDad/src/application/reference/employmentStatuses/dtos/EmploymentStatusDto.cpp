@@ -14,6 +14,8 @@ EmploymentStatusDto::EmploymentStatusDto(const EmploymentStatus& status)
     , createdAt_(formatDate(status.getCreatedAt()))
 {}
 
+std::string EmploymentStatusDto::getValue() const { return value_; }
+
 EmploymentStatusDto::operator crow::json::wvalue() const {
     crow::json::wvalue result;
     result["id"]        = id_;

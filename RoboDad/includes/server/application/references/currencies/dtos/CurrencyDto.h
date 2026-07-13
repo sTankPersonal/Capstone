@@ -12,4 +12,6 @@ class CurrencyDto : public IDto {
 public:
     explicit CurrencyDto(const Currency& currency);
     explicit operator crow::json::wvalue() const override;
+
+    std::string getValue() const;
 };
