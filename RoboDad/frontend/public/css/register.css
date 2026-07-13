@@ -217,21 +217,23 @@ select {
     }
 
 .btn-signup {
-    padding: 0.75rem;
-    font-size: 1rem;
+    padding: 0.85rem;
+    font-size: 1.05rem;
     font-weight: bold;
-    background: #7ab4ff;
-    color: #1e1e2f;
+    background: #2f6fed;
+    color: #ffffff;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 4px 12px rgba(47, 111, 237, 0.35);
+    transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
     width: 100%;
 }
 
     .btn-signup:hover {
-        background: #5a9aee;
+        background: #2559c7;
         transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(47, 111, 237, 0.45);
     }
 
     .btn-signup:active {
