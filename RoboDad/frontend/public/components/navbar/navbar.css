@@ -140,6 +140,12 @@
     transition: color 0.2s ease;
 }
 
+.dropdown-caret {
+    font-size: 10px;
+    display: inline-block;
+    margin-left: 2px;
+}
+
 .dropdown:hover .dropdown-title {
     color: white;
 }

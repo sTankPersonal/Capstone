@@ -213,16 +213,20 @@ crow::response UserController::postEditUserSettingsInformation(const crow::reque
     std::string newLanguage         = params.get("language")           ? params.get("language")           : "";
     std::string newEmploymentStatus = params.get("employment_status")  ? params.get("employment_status")  : "";
 
+    if (newDateOfBirth.empty()) {
+        return crow::response(400, "Date of birth is required");
+    }
+
     std::optional<std::chrono::year_month_day> dob = std::nullopt;
-    if (!newDateOfBirth.empty()) {
-        int y = 0, m = 0, d = 0;
-        if (std::sscanf(newDateOfBirth.c_str(), "%d-%d-%d", &y, &m, &d) == 3) {
-            dob = std::chrono::year_month_day{
-                std::chrono::year{y},
-                std::chrono::month{static_cast<unsigned>(m)},
-                std::chrono::day{static_cast<unsigned>(d)}
-            };
-        }
+    int y = 0, m = 0, d = 0;
+    if (std::sscanf(newDateOfBirth.c_str(), "%d-%d-%d", &y, &m, &d) == 3) {
+        dob = std::chrono::year_month_day{
+            std::chrono::year{y},
+            std::chrono::month{static_cast<unsigned>(m)},
+            std::chrono::day{static_cast<unsigned>(d)}
+        };
+    } else {
+        return crow::response(400, "Invalid date of birth");
     }
 
     try {

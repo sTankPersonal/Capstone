@@ -2,10 +2,15 @@
 #include <chrono>
 #include <string>
 
+static std::string pad2(unsigned n) {
+    std::string s = std::to_string(n);
+    return s.size() < 2 ? "0" + s : s;
+}
+
 static std::string formatDate(const std::chrono::year_month_day& d) {
     return std::to_string(int(d.year())) + "-"
-         + std::to_string(unsigned(d.month())) + "-"
-         + std::to_string(unsigned(d.day()));
+         + pad2(unsigned(d.month())) + "-"
+         + pad2(unsigned(d.day()));
 }
 
 UserProfileDto::UserProfileDto(const User& user)
