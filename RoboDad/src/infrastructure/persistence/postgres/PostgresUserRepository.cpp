@@ -35,12 +35,23 @@ static User rowToUser(const pqxx::row& row) {
         optId("employment_status_id") ? std::make_optional(EmploymentStatusId{*optId("employment_status_id")}) : std::optional<EmploymentStatusId>{}
     };
 
+    bool isVerified = row["is_verified"].as<bool>();
+    std::optional<std::string> verificationToken = row["verification_token"].is_null()
+        ? std::nullopt
+        : std::make_optional(row["verification_token"].as<std::string>());
+    std::optional<std::chrono::system_clock::time_point> verificationTokenExpiresAt = row["verification_token_expires_at"].is_null()
+        ? std::nullopt
+        : std::make_optional(timestampFromStr(row["verification_token_expires_at"].as<std::string>()));
+
     return User{
         userId,
         login,
         info,
         dateFromStr(row["created_at"].as<std::string>()),
-        dateFromStr(row["updated_at"].as<std::string>())
+        dateFromStr(row["updated_at"].as<std::string>()),
+        isVerified,
+        verificationToken,
+        verificationTokenExpiresAt
     };
 }
 
@@ -55,10 +66,14 @@ User PostgresUserRepository::create(const User& user) {
     std::optional<std::string> dobStr = info.getDateOfBirth().has_value()
         ? std::make_optional(dateToStr(*info.getDateOfBirth())) : std::nullopt;
 
+    std::optional<std::string> expiresAtStr = user.getVerificationTokenExpiresAt().has_value()
+        ? std::make_optional(timestampToStr(*user.getVerificationTokenExpiresAt())) : std::nullopt;
+
     txn.exec_params(
         "INSERT INTO users(user_id, email, password_hash, first_name, last_name, "
         "date_of_birth, country_id, currency_id, language_id, employment_status_id, "
-        "created_at, updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)",
+        "is_verified, verification_token, verification_token_expires_at, "
+        "created_at, updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)",
         user.getId().getId(),
         login.getEmail(),
         login.getPasswordHash(),
@@ -69,6 +84,9 @@ User PostgresUserRepository::create(const User& user) {
         optIdStr(info.getCurrencyId()),
         optIdStr(info.getLanguageId()),
         optIdStr(info.getEmploymentStatusId()),
+        user.isVerified(),
+        user.getVerificationToken(),
+        expiresAtStr,
         dateToStr(user.getCreatedAt()),
         dateToStr(user.getUpdatedAt())
     );
@@ -80,7 +98,8 @@ std::optional<User> PostgresUserRepository::findById(UserId id) {
     pqxx::work txn{db_.getConnection()};
     auto r = txn.exec_params(
         "SELECT user_id, email, password_hash, first_name, last_name, date_of_birth, "
-        "country_id, currency_id, language_id, employment_status_id, created_at, updated_at "
+        "country_id, currency_id, language_id, employment_status_id, "
+        "is_verified, verification_token, verification_token_expires_at, created_at, updated_at "
         "FROM users WHERE user_id=$1",
         id.getId());
     txn.commit();
@@ -92,7 +111,8 @@ std::vector<User> PostgresUserRepository::findAll() {
     pqxx::work txn{db_.getConnection()};
     auto r = txn.exec(
         "SELECT user_id, email, password_hash, first_name, last_name, date_of_birth, "
-        "country_id, currency_id, language_id, employment_status_id, created_at, updated_at "
+        "country_id, currency_id, language_id, employment_status_id, "
+        "is_verified, verification_token, verification_token_expires_at, created_at, updated_at "
         "FROM users");
     txn.commit();
     std::vector<User> users;
@@ -111,11 +131,14 @@ bool PostgresUserRepository::update(const User& user) {
     };
     std::optional<std::string> dobStr = info.getDateOfBirth().has_value()
         ? std::make_optional(dateToStr(*info.getDateOfBirth())) : std::nullopt;
+    std::optional<std::string> expiresAtStr = user.getVerificationTokenExpiresAt().has_value()
+        ? std::make_optional(timestampToStr(*user.getVerificationTokenExpiresAt())) : std::nullopt;
 
     auto res = txn.exec_params(
         "UPDATE users SET email=$2, password_hash=$3, first_name=$4, last_name=$5, "
         "date_of_birth=$6, country_id=$7, currency_id=$8, language_id=$9, "
-        "employment_status_id=$10, updated_at=$11 WHERE user_id=$1",
+        "employment_status_id=$10, is_verified=$11, verification_token=$12, "
+        "verification_token_expires_at=$13, updated_at=$14 WHERE user_id=$1",
         user.getId().getId(),
         login.getEmail(),
         login.getPasswordHash(),
@@ -126,10 +149,26 @@ bool PostgresUserRepository::update(const User& user) {
         optIdStr(info.getCurrencyId()),
         optIdStr(info.getLanguageId()),
         optIdStr(info.getEmploymentStatusId()),
+        user.isVerified(),
+        user.getVerificationToken(),
+        expiresAtStr,
         dateToStr(user.getUpdatedAt())
     );
     txn.commit();
     return res.affected_rows() > 0;
+}
+
+std::optional<User> PostgresUserRepository::findByVerificationToken(const std::string& token) {
+    pqxx::work txn{db_.getConnection()};
+    auto r = txn.exec_params(
+        "SELECT user_id, email, password_hash, first_name, last_name, date_of_birth, "
+        "country_id, currency_id, language_id, employment_status_id, "
+        "is_verified, verification_token, verification_token_expires_at, created_at, updated_at "
+        "FROM users WHERE verification_token=$1",
+        token);
+    txn.commit();
+    if (r.empty()) return std::nullopt;
+    return rowToUser(r[0]);
 }
 
 bool PostgresUserRepository::remove(UserId id) {

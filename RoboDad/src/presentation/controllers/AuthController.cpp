@@ -3,19 +3,26 @@
 #include "application/users/commands/LoginUserCommand.h"
 #include "application/users/commands/RegisterUserCommand.h"
 #include "application/users/commands/OAuthLoginCommand.h"
+#include "application/users/commands/VerifyEmailCommand.h"
+#include "application/users/commands/ResendVerificationCommand.h"
 #include "domain/valueObjects/UserInformation.h"
 
 #include <crow/mustache.h>
+#include <crow/query_string.h>
 
 
 AuthController::AuthController(const LoginUser& loginUser,
                                const RegisterUser& registerUser,
                                const LoginOrRegisterOAuthUser& loginOrRegisterOAuthUser,
+                               const VerifyEmail& verifyEmail,
+                               const ResendVerificationEmail& resendVerificationEmail,
                                IGoogleOAuthClient& googleOAuth,
                                IJwtService& jwt)
     : loginUser_(loginUser)
     , registerUser_(registerUser)
     , loginOrRegisterOAuthUser_(loginOrRegisterOAuthUser)
+    , verifyEmail_(verifyEmail)
+    , resendVerificationEmail_(resendVerificationEmail)
     , googleOAuth_(googleOAuth)
     , jwt_(jwt) {}
 
@@ -47,6 +54,21 @@ void AuthController::registerRoutes(RoboDadApp& app) {
             return postAuthLogout(req, app);
         });
 
+    CROW_ROUTE(app, "/auth/check-email")
+        .methods(crow::HTTPMethod::GET)([this](const crow::request& req){
+            return getAuthCheckEmailPage(req);
+        });
+
+    CROW_ROUTE(app, "/auth/verify")
+        .methods(crow::HTTPMethod::GET)([this](const crow::request& req){
+            return getAuthVerify(req);
+        });
+
+    CROW_ROUTE(app, "/auth/resend-verification")
+        .methods(crow::HTTPMethod::POST)([this](const crow::request& req){
+            return postAuthResendVerification(req);
+        });
+
     CROW_ROUTE(app, "/auth/google")
         .methods(crow::HTTPMethod::GET)([this](const crow::request& req){
             return getAuthGoogle(req);
@@ -70,6 +92,28 @@ crow::response AuthController::getAuthLogout(const crow::request& req) {
     return crow::response(crow::mustache::load("logout.html").render());
 }
 
+crow::response AuthController::getAuthCheckEmailPage(const crow::request& req) {
+    return crow::response(crow::mustache::load("check-email.html").render());
+}
+
+crow::response AuthController::getAuthVerify(const crow::request& req) {
+    const std::string token = req.url_params.get("token") ? req.url_params.get("token") : "";
+    if (token.empty()) {
+        return crow::response(400, "Missing verification token");
+    }
+
+    VerifyEmailCommand cmd{token};
+    VerifyEmailResult result = verifyEmail_.execute(cmd);
+
+    crow::response res(302);
+    if (result == VerifyEmailResult::Verified) {
+        res.add_header("Location", "/auth/login?verified=1");
+    } else {
+        res.add_header("Location", "/auth/check-email?expired=1");
+    }
+    return res;
+}
+
 crow::response AuthController::postAuthLogin(const crow::request& req, RoboDadApp& app) {
     crow::query_string params("?" + req.body);
     std::string email    = params.get("email")    ? params.get("email")    : "";
@@ -84,6 +128,11 @@ crow::response AuthController::postAuthLogin(const crow::request& req, RoboDadAp
 
     if (!user) {
         return crow::response(401, "Invalid login credentials");
+    }
+    if (!user->isVerified()) {
+        crow::response res(302);
+        res.add_header("Location", "/auth/login?error=unverified&email=" + email);
+        return res;
     }
     auto& ctx = app.get_context<crow::CookieParser>(req);
     ctx.set_cookie("userId", jwt_.generate(user->getId()))
@@ -115,17 +164,27 @@ crow::response AuthController::postAuthRegister(const crow::request& req, RoboDa
         )
     );
     try {
-        UserProfileDto registeredUser = registerUser_.execute(registerCommand);
-        auto& ctx = app.get_context<crow::CookieParser>(req);
-        ctx.set_cookie("userId", jwt_.generate(registeredUser.getId()))
-            .path("/")
-            .max_age(60 * 60 * 24 * 7);
+        registerUser_.execute(registerCommand);
         crow::response res(302);
-        res.add_header("Location", "/user/settings/userInformation/edit");
+        res.add_header("Location", "/auth/check-email?email=" + email);
         return res;
     } catch (const std::exception&) {
         return crow::response(400, "User registration failed");
     }
+}
+
+crow::response AuthController::postAuthResendVerification(const crow::request& req) {
+    crow::query_string params("?" + req.body);
+    std::string email = params.get("email") ? params.get("email") : "";
+
+    if (!email.empty()) {
+        ResendVerificationCommand cmd{email};
+        resendVerificationEmail_.execute(cmd);
+    }
+
+    crow::response res(302);
+    res.add_header("Location", "/auth/check-email?email=" + email + "&sent=1");
+    return res;
 }
 
 crow::response AuthController::postAuthLogout(const crow::request& req, RoboDadApp& app) {

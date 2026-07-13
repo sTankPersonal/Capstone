@@ -24,6 +24,7 @@
 #include "infrastructure/apiClient/openAiClient/PromptBuilder.h"
 #include "infrastructure/apiClient/plaidClient/plaidClient.h"
 #include "infrastructure/apiClient/googleAuthClient/GoogleOAuthService.h"
+#include "infrastructure/apiClient/sendGridClient/SendGridEmailService.h"
 #include "infrastructure/security/JwtService.h"
 #include "infrastructure/security/PasswordHasher.h"
 
@@ -33,6 +34,8 @@
 #include "application/users/services/LoginUser.h"
 #include "application/users/services/RegisterUser.h"
 #include "application/users/services/LoginOrRegisterOAuthUser.h"
+#include "application/users/services/VerifyEmail.h"
+#include "application/users/services/ResendVerificationEmail.h"
 #include "application/users/services/GetUserProfile.h"
 #include "application/users/services/UpdateUserProfile.h"
 #include "application/users/services/UpdateUserPassword.h"
@@ -105,6 +108,7 @@ class Server {
     PromptBuilder       promptBuilder_;
     PlaidClient         plaid_;
     GoogleOAuthService  googleOAuth_;
+    SendGridEmailService emailService_;
 
     JwtService     jwt_;
     PasswordHasher hasher_;
@@ -112,6 +116,8 @@ class Server {
     LoginUser                  loginUser_;
     RegisterUser               registerUser_;
     LoginOrRegisterOAuthUser   loginOrRegisterOAuthUser_;
+    VerifyEmail                verifyEmail_;
+    ResendVerificationEmail    resendVerificationEmail_;
 
     GetUserProfile     getUserProfile_;
     UpdateUserProfile  updateUserProfile_;

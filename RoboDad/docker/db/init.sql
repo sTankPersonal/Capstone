@@ -334,18 +334,21 @@ ON CONFLICT (llm_persona_id) DO NOTHING;
 
 -- ── Users ─────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
-    user_id              TEXT PRIMARY KEY,
-    email                TEXT NOT NULL UNIQUE,
-    password_hash        TEXT,
-    first_name           TEXT,
-    last_name            TEXT,
-    date_of_birth        DATE,
-    country_id           TEXT REFERENCES countries(country_id),
-    currency_id          TEXT REFERENCES currencies(currency_id),
-    language_id          TEXT REFERENCES languages(language_id),
-    employment_status_id TEXT REFERENCES employment_statuses(employment_status_id),
-    created_at           DATE NOT NULL DEFAULT CURRENT_DATE,
-    updated_at           DATE NOT NULL DEFAULT CURRENT_DATE
+    user_id                        TEXT PRIMARY KEY,
+    email                          TEXT NOT NULL UNIQUE,
+    password_hash                  TEXT,
+    first_name                     TEXT,
+    last_name                      TEXT,
+    date_of_birth                  DATE,
+    country_id                     TEXT REFERENCES countries(country_id),
+    currency_id                    TEXT REFERENCES currencies(currency_id),
+    language_id                    TEXT REFERENCES languages(language_id),
+    employment_status_id           TEXT REFERENCES employment_statuses(employment_status_id),
+    is_verified                    BOOLEAN NOT NULL DEFAULT false,
+    verification_token             TEXT,
+    verification_token_expires_at  TIMESTAMP,
+    created_at                     DATE NOT NULL DEFAULT CURRENT_DATE,
+    updated_at                     DATE NOT NULL DEFAULT CURRENT_DATE
 );
 
 -- ── Chat Sessions ─────────────────────────────────────────────────────────────

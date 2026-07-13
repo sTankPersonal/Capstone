@@ -21,4 +21,6 @@ public:
 
     // Returns {userId, passwordHash} for the given email, or nullopt if not found.
     std::optional<std::pair<UserId, std::string>> lookupCredentials(const std::string& email);
+
+    std::optional<User> findByVerificationToken(const std::string& token) override;
 };

@@ -1,6 +1,7 @@
 (function () {
     var form = document.getElementById('login-form');
     var errorBox = document.getElementById('form-error');
+    var noticeBox = document.getElementById('form-notice');
     var emailInput = document.getElementById('email');
     var passwordInput = document.getElementById('password');
 
@@ -12,6 +13,22 @@
     function clearError() {
         errorBox.textContent = '';
         errorBox.hidden = true;
+    }
+
+    function showNotice(message) {
+        noticeBox.textContent = message;
+        noticeBox.hidden = false;
+    }
+
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('verified') === '1') {
+        showNotice('Your email has been verified. You can now sign in.');
+    } else if (params.get('error') === 'unverified') {
+        var email = params.get('email') || '';
+        errorBox.innerHTML = 'Please verify your email before signing in. ' +
+            '<a href="/auth/check-email?email=' + encodeURIComponent(email) + '">Resend verification email</a>';
+        errorBox.hidden = false;
+        if (email) emailInput.value = email;
     }
 
     // Hide the error as soon as the user starts correcting their input.

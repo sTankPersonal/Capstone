@@ -16,6 +16,7 @@ static std::string formatDate(const std::chrono::year_month_day& d) {
 UserProfileDto::UserProfileDto(const User& user)
     : id_(user.getId().getId())
     , email_(user.getUserLogin().getEmail())
+    , isVerified_(user.isVerified())
     , createdAt_(formatDate(user.getCreatedAt()))
     , updatedAt_(formatDate(user.getUpdatedAt()))
 {
@@ -32,6 +33,7 @@ UserProfileDto::UserProfileDto(const User& user)
 std::string UserProfileDto::getId() const { return id_; }
 std::optional<std::string> UserProfileDto::getFirstName() const { return firstName_; }
 std::optional<std::string> UserProfileDto::getLastName() const { return lastName_; }
+bool UserProfileDto::isVerified() const { return isVerified_; }
 
 UserProfileDto::operator crow::json::wvalue() const {
     crow::json::wvalue result;
@@ -44,6 +46,7 @@ UserProfileDto::operator crow::json::wvalue() const {
     if (currencyId_)         result["currencyId"]         = *currencyId_;
     if (languageId_)         result["languageId"]         = *languageId_;
     if (employmentStatusId_) result["employmentStatusId"] = *employmentStatusId_;
+    result["isVerified"] = isVerified_;
     result["createdAt"] = createdAt_;
     result["updatedAt"] = updatedAt_;
     return result;

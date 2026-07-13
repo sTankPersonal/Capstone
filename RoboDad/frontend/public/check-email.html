@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Verify your email to finish creating your RoboDad account." />
+    <title>RoboDad - Check Your Email</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+
+    <!-- Left Panel -->
+    <div class="left-panel">
+        <div class="left-panel-logo">Robo<span>Dad</span></div>
+        <div class="left-panel-divider"></div>
+        <p class="left-panel-tagline">Take control of your finances today.</p>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+        <div class="login-box">
+            <h2>Check your email</h2>
+            <p class="subtitle" id="check-email-subtitle">
+                We've sent a verification link to your email address. Click the link to activate your account.
+            </p>
+
+            <div id="form-error" class="form-error" role="alert" hidden></div>
+            <div id="status-message" class="form-notice" role="status" hidden></div>
+
+            <form id="resend-form" style="display:flex; flex-direction:column; gap:1.2rem;">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" autocomplete="email" maxlength="254" placeholder="you@example.com" required />
+                </div>
+                <button type="submit" class="btn-signin">Resend verification email</button>
+            </form>
+
+            <p class="login-footer">Already verified? <a href="/auth/login">Sign in</a></p>
+        </div>
+    </div>
+
+    <script src="/js/check-email.js"></script>
+</body>
+</html>

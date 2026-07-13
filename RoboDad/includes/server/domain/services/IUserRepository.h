@@ -9,4 +9,5 @@
 class IUserRepository : public IRepository<User, UserId> {
 public:
     virtual std::optional<std::pair<UserId, std::string>> lookupCredentials(const std::string& email) = 0;
+    virtual std::optional<User> findByVerificationToken(const std::string& token) = 0;
 };

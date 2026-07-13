@@ -15,6 +15,7 @@ class UserProfileDto : public IDto {
     std::optional<std::string> currencyId_;
     std::optional<std::string> languageId_;
     std::optional<std::string> employmentStatusId_;
+    bool isVerified_;
     std::string createdAt_;
     std::string updatedAt_;
 
@@ -25,4 +26,5 @@ public:
     std::string getId() const;
     std::optional<std::string> getFirstName() const;
     std::optional<std::string> getLastName() const;
+    bool isVerified() const;
 };

@@ -42,7 +42,8 @@ UserProfileDto LoginOrRegisterOAuthUser::execute(const OAuthLoginCommand& cmd, b
             std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt
         ),
         today,
-        today
+        today,
+        /*isVerified=*/true
     );
     return UserProfileDto(repo_.create(newUser));
 }
