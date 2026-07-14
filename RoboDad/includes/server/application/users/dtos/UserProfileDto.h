@@ -25,4 +25,8 @@ public:
     std::string getId() const;
     std::optional<std::string> getFirstName() const;
     std::optional<std::string> getLastName() const;
+    std::optional<std::string> getCountryId() const;
+    std::optional<std::string> getCurrencyId() const;
+    std::optional<std::string> getLanguageId() const;
+    std::optional<std::string> getEmploymentStatusId() const;
 };

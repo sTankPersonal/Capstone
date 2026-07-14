@@ -12,4 +12,6 @@ class CountryDto : public IDto {
 public:
     explicit CountryDto(const Country& country);
     explicit operator crow::json::wvalue() const override;
+
+    std::string getValue() const;
 };

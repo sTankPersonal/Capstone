@@ -32,6 +32,10 @@ UserProfileDto::UserProfileDto(const User& user)
 std::string UserProfileDto::getId() const { return id_; }
 std::optional<std::string> UserProfileDto::getFirstName() const { return firstName_; }
 std::optional<std::string> UserProfileDto::getLastName() const { return lastName_; }
+std::optional<std::string> UserProfileDto::getCountryId() const { return countryId_; }
+std::optional<std::string> UserProfileDto::getCurrencyId() const { return currencyId_; }
+std::optional<std::string> UserProfileDto::getLanguageId() const { return languageId_; }
+std::optional<std::string> UserProfileDto::getEmploymentStatusId() const { return employmentStatusId_; }
 
 UserProfileDto::operator crow::json::wvalue() const {
     crow::json::wvalue result;

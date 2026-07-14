@@ -12,4 +12,6 @@ class EmploymentStatusDto : public IDto {
 public:
     explicit EmploymentStatusDto(const EmploymentStatus& status);
     explicit operator crow::json::wvalue() const override;
+
+    std::string getValue() const;
 };

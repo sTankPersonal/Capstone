@@ -14,6 +14,8 @@ CountryDto::CountryDto(const Country& country)
     , createdAt_(formatDate(country.getCreatedAt()))
 {}
 
+std::string CountryDto::getValue() const { return value_; }
+
 CountryDto::operator crow::json::wvalue() const {
     crow::json::wvalue result;
     result["id"]        = id_;

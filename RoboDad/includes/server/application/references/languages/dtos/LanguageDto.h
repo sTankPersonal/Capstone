@@ -12,4 +12,6 @@ class LanguageDto : public IDto {
 public:
     explicit LanguageDto(const Language& language);
     explicit operator crow::json::wvalue() const override;
+
+    std::string getValue() const;
 };

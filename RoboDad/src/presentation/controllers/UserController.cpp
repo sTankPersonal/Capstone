@@ -6,10 +6,11 @@
 #include "application/users/commands/DeleteUserCommand.h"
 #include "application/users/queries/GetFinancialInsightsQuery.h"
 #include "application/users/dtos/FinancialInsightsDto.h"
+#include "application/users/dtos/UserSettingsViewDto.h"
 #include "domain/valueObjects/UserInformation.h"
 
-UserController::UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser, const GetFinancialInsights& getFinancialInsights)
-    : getUserProfile_(getUserProfile), updateUserProfile_(updateUserProfile), updateUserPassword_(updateUserPassword), deleteUser_(deleteUser), getFinancialInsights_(getFinancialInsights) {}
+UserController::UserController(const GetUserProfile& getUserProfile, const UpdateUserProfile& updateUserProfile, const UpdateUserPassword& updateUserPassword, const DeleteUser& deleteUser, const GetFinancialInsights& getFinancialInsights, const GetUserSettingsView& getUserSettingsView)
+    : getUserProfile_(getUserProfile), updateUserProfile_(updateUserProfile), updateUserPassword_(updateUserPassword), deleteUser_(deleteUser), getFinancialInsights_(getFinancialInsights), getUserSettingsView_(getUserSettingsView) {}
 
 void UserController::registerRoutes(RoboDadApp &app){
     CROW_ROUTE(app, "/user/dashboard")
@@ -130,13 +131,13 @@ crow::response UserController::getUserSettingsLoginPage(const crow::request& req
 }
 
 crow::response UserController::getUserSettingsInformationPage(const crow::request& req, UserId user_id){
-    std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
-    if (!userOpt) {
+    std::optional<UserSettingsViewDto> settingsOpt = getUserSettingsView_.execute(GetUserProfileQuery(user_id));
+    if (!settingsOpt) {
         return crow::response(404, "User not found");
     }
 
     crow::mustache::context ctx;
-    ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
+    ctx["user"] = static_cast<crow::json::wvalue>(*settingsOpt);
 
     return crow::response(crow::mustache::load("user_settings_information.html").render(ctx));
 }

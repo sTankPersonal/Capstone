@@ -14,4 +14,7 @@ class PersonaDto : public IDto {
 public:
     explicit PersonaDto(const LlmPersona& persona);
     explicit operator crow::json::wvalue() const override;
+
+    std::string getId() const;
+    std::string getName() const;
 };
