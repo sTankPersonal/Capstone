@@ -1,4 +1,0 @@
-{
-    "cmake.buildDirectory": "${workspaceFolder}/out/build/linux-debug",
-    "cmake.configureOnOpen": true
-}

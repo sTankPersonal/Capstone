@@ -1,6 +1,7 @@
 # Ignore Visual Studio and VS Code settings
 .vs
 .vscode
+.claude
 
 # Ignore build directories
 out
