@@ -94,7 +94,64 @@ crow::response UserController::getUserDashboardPage(
             GetFinancialInsightsQuery(user_id, timeSpan));
 
     if (insightsOpt) {
-        ctx["insights"] = static_cast<crow::json::wvalue>(*insightsOpt);
+        crow::json::wvalue insightsJson;
+
+        insightsJson["totalIncome"] = insightsOpt->totalIncome;
+        insightsJson["totalExpenses"] = insightsOpt->totalExpenses;
+
+        // Income categories
+        {
+            crow::json::wvalue::list incomeList;
+            for (const auto& item : insightsOpt->incomeByCategoryList) {
+                crow::json::wvalue entry;
+                entry["category"] = item.category;
+                entry["amount"] = item.amount;
+                entry["count"] = item.count;
+                incomeList.push_back(std::move(entry));
+            }
+            insightsJson["incomeByCategoryList"] = std::move(incomeList);
+        }
+
+        // Expense categories
+        {
+            crow::json::wvalue::list expenseList;
+            for (const auto& item : insightsOpt->expenseByCategoryList) {
+                crow::json::wvalue entry;
+                entry["category"] = item.category;
+                entry["amount"] = item.amount;
+                entry["count"] = item.count;
+                expenseList.push_back(std::move(entry));
+            }
+            insightsJson["expenseByCategoryList"] = std::move(expenseList);
+        }
+
+        // Unusual income
+        {
+            crow::json::wvalue::list unusualIncomeList;
+            for (const auto& desc : insightsOpt->unusualIncome) {
+                unusualIncomeList.push_back(desc);
+            }
+            insightsJson["unusualIncome"] = std::move(unusualIncomeList);
+        }
+
+        // Unusual expenses
+        {
+            crow::json::wvalue::list unusualExpenseList;
+            for (const auto& desc : insightsOpt->unusualExpenses) {
+                unusualExpenseList.push_back(desc);
+            }
+            insightsJson["unusualExpenses"] = std::move(unusualExpenseList);
+        }
+
+        // 4. Expose timeSpan to Mustache
+        insightsJson["timeSpan"] = timeSpan;
+        insightsJson["is7"] = (timeSpan == 7);
+        insightsJson["is14"] = (timeSpan == 14);
+        insightsJson["is30"] = (timeSpan == 30);
+        insightsJson["is60"] = (timeSpan == 60);
+        insightsJson["is90"] = (timeSpan == 90);
+
+        ctx["insights"] = std::move(insightsJson);
     }
 
     return crow::response(

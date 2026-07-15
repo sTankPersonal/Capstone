@@ -68,11 +68,17 @@ GetFinancialInsights::execute(const GetFinancialInsightsQuery& request)
     for (const auto& t : allTxs) {
         sys_days txDate = toSysDays(t.getTransactionDate());
 
-        // "Last N days" = strictly after cutoff and up to today
+        // Reject future dates explicitly
+        if (txDate > today) {
+            continue;
+        }
+
+        // "Last N days" filter
         if (txDate > cutoff && txDate <= today) {
             txs.push_back(t);
         }
     }
+
 
     if (txs.empty())
         return std::nullopt;
