@@ -86,7 +86,7 @@
     gap: 0.5rem;
     font-size: 0.8rem;
     color: #c0392b;
-    transition: opacity 0.2s ease;
+    transition: color 0.2s ease;
 }
 
 .password-requirements li::before {
@@ -95,7 +95,12 @@
     color: #c0392b;
 }
 
-/* Requirements disappear from the list once they have been met. */
+/* Met requirements turn green with a checkmark. */
 .password-requirements li.met {
-    display: none;
+    color: #27ae60;
+}
+
+.password-requirements li.met::before {
+    content: "\2713";
+    color: #27ae60;
 }
