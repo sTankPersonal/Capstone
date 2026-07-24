@@ -47,6 +47,7 @@ function addMessage(text, role) {
     setMessageContent(div, text, role);
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
+    return div;
 }
 var isWaiting = false;
 
@@ -60,7 +61,7 @@ function sendMessage() {
     input.disabled = true;
     document.getElementById('sendBtn').disabled = true;
 
-    addMessage(text, 'user');
+    const userBubble = addMessage(text, 'user');
     input.value = '';
     input.style.height = 'auto';
     document.getElementById('charCounter').textContent = `0 / 1200`;
@@ -91,10 +92,19 @@ function sendMessage() {
                 animateAssistantMessage(data.reply);
             }
         })
-        .catch(function () {
+        .catch(function (err) {
             typingBubble.remove();
-            addMessage('Error sending message. Please try again.', 'assistant');
+
+            // Create a visible error message in the chat
+            const errorBubble = addMessage('Error sending message.', 'assistant');
+
+            // Unlock input
+            isWaiting = false;
+            input.disabled = false;
+            document.getElementById('sendBtn').disabled = false;
         });
+
+
 }
 
 
@@ -171,17 +181,26 @@ function animateAssistantMessage(fullText, chunkSize = 30, delay = 70) {
 
             index += chunkSize;
 
-            if (index <= fullText.length) {
+            if (index < fullText.length) {
                 setTimeout(step, delay);
             } else {
-                // Animation finished — unlock input
+                // Render the full text one last time to avoid truncation
+                const html = renderMarkdown(fullText);
+                if (html !== null) div.innerHTML = html;
+                else div.textContent = fullText;
+
+                chat.scrollTop = chat.scrollHeight;
+
+                // unlock input
                 isWaiting = false;
                 input.disabled = false;
                 document.getElementById('sendBtn').disabled = false;
                 input.focus();
             }
+
         }
 
         step();
     }, 300); // typing bubble visible for 300ms
 }
+

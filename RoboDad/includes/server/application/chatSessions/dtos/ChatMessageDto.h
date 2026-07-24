@@ -15,4 +15,5 @@ class ChatMessageDto : public IDto {
 public:
     explicit ChatMessageDto(const ChatMessage& message);
     explicit operator crow::json::wvalue() const override;
+    const std::string& getCreatedAt() const { return createdAt_; }
 };
