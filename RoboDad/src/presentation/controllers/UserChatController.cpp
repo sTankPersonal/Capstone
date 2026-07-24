@@ -163,20 +163,41 @@ crow::response UserChatController::postDeleteChatSession(const crow::request& re
     return res;
 }
 
-crow::response UserChatController::getMessages(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {
-    std::optional<UserProfileDto> userOpt = getUserProfile_.execute(GetUserProfileQuery(user_id));
-    std::vector<ChatMessageDto> messages = getChatHistory_.execute(GetChatHistoryQuery(chat_session_id));
+crow::response UserChatController::getMessages(
+    const crow::request& req,
+    UserId user_id,
+    ChatSessionId chat_session_id
+) {
+    std::optional<UserProfileDto> userOpt =
+        getUserProfile_.execute(GetUserProfileQuery(user_id));
+
+    // Get messages ONCE
+    std::vector<ChatMessageDto> messages =
+        getChatHistory_.execute(GetChatHistoryQuery(chat_session_id));
+
+    // Sort by createdAt BEFORE converting to JSON
+    std::sort(messages.begin(), messages.end(),
+        [](const ChatMessageDto& a, const ChatMessageDto& b) {
+            return a.getCreatedAt() < b.getCreatedAt();
+        });
+
+    // Build JSON list from sorted messages
     crow::json::wvalue::list messageList;
     for (const ChatMessageDto& message : messages) {
         messageList.push_back(static_cast<crow::json::wvalue>(message));
     }
+
     crow::mustache::context ctx;
     ctx["chat_sessions"] = buildSessionList(user_id);
     ctx["messages"] = std::move(messageList);
     ctx["chat_session_id"] = chat_session_id.getId();
     if (userOpt) ctx["user"] = static_cast<crow::json::wvalue>(*userOpt);
-    return crow::response(crow::mustache::load("chat.html").render(ctx));
+
+    return crow::response(
+        crow::mustache::load("chat.html").render(ctx)
+    );
 }
+
 
 crow::response UserChatController::postNewMessage(const crow::request& req, UserId user_id, ChatSessionId chat_session_id) {
     crow::query_string params("?" + req.body);
@@ -188,6 +209,16 @@ crow::response UserChatController::postNewMessage(const crow::request& req, User
 
     SendChatMessageCommand sendRequest(chat_session_id, message);
     std::string assistantReply = sendChatMessage_.execute(sendRequest);
+    if (assistantReply.empty()) {
+        // Store an error message as an assistant message
+        SendChatMessageCommand sendError(chat_session_id, "[Error: assistant failed to respond]");
+        sendChatMessage_.execute(sendError);
+
+        crow::json::wvalue responseBody;
+        responseBody["reply"] = "[Error: assistant failed to respond]";
+        return crow::response(200, responseBody);
+    }
+
     crow::json::wvalue responseBody;
     responseBody["reply"] = assistantReply;
     return crow::response(200, responseBody);

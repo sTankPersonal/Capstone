@@ -388,7 +388,7 @@ CREATE TABLE IF NOT EXISTS plaid_items (
     user_id       TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     access_token  TEXT NOT NULL,
     sync_cursor   TEXT NOT NULL DEFAULT '',
-    created_at    DATE NOT NULL DEFAULT CURRENT_DATE
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ── Indexes ───────────────────────────────────────────────────────────────────
