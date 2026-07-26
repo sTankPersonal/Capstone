@@ -19,23 +19,30 @@
         <div class="transaction-form-card">
             <h2>Edit Personal Information</h2>
 
+            {{^user.dateOfBirth}}
+            <p class="profile-incomplete-note">
+                Please complete your profile before continuing.
+                Fields marked with <span class="required-marker">*</span> are required.
+            </p>
+            {{/user.dateOfBirth}}
+
             <div id="form-error" class="alert alert-error" role="alert" style="display:none;"></div>
 
             <form method="POST" action="" id="information-form">
                 <div class="form-group">
-                    <label for="first_name">First Name</label>
+                    <label for="first_name">First Name <span class="required-marker">*</span></label>
                     <input type="text" id="first_name" name="first_name"
                            minlength="1" maxlength="100" autocomplete="given-name"
                            value="{{user.firstName}}" required />
                 </div>
                 <div class="form-group">
-                    <label for="last_name">Last Name</label>
+                    <label for="last_name">Last Name <span class="required-marker">*</span></label>
                     <input type="text" id="last_name" name="last_name"
                            minlength="1" maxlength="100" autocomplete="family-name"
                            value="{{user.lastName}}" required />
                 </div>
                 <div class="form-group">
-                    <label for="date_of_birth">Date of Birth</label>
+                    <label for="date_of_birth">Date of Birth <span class="required-marker">*</span></label>
                     <input type="date" id="date_of_birth" name="date_of_birth"
                            min="1900-01-01" autocomplete="bday"
                            value="{{user.dateOfBirth}}" required />
@@ -68,7 +75,9 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">Save Changes</button>
+                    {{#user.dateOfBirth}}
                     <a href="/user/settings/userInformation" class="btn btn-secondary">Cancel</a>
+                    {{/user.dateOfBirth}}
                 </div>
             </form>
         </div>

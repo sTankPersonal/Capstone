@@ -71,6 +71,16 @@
     color: #1e1e2f;
 }
 
+.required-marker {
+    color: #c0392b;
+}
+
+.profile-incomplete-note {
+    font-size: 0.85rem;
+    color: #555;
+    margin: 0 0 1rem;
+}
+
 .password-requirements {
     list-style: none;
     display: flex;
