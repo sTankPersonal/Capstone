@@ -5,9 +5,12 @@
 #include <iomanip>
 
 static std::string formatDate(const std::chrono::year_month_day& d) {
-    return std::to_string(int(d.year())) + "-"
-         + std::to_string(unsigned(d.month())) + "-"
-         + std::to_string(unsigned(d.day()));
+    std::ostringstream oss;
+    oss << std::setfill('0')
+        << std::setw(4) << int(d.year()) << "-"
+        << std::setw(2) << unsigned(d.month()) << "-"
+        << std::setw(2) << unsigned(d.day());
+    return oss.str();
 }
 
 static std::string formatAmount(double amount) {
