@@ -345,7 +345,7 @@
 /* Two-zone list layout (transactions / expenses / earnings)             */
 /* ===================================================================== */
 .transactions-list-page {
-    max-width: 1280px;
+    max-width: 1500px;
     margin: 2rem auto;
     padding: 0 1.5rem;
 }
@@ -508,10 +508,15 @@
     gap: 0.5rem;
 }
 
-.txn-date {
-    font-size: 0.8rem;
+.txn-table th.th-category,
+.txn-table th.th-date {
+    width: 160px;
+}
+
+.txn-cell-date {
+    font-size: 0.85rem;
     color: #999;
-    margin-top: 2px;
+    white-space: nowrap;
 }
 
 .txn-badge {
