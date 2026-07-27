@@ -133,7 +133,7 @@
                 <h2>Income Details (Last {{timeSpan}} Days)</h2>
                 <ul>
                     {{#incomeByCategoryList}}
-                    <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
+                    <li>{{category}}: ${{amount}} ({{count}} transaction{{#isPlural}}s{{/isPlural}})</li>
                     {{/incomeByCategoryList}}
                 </ul>
             </div>
@@ -143,7 +143,7 @@
                 <h2>Expense Details (Last {{timeSpan}} Days)</h2>
                 <ul>
                     {{#expenseByCategoryList}}
-                    <li>{{category}}: ${{amount}} ({{count}} transactions)</li>
+                    <li>{{category}}: ${{amount}} ({{count}} transaction{{#isPlural}}s{{/isPlural}})</li>
                     {{/expenseByCategoryList}}
                 </ul>
             </div>

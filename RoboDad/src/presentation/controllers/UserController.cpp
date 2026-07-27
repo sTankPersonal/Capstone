@@ -107,6 +107,7 @@ crow::response UserController::getUserDashboardPage(
                 entry["category"] = item.category;
                 entry["amount"] = item.amount;
                 entry["count"] = item.count;
+                entry["isPlural"] = (item.count != 1);
                 incomeList.push_back(std::move(entry));
             }
             insightsJson["incomeByCategoryList"] = std::move(incomeList);
@@ -120,6 +121,7 @@ crow::response UserController::getUserDashboardPage(
                 entry["category"] = item.category;
                 entry["amount"] = item.amount;
                 entry["count"] = item.count;
+                entry["isPlural"] = (item.count != 1);
                 expenseList.push_back(std::move(entry));
             }
             insightsJson["expenseByCategoryList"] = std::move(expenseList);
