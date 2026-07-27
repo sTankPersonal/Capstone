@@ -46,9 +46,10 @@
                     </div>
                     <div class="form-group">
                         <label for="persona_id">Persona</label>
-                        <select id="persona_id" name="persona_id" required>
+                        <select id="persona_id" name="persona_id">
                             <option value="">Loading...</option>
                         </select>
+                        <small id="persona_id-description" class="hint-text"></small>
                     </div>
 
                     <div class="form-actions">
@@ -64,7 +65,7 @@
     <script src="/js/dropdowns.js"></script>
     <script src="/js/chat_session_active.js"></script>
     <script>
-        populateDropdown('persona_id', '/references/llm-personas', 'llmPersonas', '{{chat_sessions.personaId}}', 'name', 'description');
+        populateCustomDropdown('persona_id', '/references/llm-personas', 'llmPersonas', '{{chat_sessions.personaId}}', 'name', 'description');
     </script>
 
 </body>

@@ -17,7 +17,7 @@
     <div class="transactions-list-page">
         <div class="transactions-header">
             <h1>All Transactions</h1>
-            <a href="/user/transactions/import/plaid" class="btn btn-primary">Import from Plaid</a>
+            <a href="/user/transactions/import/plaid" class="btn btn-primary">Import from Bank</a>
         </div>
 
         <div class="txn-layout">
@@ -54,6 +54,8 @@
                     <thead>
                         <tr>
                             <th scope="col">Transaction</th>
+                            <th scope="col" class="th-category">Category</th>
+                            <th scope="col" class="th-date">Date</th>
                             <th scope="col" class="th-amount">Amount</th>
                             <th scope="col" class="th-actions"></th>
                         </tr>
@@ -62,9 +64,10 @@
                         {{#transactions}}
                         <tr class="txn-row" data-category="{{categoryId}}" data-description="{{description}}">
                             <td class="txn-cell-main">
-                                <div class="txn-desc">{{description}} <span class="txn-badge"></span></div>
-                                <div class="txn-date">{{transactionDate}}</div>
+                                <div class="txn-desc">{{description}}</div>
                             </td>
+                            <td class="txn-cell-category"><span class="txn-badge"></span></td>
+                            <td class="txn-cell-date">{{transactionDate}}</td>
                             <td class="txn-cell-amount" data-amount="{{amount}}">${{amount}}</td>
                             <td class="txn-cell-actions">
                                 <div class="txn-menu">
