@@ -36,7 +36,8 @@ static const char* kSelectCols =
     "FROM transactions";
 
 Transaction PostgresTransactionRepository::create(const Transaction& transaction) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     const auto& amt = transaction.getAmount();
     std::optional<std::string> currStr = amt.getCurrencyId().has_value()
         ? std::make_optional(amt.getCurrencyId()->getId()) : std::nullopt;
@@ -64,7 +65,8 @@ Transaction PostgresTransactionRepository::create(const Transaction& transaction
 }
 
 std::optional<Transaction> PostgresTransactionRepository::findById(TransactionId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelectCols) + " WHERE transaction_id=$1", id.getId());
     txn.commit();
@@ -73,7 +75,8 @@ std::optional<Transaction> PostgresTransactionRepository::findById(TransactionId
 }
 
 std::vector<Transaction> PostgresTransactionRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(kSelectCols);
     txn.commit();
     std::vector<Transaction> results;
@@ -82,7 +85,8 @@ std::vector<Transaction> PostgresTransactionRepository::findAll() {
 }
 
 bool PostgresTransactionRepository::update(const Transaction& transaction) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     const auto& amt = transaction.getAmount();
     std::optional<std::string> currStr = amt.getCurrencyId().has_value()
         ? std::make_optional(amt.getCurrencyId()->getId()) : std::nullopt;
@@ -105,7 +109,8 @@ bool PostgresTransactionRepository::update(const Transaction& transaction) {
 }
 
 bool PostgresTransactionRepository::remove(TransactionId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "DELETE FROM transactions WHERE transaction_id=$1", id.getId());
     txn.commit();
@@ -113,7 +118,8 @@ bool PostgresTransactionRepository::remove(TransactionId id) {
 }
 
 std::vector<Transaction> PostgresTransactionRepository::findByUserId(const UserId& userId) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelectCols) + " WHERE user_id=$1 ORDER BY transaction_date DESC",
         userId.getId());
@@ -124,7 +130,8 @@ std::vector<Transaction> PostgresTransactionRepository::findByUserId(const UserI
 }
 
 std::optional<Transaction> PostgresTransactionRepository::findByPlaidTransactionId(const std::string& plaidTransactionId) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelectCols) + " WHERE plaid_transaction_id=$1",
         plaidTransactionId);

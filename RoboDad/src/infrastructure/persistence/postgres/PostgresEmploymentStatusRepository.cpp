@@ -13,7 +13,8 @@ static EmploymentStatus rowToEmploymentStatus(const pqxx::row& row) {
 }
 
 EmploymentStatus PostgresEmploymentStatusRepository::create(const EmploymentStatus& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     txn.exec_params(
         "INSERT INTO employment_statuses(employment_status_id, value, created_at) VALUES($1,$2,$3)",
         entity.getId().getId(), entity.getValue(), dateToStr(entity.getCreatedAt()));
@@ -22,7 +23,8 @@ EmploymentStatus PostgresEmploymentStatusRepository::create(const EmploymentStat
 }
 
 std::optional<EmploymentStatus> PostgresEmploymentStatusRepository::findById(EmploymentStatusId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT employment_status_id, value, created_at FROM employment_statuses WHERE employment_status_id=$1",
         id.getId());
@@ -32,7 +34,8 @@ std::optional<EmploymentStatus> PostgresEmploymentStatusRepository::findById(Emp
 }
 
 std::vector<EmploymentStatus> PostgresEmploymentStatusRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(
         "SELECT employment_status_id, value, created_at FROM employment_statuses ORDER BY value");
     txn.commit();
@@ -42,7 +45,8 @@ std::vector<EmploymentStatus> PostgresEmploymentStatusRepository::findAll() {
 }
 
 bool PostgresEmploymentStatusRepository::update(const EmploymentStatus& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "UPDATE employment_statuses SET value=$2 WHERE employment_status_id=$1",
         entity.getId().getId(), entity.getValue());
@@ -51,7 +55,8 @@ bool PostgresEmploymentStatusRepository::update(const EmploymentStatus& entity) 
 }
 
 bool PostgresEmploymentStatusRepository::remove(EmploymentStatusId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "DELETE FROM employment_statuses WHERE employment_status_id=$1", id.getId());
     txn.commit();
@@ -59,7 +64,8 @@ bool PostgresEmploymentStatusRepository::remove(EmploymentStatusId id) {
 }
 
 std::optional<EmploymentStatus> PostgresEmploymentStatusRepository::findByValue(const std::string& value) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT employment_status_id, value, created_at FROM employment_statuses WHERE value=$1", value);
     txn.commit();

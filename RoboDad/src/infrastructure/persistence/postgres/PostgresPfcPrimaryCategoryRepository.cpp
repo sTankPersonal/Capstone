@@ -15,7 +15,8 @@ static PfcPrimaryCategory rowToPrimary(const pqxx::row& row) {
 static const char* kSelect = "SELECT pfc_primary_category_id, value, created_at FROM pfc_primary_categories";
 
 PfcPrimaryCategory PostgresPfcPrimaryCategoryRepository::create(const PfcPrimaryCategory& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     txn.exec_params(
         "INSERT INTO pfc_primary_categories(pfc_primary_category_id, value, created_at) VALUES($1,$2,$3)",
         entity.getId().getId(), entity.getValue(), dateToStr(entity.getCreatedAt()));
@@ -24,7 +25,8 @@ PfcPrimaryCategory PostgresPfcPrimaryCategoryRepository::create(const PfcPrimary
 }
 
 std::optional<PfcPrimaryCategory> PostgresPfcPrimaryCategoryRepository::findById(PfcPrimaryCategoryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelect) + " WHERE pfc_primary_category_id=$1", id.getId());
     txn.commit();
@@ -33,7 +35,8 @@ std::optional<PfcPrimaryCategory> PostgresPfcPrimaryCategoryRepository::findById
 }
 
 std::vector<PfcPrimaryCategory> PostgresPfcPrimaryCategoryRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(std::string(kSelect) + " ORDER BY pfc_primary_category_id");
     txn.commit();
     std::vector<PfcPrimaryCategory> results;
@@ -42,7 +45,8 @@ std::vector<PfcPrimaryCategory> PostgresPfcPrimaryCategoryRepository::findAll() 
 }
 
 bool PostgresPfcPrimaryCategoryRepository::update(const PfcPrimaryCategory& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "UPDATE pfc_primary_categories SET value=$2 WHERE pfc_primary_category_id=$1",
         entity.getId().getId(), entity.getValue());
@@ -51,7 +55,8 @@ bool PostgresPfcPrimaryCategoryRepository::update(const PfcPrimaryCategory& enti
 }
 
 bool PostgresPfcPrimaryCategoryRepository::remove(PfcPrimaryCategoryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "DELETE FROM pfc_primary_categories WHERE pfc_primary_category_id=$1", id.getId());
     txn.commit();
@@ -59,7 +64,8 @@ bool PostgresPfcPrimaryCategoryRepository::remove(PfcPrimaryCategoryId id) {
 }
 
 std::optional<PfcPrimaryCategory> PostgresPfcPrimaryCategoryRepository::findByValue(const std::string& value) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelect) + " WHERE value=$1", value);
     txn.commit();
