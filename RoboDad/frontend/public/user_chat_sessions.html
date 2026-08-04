@@ -24,7 +24,11 @@
             </div>
             <nav class="chat-list" aria-label="Chat sessions">
                 {{#chat_sessions}}
-                <a class="chat-list-item" href="/user/chats/{{id}}/messages">{{description}}</a>
+                <a class="chat-list-item"
+                   href="/user/chats/{{id}}/messages"
+                   title="{{description}}">
+                    {{description}}
+                </a>
                 {{/chat_sessions}}
                 {{^chat_sessions}}
                 <p class="sidebar-empty">No chats yet</p>
