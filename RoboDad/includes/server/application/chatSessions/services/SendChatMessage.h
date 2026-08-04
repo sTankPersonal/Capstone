@@ -7,6 +7,7 @@
 #include "ITransactionRepository.h"
 #include "IPfcDetailedCategoryRepository.h"
 #include "ILlmClient.h"
+#include "GetUserProfile.h"
 #include "IPromptBuilder.h"
 #include <string>
 
@@ -18,6 +19,7 @@ class SendChatMessage : public IUseCase<SendChatMessageCommand, std::string> {
     IPfcDetailedCategoryRepository& pfcDetailedRepo_;
     ILlmClient&             llmClient_;
     IPromptBuilder&         promptBuilder_;
+    GetUserProfile& getUserProfile_;
     int defaultHistoryLimit_;
 public:
     SendChatMessage(IChatSessionRepository& sessionRepo,
@@ -27,6 +29,7 @@ public:
                     IPfcDetailedCategoryRepository& pfcDetailedRepo,
                     ILlmClient&             llmClient,
                     IPromptBuilder&         promptBuilder,
+                    GetUserProfile& getUserProfile,
                     int historyLimit = 5);
 
     std::string execute(const SendChatMessageCommand& request) override;

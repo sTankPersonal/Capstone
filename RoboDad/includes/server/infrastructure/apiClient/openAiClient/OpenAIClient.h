@@ -13,13 +13,19 @@ public:
 
     std::string generate(const std::string&              systemPrompt,
                          const std::vector<ChatMessage>& history,
-                         const std::string&              userMessage) override;
+                         const std::string&              userMessage,
+                         const std::optional<UserProfileDto>& userContext
+    ) override;
 
     const std::string& apiKey() const { return apiKey_; }
 
 private:
-    std::string buildRequestPayload(const std::string&              systemPrompt,
-                                    const std::vector<ChatMessage>& history,
-                                    const std::string&              userMessage) const;
+    std::string buildRequestPayload(
+        const std::string& systemPrompt,
+        const std::vector<ChatMessage>& history,
+        const std::string& userMessage,
+        const std::optional<UserProfileDto>& userContext
+    ) const;
+
     std::string parseResponse(const std::string& jsonResponse) const;
 };

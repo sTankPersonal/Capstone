@@ -4,6 +4,7 @@
 #include "MessageSenderId.h"
 #include "GetFinancialInsights.h"
 #include "UuidGenerator.h"
+#include "GetUserProfile.h"
 #include <chrono>
 
 SendChatMessage::SendChatMessage(IChatSessionRepository& sessionRepo,
@@ -13,6 +14,7 @@ SendChatMessage::SendChatMessage(IChatSessionRepository& sessionRepo,
     IPfcDetailedCategoryRepository& pfcDetailedRepo,
                                  ILlmClient&             llmClient,
                                  IPromptBuilder&         promptBuilder,
+    GetUserProfile& getUserProfile,
     int historyLimit)
     : sessionRepo_(sessionRepo)
     , messageRepo_(messageRepo)
@@ -21,6 +23,7 @@ SendChatMessage::SendChatMessage(IChatSessionRepository& sessionRepo,
     , pfcDetailedRepo_(pfcDetailedRepo)
     , llmClient_(llmClient)
     , promptBuilder_(promptBuilder)
+    , getUserProfile_(getUserProfile)
     , defaultHistoryLimit_(historyLimit) {}
 
 std::string SendChatMessage::execute(const SendChatMessageCommand& request) {
@@ -59,9 +62,13 @@ std::string SendChatMessage::execute(const SendChatMessageCommand& request) {
         today
     ));
 
+    auto userOpt = getUserProfile_.execute(
+        GetUserProfileQuery(session->getUserId())
+    );
+
     std::string response;
     try {
-        response = llmClient_.generate(systemPrompt, history, enriched);
+        response = llmClient_.generate(systemPrompt, history, enriched, userOpt);
     }
     catch (const std::exception& ex) {
         response = "I'm running into an issue and can't generate a full response right now.";

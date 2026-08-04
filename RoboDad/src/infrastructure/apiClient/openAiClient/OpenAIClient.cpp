@@ -8,8 +8,10 @@ OpenAIClient::OpenAIClient(const std::string& apiKey, const std::string& model)
 
 std::string OpenAIClient::generate(const std::string&              systemPrompt,
                                    const std::vector<ChatMessage>& history,
-                                   const std::string&              userMessage) {
-    const std::string payload = buildRequestPayload(systemPrompt, history, userMessage);
+                                   const std::string&              userMessage,
+                                   const std::optional<UserProfileDto>& userContext
+) {
+    const std::string payload = buildRequestPayload(systemPrompt, history, userMessage, userContext);
     const std::string raw = httpPost(
         baseUrl_ + "/v1/chat/completions",
         payload,
@@ -21,9 +23,12 @@ std::string OpenAIClient::generate(const std::string&              systemPrompt,
     return parseResponse(raw);
 }
 
-std::string OpenAIClient::buildRequestPayload(const std::string&              systemPrompt,
-                                              const std::vector<ChatMessage>& history,
-                                              const std::string&              userMessage) const {
+std::string OpenAIClient::buildRequestPayload(
+    const std::string& systemPrompt,
+    const std::vector<ChatMessage>& history,
+    const std::string& userMessage,
+    const std::optional<UserProfileDto>& userContext) const
+{
     crow::json::wvalue root;
     root["model"] = model_;
     root["stream"] = false;
@@ -31,23 +36,65 @@ std::string OpenAIClient::buildRequestPayload(const std::string&              sy
     crow::json::wvalue messages = crow::json::wvalue::list();
     int index = 0;
 
-    if (!systemPrompt.empty()) {
+    // System prompt
+    messages[index++] = crow::json::wvalue{
+        {"role", "system"},
+        {"content", systemPrompt}
+    };
+
+    // Inject user settings as a system-level metadata block
+    if (userContext) {
+        crow::json::wvalue ctx;
+        ctx["firstName"] = userContext->getFirstName().value_or("");
+        ctx["lastName"] = userContext->getLastName().value_or("");
+        ctx["countryId"] = userContext->getCountryId().value_or("");
+        ctx["currencyId"] = userContext->getCurrencyId().value_or("");
+        ctx["languageId"] = userContext->getLanguageId().value_or("");
+        ctx["employmentStatusId"] = userContext->getEmploymentStatusId().value_or("");
+
+        std::stringstream ss;
+        auto firstName = ctx["firstName"].dump();
+        auto lastName = ctx["lastName"].dump();
+        auto countryId = ctx["countryId"].dump();
+        auto currencyId = ctx["currencyId"].dump();
+        auto languageId = ctx["languageId"].dump();
+        auto employmentStatusId = ctx["employmentStatusId"].dump();
+
+        auto strip = [](std::string& s) {
+            if (!s.empty() && s.front() == '"' && s.back() == '"') {
+                s = s.substr(1, s.size() - 2);
+            }
+            };
+
+        strip(firstName);
+        strip(lastName);
+        strip(countryId);
+        strip(currencyId);
+        strip(languageId);
+        strip(employmentStatusId);
+
+        ss << "First name: " << firstName << "\n";
+        ss << "Last name: " << lastName << "\n";
+        ss << "Country: " << countryId << "\n";
+        ss << "Currency: " << currencyId << "\n";
+        ss << "Language: " << languageId << "\n";
+        ss << "Employment status: " << employmentStatusId << "\n";
+
         messages[index++] = crow::json::wvalue{
             {"role", "system"},
-            {"content", systemPrompt}
+            {"content", ss.str()}
         };
     }
 
+    // History
     for (const auto& msg : history) {
-        // MessageSenderId value is "user" or "assistant" — matches OpenAI role names.
-        const std::string role = msg.getMessageSenderId().getId();
-        const std::string content = msg.getContent().getContent().value_or(std::string{});
         messages[index++] = crow::json::wvalue{
-            {"role", role},
-            {"content", content}
+            {"role", msg.getMessageSenderId().getId()},
+            {"content", msg.getContent().getContent().value_or("")}
         };
     }
 
+    // User message
     messages[index++] = crow::json::wvalue{
         {"role", "user"},
         {"content", userMessage}
@@ -56,6 +103,7 @@ std::string OpenAIClient::buildRequestPayload(const std::string&              sy
     root["messages"] = std::move(messages);
     return root.dump();
 }
+
 
 std::string OpenAIClient::parseResponse(const std::string& jsonResponse) const {
     auto json = crow::json::load(jsonResponse);
