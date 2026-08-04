@@ -13,7 +13,8 @@ static Currency rowToCurrency(const pqxx::row& row) {
 }
 
 Currency PostgresCurrencyRepository::create(const Currency& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     txn.exec_params(
         "INSERT INTO currencies(currency_id, value, created_at) VALUES($1,$2,$3)",
         entity.getId().getId(), entity.getValue(), dateToStr(entity.getCreatedAt()));
@@ -22,7 +23,8 @@ Currency PostgresCurrencyRepository::create(const Currency& entity) {
 }
 
 std::optional<Currency> PostgresCurrencyRepository::findById(CurrencyId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT currency_id, value, created_at FROM currencies WHERE currency_id=$1", id.getId());
     txn.commit();
@@ -31,7 +33,8 @@ std::optional<Currency> PostgresCurrencyRepository::findById(CurrencyId id) {
 }
 
 std::vector<Currency> PostgresCurrencyRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec("SELECT currency_id, value, created_at FROM currencies ORDER BY value");
     txn.commit();
     std::vector<Currency> results;
@@ -40,7 +43,8 @@ std::vector<Currency> PostgresCurrencyRepository::findAll() {
 }
 
 bool PostgresCurrencyRepository::update(const Currency& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "UPDATE currencies SET value=$2 WHERE currency_id=$1",
         entity.getId().getId(), entity.getValue());
@@ -49,14 +53,16 @@ bool PostgresCurrencyRepository::update(const Currency& entity) {
 }
 
 bool PostgresCurrencyRepository::remove(CurrencyId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params("DELETE FROM currencies WHERE currency_id=$1", id.getId());
     txn.commit();
     return res.affected_rows() > 0;
 }
 
 std::optional<Currency> PostgresCurrencyRepository::findByValue(const std::string& value) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT currency_id, value, created_at FROM currencies WHERE value=$1", value);
     txn.commit();

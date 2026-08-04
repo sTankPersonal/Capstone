@@ -17,7 +17,8 @@ static const char* kSelect =
     "SELECT pfc_detailed_category_id, pfc_primary_category_id, value, created_at FROM pfc_detailed_categories";
 
 PfcDetailedCategory PostgresPfcDetailedCategoryRepository::create(const PfcDetailedCategory& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     txn.exec_params(
         "INSERT INTO pfc_detailed_categories(pfc_detailed_category_id, pfc_primary_category_id, value, created_at) "
         "VALUES($1,$2,$3,$4)",
@@ -30,7 +31,8 @@ PfcDetailedCategory PostgresPfcDetailedCategoryRepository::create(const PfcDetai
 }
 
 std::optional<PfcDetailedCategory> PostgresPfcDetailedCategoryRepository::findById(PfcDetailedCategoryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelect) + " WHERE pfc_detailed_category_id=$1", id.getId());
     txn.commit();
@@ -39,7 +41,8 @@ std::optional<PfcDetailedCategory> PostgresPfcDetailedCategoryRepository::findBy
 }
 
 std::vector<PfcDetailedCategory> PostgresPfcDetailedCategoryRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(std::string(kSelect) + " ORDER BY pfc_primary_category_id, pfc_detailed_category_id");
     txn.commit();
     std::vector<PfcDetailedCategory> results;
@@ -48,7 +51,8 @@ std::vector<PfcDetailedCategory> PostgresPfcDetailedCategoryRepository::findAll(
 }
 
 bool PostgresPfcDetailedCategoryRepository::update(const PfcDetailedCategory& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "UPDATE pfc_detailed_categories SET pfc_primary_category_id=$2, value=$3 "
         "WHERE pfc_detailed_category_id=$1",
@@ -60,7 +64,8 @@ bool PostgresPfcDetailedCategoryRepository::update(const PfcDetailedCategory& en
 }
 
 bool PostgresPfcDetailedCategoryRepository::remove(PfcDetailedCategoryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "DELETE FROM pfc_detailed_categories WHERE pfc_detailed_category_id=$1", id.getId());
     txn.commit();
@@ -70,7 +75,8 @@ bool PostgresPfcDetailedCategoryRepository::remove(PfcDetailedCategoryId id) {
 std::vector<PfcDetailedCategory> PostgresPfcDetailedCategoryRepository::findByPrimaryId(
     const PfcPrimaryCategoryId& primaryId)
 {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelect) + " WHERE pfc_primary_category_id=$1 ORDER BY pfc_detailed_category_id",
         primaryId.getId());
@@ -81,7 +87,8 @@ std::vector<PfcDetailedCategory> PostgresPfcDetailedCategoryRepository::findByPr
 }
 
 std::optional<PfcDetailedCategory> PostgresPfcDetailedCategoryRepository::findByValue(const std::string& value) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(std::string(kSelect) + " WHERE value=$1", value);
     txn.commit();
     if (r.empty()) return std::nullopt;

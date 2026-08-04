@@ -23,7 +23,8 @@ static const char* kSelectCols =
     "created_at, updated_at FROM chat_sessions";
 
 ChatSession PostgresChatSessionRepository::create(const ChatSession& session) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     const auto& desc = session.getSessionDescription();
     txn.exec_params(
         "INSERT INTO chat_sessions(chat_session_id, user_id, llm_persona_id, description, "
@@ -41,7 +42,8 @@ ChatSession PostgresChatSessionRepository::create(const ChatSession& session) {
 }
 
 std::optional<ChatSession> PostgresChatSessionRepository::findById(ChatSessionId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelectCols) + " WHERE chat_session_id=$1", id.getId());
     txn.commit();
@@ -50,7 +52,8 @@ std::optional<ChatSession> PostgresChatSessionRepository::findById(ChatSessionId
 }
 
 std::vector<ChatSession> PostgresChatSessionRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(kSelectCols);
     txn.commit();
     std::vector<ChatSession> results;
@@ -59,7 +62,8 @@ std::vector<ChatSession> PostgresChatSessionRepository::findAll() {
 }
 
 bool PostgresChatSessionRepository::update(const ChatSession& session) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     const auto& desc = session.getSessionDescription();
     auto res = txn.exec_params(
         "UPDATE chat_sessions SET llm_persona_id=$2, description=$3, additional_info=$4, "
@@ -75,7 +79,8 @@ bool PostgresChatSessionRepository::update(const ChatSession& session) {
 }
 
 bool PostgresChatSessionRepository::remove(ChatSessionId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "DELETE FROM chat_sessions WHERE chat_session_id=$1", id.getId());
     txn.commit();
@@ -83,7 +88,8 @@ bool PostgresChatSessionRepository::remove(ChatSessionId id) {
 }
 
 std::vector<ChatSession> PostgresChatSessionRepository::findByUserId(const UserId& userId) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         std::string(kSelectCols) + " WHERE user_id=$1", userId.getId());
     txn.commit();

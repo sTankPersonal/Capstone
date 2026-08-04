@@ -13,7 +13,8 @@ static Country rowToCountry(const pqxx::row& row) {
 }
 
 Country PostgresCountryRepository::create(const Country& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     txn.exec_params(
         "INSERT INTO countries(country_id, value, created_at) VALUES($1,$2,$3)",
         entity.getId().getId(), entity.getValue(), dateToStr(entity.getCreatedAt()));
@@ -22,7 +23,8 @@ Country PostgresCountryRepository::create(const Country& entity) {
 }
 
 std::optional<Country> PostgresCountryRepository::findById(CountryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT country_id, value, created_at FROM countries WHERE country_id=$1", id.getId());
     txn.commit();
@@ -31,7 +33,8 @@ std::optional<Country> PostgresCountryRepository::findById(CountryId id) {
 }
 
 std::vector<Country> PostgresCountryRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec("SELECT country_id, value, created_at FROM countries ORDER BY value");
     txn.commit();
     std::vector<Country> results;
@@ -40,7 +43,8 @@ std::vector<Country> PostgresCountryRepository::findAll() {
 }
 
 bool PostgresCountryRepository::update(const Country& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "UPDATE countries SET value=$2 WHERE country_id=$1",
         entity.getId().getId(), entity.getValue());
@@ -49,14 +53,16 @@ bool PostgresCountryRepository::update(const Country& entity) {
 }
 
 bool PostgresCountryRepository::remove(CountryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params("DELETE FROM countries WHERE country_id=$1", id.getId());
     txn.commit();
     return res.affected_rows() > 0;
 }
 
 std::optional<Country> PostgresCountryRepository::findByValue(const std::string& value) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT country_id, value, created_at FROM countries WHERE value=$1", value);
     txn.commit();

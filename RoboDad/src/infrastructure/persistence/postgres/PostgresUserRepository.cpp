@@ -45,7 +45,8 @@ static User rowToUser(const pqxx::row& row) {
 }
 
 User PostgresUserRepository::create(const User& user) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     const auto& info = user.getUserInformation();
     const auto& login = user.getUserLogin();
 
@@ -77,7 +78,8 @@ User PostgresUserRepository::create(const User& user) {
 }
 
 std::optional<User> PostgresUserRepository::findById(UserId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT user_id, email, password_hash, first_name, last_name, date_of_birth, "
         "country_id, currency_id, language_id, employment_status_id, created_at, updated_at "
@@ -89,7 +91,8 @@ std::optional<User> PostgresUserRepository::findById(UserId id) {
 }
 
 std::vector<User> PostgresUserRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(
         "SELECT user_id, email, password_hash, first_name, last_name, date_of_birth, "
         "country_id, currency_id, language_id, employment_status_id, created_at, updated_at "
@@ -102,7 +105,8 @@ std::vector<User> PostgresUserRepository::findAll() {
 }
 
 bool PostgresUserRepository::update(const User& user) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     const auto& info = user.getUserInformation();
     const auto& login = user.getUserLogin();
 
@@ -133,7 +137,8 @@ bool PostgresUserRepository::update(const User& user) {
 }
 
 bool PostgresUserRepository::remove(UserId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params("DELETE FROM users WHERE user_id=$1", id.getId());
     txn.commit();
     return res.affected_rows() > 0;
@@ -142,7 +147,8 @@ bool PostgresUserRepository::remove(UserId id) {
 std::optional<std::pair<UserId, std::string>> PostgresUserRepository::lookupCredentials(
     const std::string& email)
 {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT user_id, password_hash FROM users WHERE email=$1", email);
     txn.commit();

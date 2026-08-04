@@ -13,7 +13,8 @@ static MessageSender rowToSender(const pqxx::row& row) {
 }
 
 MessageSender PostgresMessageSenderRepository::create(const MessageSender& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     txn.exec_params(
         "INSERT INTO message_senders(message_sender_id, name, created_at) VALUES($1,$2,$3)",
         entity.getId().getId(), entity.getName(), dateToStr(entity.getCreatedAt()));
@@ -22,7 +23,8 @@ MessageSender PostgresMessageSenderRepository::create(const MessageSender& entit
 }
 
 std::optional<MessageSender> PostgresMessageSenderRepository::findById(MessageSenderId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT message_sender_id, name, created_at FROM message_senders WHERE message_sender_id=$1",
         id.getId());
@@ -32,7 +34,8 @@ std::optional<MessageSender> PostgresMessageSenderRepository::findById(MessageSe
 }
 
 std::vector<MessageSender> PostgresMessageSenderRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(
         "SELECT message_sender_id, name, created_at FROM message_senders ORDER BY name");
     txn.commit();
@@ -42,7 +45,8 @@ std::vector<MessageSender> PostgresMessageSenderRepository::findAll() {
 }
 
 bool PostgresMessageSenderRepository::update(const MessageSender& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "UPDATE message_senders SET name=$2 WHERE message_sender_id=$1",
         entity.getId().getId(), entity.getName());
@@ -51,7 +55,8 @@ bool PostgresMessageSenderRepository::update(const MessageSender& entity) {
 }
 
 bool PostgresMessageSenderRepository::remove(MessageSenderId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "DELETE FROM message_senders WHERE message_sender_id=$1", id.getId());
     txn.commit();
@@ -59,7 +64,8 @@ bool PostgresMessageSenderRepository::remove(MessageSenderId id) {
 }
 
 std::optional<MessageSender> PostgresMessageSenderRepository::findByName(const std::string& name) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT message_sender_id, name, created_at FROM message_senders WHERE name=$1", name);
     txn.commit();

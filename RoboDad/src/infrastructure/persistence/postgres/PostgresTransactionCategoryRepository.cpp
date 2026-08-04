@@ -13,7 +13,8 @@ static TransactionCategory rowToCategory(const pqxx::row& row) {
 }
 
 TransactionCategory PostgresTransactionCategoryRepository::create(const TransactionCategory& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     txn.exec_params(
         "INSERT INTO transaction_categories(transaction_category_id, value, created_at) VALUES($1,$2,$3)",
         entity.getId().getId(), entity.getValue(), dateToStr(entity.getCreatedAt()));
@@ -22,7 +23,8 @@ TransactionCategory PostgresTransactionCategoryRepository::create(const Transact
 }
 
 std::optional<TransactionCategory> PostgresTransactionCategoryRepository::findById(TransactionCategoryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT transaction_category_id, value, created_at FROM transaction_categories WHERE transaction_category_id=$1",
         id.getId());
@@ -32,7 +34,8 @@ std::optional<TransactionCategory> PostgresTransactionCategoryRepository::findBy
 }
 
 std::vector<TransactionCategory> PostgresTransactionCategoryRepository::findAll() {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec(
         "SELECT transaction_category_id, value, created_at FROM transaction_categories ORDER BY value");
     txn.commit();
@@ -42,7 +45,8 @@ std::vector<TransactionCategory> PostgresTransactionCategoryRepository::findAll(
 }
 
 bool PostgresTransactionCategoryRepository::update(const TransactionCategory& entity) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "UPDATE transaction_categories SET value=$2 WHERE transaction_category_id=$1",
         entity.getId().getId(), entity.getValue());
@@ -51,7 +55,8 @@ bool PostgresTransactionCategoryRepository::update(const TransactionCategory& en
 }
 
 bool PostgresTransactionCategoryRepository::remove(TransactionCategoryId id) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto res = txn.exec_params(
         "DELETE FROM transaction_categories WHERE transaction_category_id=$1", id.getId());
     txn.commit();
@@ -59,7 +64,8 @@ bool PostgresTransactionCategoryRepository::remove(TransactionCategoryId id) {
 }
 
 std::optional<TransactionCategory> PostgresTransactionCategoryRepository::findByValue(const std::string& value) {
-    pqxx::work txn{db_.getConnection()};
+    auto conn = db_.acquire();
+    pqxx::work txn{*conn};
     auto r = txn.exec_params(
         "SELECT transaction_category_id, value, created_at FROM transaction_categories WHERE value=$1", value);
     txn.commit();
