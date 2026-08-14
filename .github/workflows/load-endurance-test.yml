@@ -64,6 +64,13 @@ jobs:
             gcc-14 g++-14 cmake ninja-build \
             libpq-dev libcurl4-openssl-dev libssl-dev postgresql-client
 
+      - name: Install k6
+        run: |
+          curl -sL https://github.com/grafana/k6/releases/download/v0.54.0/k6-v0.54.0-linux-amd64.tar.gz \
+            | tar xz --strip-components 1
+          sudo mv k6 /usr/local/bin/k6
+          k6 version
+
       - name: Apply schema
         env:
           PGPASSWORD: robodad
@@ -117,9 +124,6 @@ jobs:
           exit 1
 
       - name: Run k6 ${{ inputs.mode }} test
-        uses: grafana/k6-action@v0.3.1
-        with:
-          filename: k6/dashboard-load-test.js
         env:
           BASE_URL: http://localhost:18080
           MODE: ${{ inputs.mode }}
@@ -127,6 +131,7 @@ jobs:
           ENDURANCE_VUS: ${{ inputs.endurance_vus }}
           DURATION: ${{ inputs.duration }}
           POOL_SIZE: ${{ inputs.pool_size }}
+        run: k6 run k6/dashboard-load-test.js
 
       - name: Stop server
         if: always()
