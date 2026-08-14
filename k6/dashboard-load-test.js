@@ -48,7 +48,7 @@ export function setup() {
       last_name: `Test${i}`,
       email: `loadtest_user_${i}_${RUN_ID}@example.com`,
       password: 'LoadTest123!',
-    });
+    }, { redirects: 0 });
     const cookie = res.cookies.userId && res.cookies.userId[0];
     if (cookie) {
       cookies.push(cookie.value);
