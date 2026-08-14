@@ -33,7 +33,8 @@ TEST_F(OpenAIClientTest, GenerateReturnsNonEmptyResponse) {
     const std::string response = client.generate(
         "You are a helpful assistant.",
         {},
-        "Say hello in one word."
+        "Say hello in one word.",
+        std::nullopt
     );
     EXPECT_FALSE(response.empty());
 }
@@ -50,7 +51,8 @@ TEST_F(OpenAIClientTest, GenerateWithChatHistoryDoesNotCrash) {
         const std::string response = client.generate(
             "You are a helpful assistant.",
             {prior},
-            "Repeat my name."
+            "Repeat my name.",
+            std::nullopt
         );
         EXPECT_FALSE(response.empty());
     });
@@ -59,7 +61,7 @@ TEST_F(OpenAIClientTest, GenerateWithChatHistoryDoesNotCrash) {
 TEST_F(OpenAIClientTest, GenerateWithEmptySystemPromptDoesNotCrash) {
     OpenAIClient client(apiKey_, model_);
     EXPECT_NO_THROW({
-        const std::string response = client.generate("", {}, "What is 2 + 2?");
+        const std::string response = client.generate("", {}, "What is 2 + 2?", std::nullopt);
         EXPECT_FALSE(response.empty());
     });
 }
