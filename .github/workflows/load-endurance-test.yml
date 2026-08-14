@@ -67,8 +67,8 @@ jobs:
       - name: Install k6
         run: |
           curl -sL https://github.com/grafana/k6/releases/download/v0.54.0/k6-v0.54.0-linux-amd64.tar.gz \
-            | tar xz --strip-components 1
-          sudo mv k6 /usr/local/bin/k6
+            | tar xz -C /tmp --strip-components 1
+          sudo mv /tmp/k6 /usr/local/bin/k6
           k6 version
 
       - name: Apply schema
