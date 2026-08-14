@@ -1,0 +1,133 @@
+name: Load & Endurance Test
+
+# Manual only: this boots a real RoboDad server against Postgres and hammers
+# it with k6, which is too slow/heavy to run on every commit.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'load = ramp through vus_list; endurance = sustain endurance_vus for the full duration'
+        type: choice
+        options: [load, endurance]
+        default: load
+      vus_list:
+        description: '[load mode] Comma-separated concurrent-user tiers to ramp through'
+        default: '50,100,200,500'
+      endurance_vus:
+        description: '[endurance mode] Concurrent users to sustain for the whole run'
+        default: '50'
+      duration:
+        description: '[endurance mode] How long to sustain endurance_vus (e.g. 2h, 30m)'
+        default: '2h'
+      pool_size:
+        description: 'How many throwaway test users to pre-register (must be >= peak concurrent VUs)'
+        default: '500'
+      db_pool_size:
+        description: 'DB_POOL_SIZE given to the server (prod default is 8 — lower it to see connection-pool contention)'
+        default: '8'
+
+jobs:
+  load-endurance-test:
+    name: Load & Endurance Test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: robodad
+          POSTGRES_PASSWORD: robodad
+          POSTGRES_DB: robodad_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache FetchContent downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cmake-deps
+          key: cmake-deps-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: cmake-deps-
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-14 g++-14 cmake ninja-build \
+            libpq-dev libcurl4-openssl-dev libssl-dev postgresql-client
+
+      - name: Apply schema
+        env:
+          PGPASSWORD: robodad
+        run: psql -h localhost -U robodad -d robodad_test -f RoboDad/sql/schema.sql
+
+      - name: Configure (Release, server only)
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_C_COMPILER=gcc-14 \
+            -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{ github.workspace }}/build/bin \
+            -DBUILD_TESTING=OFF \
+            -DFETCHCONTENT_BASE_DIR=$HOME/.cmake-deps
+
+      - name: Build server
+        run: cmake --build build --target RoboDad --parallel $(nproc)
+
+      - name: Stage frontend assets
+        run: cp -r RoboDad/frontend/public build/bin/public
+
+      - name: Start server
+        working-directory: build/bin
+        env:
+          DB_HOST: localhost
+          DB_PORT: '5432'
+          DB_USER: robodad
+          DB_PASSWORD: robodad
+          DB_NAME: robodad_test
+          DB_POOL_SIZE: ${{ inputs.db_pool_size }}
+          JWT_SECRET: ci-load-test-secret
+          OPENAI_API_KEY: ''
+          PLAID_CLIENT_ID: ''
+          PLAID_SECRET: ''
+          PLAID_ENV: sandbox
+          GOOGLE_CLIENT_ID: ''
+          GOOGLE_CLIENT_SECRET: ''
+        run: |
+          ./RoboDad &
+          echo $! > "${{ github.workspace }}/server.pid"
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:18080/auth/login || true)
+            if [ "$code" = "200" ]; then
+              echo "Server is up."
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server did not become healthy in time" >&2
+          exit 1
+
+      - name: Run k6 ${{ inputs.mode }} test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: k6/dashboard-load-test.js
+        env:
+          BASE_URL: http://localhost:18080
+          MODE: ${{ inputs.mode }}
+          VUS_LIST: ${{ inputs.vus_list }}
+          ENDURANCE_VUS: ${{ inputs.endurance_vus }}
+          DURATION: ${{ inputs.duration }}
+          POOL_SIZE: ${{ inputs.pool_size }}
+
+      - name: Stop server
+        if: always()
+        run: kill "$(cat "${{ github.workspace }}/server.pid")" 2>/dev/null || true
