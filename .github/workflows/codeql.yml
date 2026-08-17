@@ -1,0 +1,68 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Weekly scan so new queries catch existing code, not just new changes
+    - cron: '30 8 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze (C/C++)
+    runs-on: ubuntu-24.04
+
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache FetchContent downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cmake-deps
+          key: cmake-deps-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: cmake-deps-
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gcc-14 g++-14 cmake ninja-build \
+            libpq-dev libcurl4-openssl-dev libssl-dev
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: c-cpp
+          build-mode: manual
+          queries: security-extended
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_C_COMPILER=gcc-14 \
+            -DBUILD_TESTING=ON \
+            -DRUN_INTEGRATION_TESTS=OFF \
+            -DFETCHCONTENT_BASE_DIR=$HOME/.cmake-deps
+
+      - name: Build
+        run: cmake --build build --parallel $(nproc)
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:c-cpp"
